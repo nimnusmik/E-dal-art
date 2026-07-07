@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
+import ResultScreen from '@/components/ResultScreen';
 import { fileToResizedPayload } from '@/lib/resize';
 import type { Mood, NailLength, NailShape } from '@/lib/types';
 
@@ -129,6 +130,27 @@ export default function Home() {
     );
   }
 
-  // Task 13: result / Task 14: blocked 화면
+  if (phase === 'result' && result) {
+    return (
+      <main className="screen">
+        <span className="brand">이달아</span>
+        <ResultScreen
+          result={result}
+          photos={photos}
+          remaining={remaining}
+          onEvolve={() => setPhase('start')}
+          onRegenerate={generate}
+          onReset={() => {
+            setPhotos([]);
+            setResult(null);
+            setPhase('start');
+          }}
+        />
+        {error && <div className="error-toast">{error}</div>}
+      </main>
+    );
+  }
+
+  // Task 14: blocked 화면
   return <main className="screen" />;
 }
