@@ -152,5 +152,27 @@ export default function Home() {
   }
 
   // Task 14: blocked 화면
-  return <main className="screen" />;
+  if (phase === 'blocked-user') {
+    return (
+      <main className="screen">
+        <span className="brand">이달아</span>
+        <div className="blocked">
+          <span className="big">🌙</span>
+          <h2 className="headline">내일 다시 만나요</h2>
+          <p className="sub">오늘의 3회를 모두 사용했어요. 자정에 다시 채워져요.</p>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="screen">
+      <span className="brand">이달아</span>
+      <div className="blocked">
+        <span className="big">💅</span>
+        <h2 className="headline">오늘 준비된 생성이 모두 끝났어요</h2>
+        <p className="sub">내일 다시 찾아와주세요.</p>
+      </div>
+    </main>
+  );
 }
