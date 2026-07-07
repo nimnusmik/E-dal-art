@@ -25,6 +25,14 @@ describe('parseGeminiParts', () => {
     expect(out.mood?.keywords).toEqual(['몽환']);
   });
 
+  it('잡담 속 stray brace를 지나 실제 JSON 객체를 추출 (마지막 유효 객체 우선)', () => {
+    const out = parseGeminiParts([
+      IMG,
+      { text: 'Here is the palette {sea vibes} {"keywords": ["몽환"], "colors": ["#eee"]}' },
+    ]);
+    expect(out.mood?.keywords).toEqual(['몽환']);
+  });
+
   it('JSON 파싱 실패 시 mood는 null, 이미지는 유지 (스펙: 생성 실패로 처리하지 않음)', () => {
     const out = parseGeminiParts([IMG, { text: 'not json at all' }]);
     expect(out.image).not.toBeNull();

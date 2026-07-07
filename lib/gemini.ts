@@ -14,11 +14,9 @@ export interface GeminiOutcome {
 
 const SAFETY_REASONS = new Set(['SAFETY', 'PROHIBITED_CONTENT', 'IMAGE_SAFETY', 'BLOCKLIST']);
 
-function tryParseMood(text: string): Mood | null {
-  const match = text.match(/\{[\s\S]*?\}/);
-  if (!match) return null;
+function tryParseMoodCandidate(candidate: string): Mood | null {
   try {
-    const parsed: unknown = JSON.parse(match[0]);
+    const parsed: unknown = JSON.parse(candidate);
     if (typeof parsed !== 'object' || parsed === null) return null;
     const { keywords, colors } = parsed as { keywords?: unknown; colors?: unknown };
     if (!Array.isArray(keywords) || !keywords.every((k) => typeof k === 'string')) return null;
@@ -27,6 +25,18 @@ function tryParseMood(text: string): Mood | null {
   } catch {
     return null;
   }
+}
+
+function tryParseMood(text: string): Mood | null {
+  const matches = text.match(/\{[^{}]*\}/g);
+  if (!matches) return null;
+  // 잡담 속 stray brace로 인해 앞쪽 후보가 잘못 매칭될 수 있으므로,
+  // 뒤에서부터 훑어 처음으로 유효한 Mood를 반환한다.
+  for (let i = matches.length - 1; i >= 0; i -= 1) {
+    const mood = tryParseMoodCandidate(matches[i]);
+    if (mood) return mood;
+  }
+  return null;
 }
 
 export function parseGeminiParts(parts: GeminiPart[], finishReason?: string): GeminiOutcome {
