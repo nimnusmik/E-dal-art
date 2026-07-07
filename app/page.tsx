@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
 import { fileToResizedPayload } from '@/lib/resize';
@@ -60,8 +61,39 @@ export default function Home() {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-  // Task 12에서 구현
-  const generate = useCallback(async () => {}, []);
+  const generate = useCallback(async () => {
+    if (photos.length === 0) return;
+    setPhase('generating');
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          images: photos.map(({ data, mimeType }) => ({ data, mimeType })),
+          shape,
+          length,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setResult({ image: json.image, mimeType: json.mimeType, mood: json.mood });
+        setRemaining(json.remaining);
+        setPhase('result');
+        return;
+      }
+      if (json.error === 'RATE_LIMIT_USER') { setPhase('blocked-user'); return; }
+      if (json.error === 'RATE_LIMIT_TOTAL') { setPhase('blocked-total'); return; }
+      setPhase(result ? 'result' : 'start');
+      setError(
+        json.error === 'REJECTED'
+          ? '이 사진으로는 만들기 어려워요. 다른 사진으로 시도해주세요'
+          : '생성에 실패했어요. 다시 시도해주세요',
+      );
+    } catch {
+      setPhase(result ? 'result' : 'start');
+      setError('생성에 실패했어요. 다시 시도해주세요');
+    }
+  }, [photos, shape, length, result]);
 
   if (phase === 'start') {
     return (
@@ -88,6 +120,15 @@ export default function Home() {
     );
   }
 
-  // Task 12: generating / Task 13: result / Task 14: blocked 화면
+  if (phase === 'generating') {
+    return (
+      <main className="screen">
+        <span className="brand">이달아</span>
+        <GeneratingScreen />
+      </main>
+    );
+  }
+
+  // Task 13: result / Task 14: blocked 화면
   return <main className="screen" />;
 }
