@@ -33,6 +33,7 @@ npm run typecheck
 ## 지표 확인
 
 Upstash 콘솔에서 키 조회: `quota:total:YYYYMMDD`(일별 생성), `metric:save:YYYYMMDD`(저장 클릭), `metric:evolve:YYYYMMDD`(진화 클릭). 방문 지표는 Vercel Analytics.
+`/api/track`은 인증이 없어 직접 호출로 카운터를 부풀릴 수 있으므로, save/evolve 지표는 정확한 값이 아닌 방향성 참고 지표로 취급할 것.
 
 ## 트렌드 갱신 (시즌마다)
 

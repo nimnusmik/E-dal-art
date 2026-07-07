@@ -48,7 +48,9 @@ export default function Home() {
   }, [error]);
 
   const addPhotos = useCallback(async (files: FileList) => {
-    const incoming = Array.from(files);
+    const freeSlots = MAX_PHOTOS - photos.length;
+    if (freeSlots <= 0) return;
+    const incoming = Array.from(files).slice(0, freeSlots);
     const resized = await Promise.all(
       incoming.map(async (file) => {
         const payload = await fileToResizedPayload(file);
@@ -56,7 +58,7 @@ export default function Home() {
       }),
     );
     setPhotos((prev) => [...prev, ...resized].slice(0, MAX_PHOTOS));
-  }, []);
+  }, [photos]);
 
   const removePhoto = useCallback((id: string) => {
     setPhotos((prev) => prev.filter((p) => p.id !== id));

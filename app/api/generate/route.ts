@@ -13,6 +13,8 @@ const LENGTHS: NailLength[] = ['short', 'medium', 'long'];
 const MAX_IMAGE_BASE64_CHARS = 2_000_000; // 리사이즈된 JPEG 기준 넉넉한 상한 (~1.5MB)
 
 function clientIp(req: Request): string {
+  const realIp = req.headers.get('x-real-ip');
+  if (realIp && realIp.trim()) return realIp.trim();
   const header = req.headers.get('x-forwarded-for');
   return header?.split(',')[0]?.trim() || 'unknown';
 }
@@ -73,6 +75,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (outcome.safetyBlocked) return errorResponse('REJECTED', 422);
   if (!outcome.image) return errorResponse('GENERATION_FAILED', 502);
 
+  // 성공 후에만 차감 (실패 미차감 규칙). getQuota→recordGeneration 사이 동시성으로 소폭 초과 가능하나 전체 총량 한도가 상한을 보장 — 의도된 트레이드오프.
   await recordGeneration(store, ip, now); // 성공 시에만 차감
 
   return NextResponse.json({

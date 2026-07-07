@@ -77,12 +77,12 @@ export default function ResultScreen({
       )}
       {result.mood && (
         <div className="mood-chips">
-          {result.mood.keywords.map((k) => (
-            <span className="chip" key={k}>{k}</span>
+          {result.mood.keywords.map((k, i) => (
+            <span className="chip" key={i}>{k}</span>
           ))}
           <span className="swatches">
-            {result.mood.colors.slice(0, 3).map((c) => (
-              <span className="swatch" key={c} style={{ background: c }} />
+            {result.mood.colors.slice(0, 3).map((c, i) => (
+              <span className="swatch" key={i} style={{ background: c }} />
             ))}
           </span>
         </div>
