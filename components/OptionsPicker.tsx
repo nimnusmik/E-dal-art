@@ -30,11 +30,12 @@ export default function OptionsPicker({
     <div className="options">
       <div className="option-group">
         <span className="option-label">손톱 모양</span>
-        <div className="option-row">
+        <div className="option-row" role="group" aria-label="손톱 모양">
           {SHAPES.map((s) => (
             <button
               key={s.value}
               className={`pill${shape === s.value ? ' active' : ''}`}
+              aria-pressed={shape === s.value}
               onClick={() => onShape(s.value)}
             >
               {s.label}
@@ -44,11 +45,12 @@ export default function OptionsPicker({
       </div>
       <div className="option-group">
         <span className="option-label">길이</span>
-        <div className="option-row">
+        <div className="option-row" role="group" aria-label="길이">
           {LENGTHS.map((l) => (
             <button
               key={l.value}
               className={`pill${length === l.value ? ' active' : ''}`}
+              aria-pressed={length === l.value}
               onClick={() => onLength(l.value)}
             >
               {l.label}

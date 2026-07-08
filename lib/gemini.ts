@@ -1,16 +1,13 @@
 import { GoogleGenAI } from '@google/genai';
-import type { ImagePayload, Mood } from './types';
+import type { ImageOutcome, ImagePayload, Mood } from './types';
 
 export interface GeminiPart {
   inlineData?: { data: string; mimeType: string };
   text?: string;
 }
 
-export interface GeminiOutcome {
-  image: ImagePayload | null;
-  mood: Mood | null;
-  safetyBlocked: boolean;
-}
+/** @deprecated 공유 타입 ImageOutcome 사용 */
+export type GeminiOutcome = ImageOutcome;
 
 const SAFETY_REASONS = new Set(['SAFETY', 'PROHIBITED_CONTENT', 'IMAGE_SAFETY', 'BLOCKLIST']);
 
@@ -39,7 +36,7 @@ function tryParseMood(text: string): Mood | null {
   return null;
 }
 
-export function parseGeminiParts(parts: GeminiPart[], finishReason?: string): GeminiOutcome {
+export function parseGeminiParts(parts: GeminiPart[], finishReason?: string): ImageOutcome {
   let image: ImagePayload | null = null;
   let mood: Mood | null = null;
   for (const part of parts) {
@@ -64,8 +61,25 @@ function getClient(): GoogleGenAI {
   return client;
 }
 
+/**
+ * 로컬 개발용 목 응답 (GEMINI_MOCK=1). 실제 API 호출·과금 없이
+ * ref/ 샘플 이미지로 전체 흐름(쿼터·콜라주·저장)을 확인한다.
+ */
+async function mockGemini(): Promise<ImageOutcome> {
+  const { readFile } = await import('node:fs/promises');
+  const path = await import('node:path');
+  const file = await readFile(path.join(process.cwd(), 'ref', 'Nails.jpeg'));
+  await new Promise((r) => setTimeout(r, 2000)); // 생성 지연 흉내
+  return {
+    image: { data: file.toString('base64'), mimeType: 'image/jpeg' },
+    mood: { keywords: ['글레이즈드', '몽환'], colors: ['#e8c7d8', '#b7a6c9', '#f4ece2'] },
+    safetyBlocked: false,
+  };
+}
+
 /** 서버 전용. 영감 사진 1~3장 + 지시문 → 네일 이미지 + 무드 텍스트 */
-export async function callGemini(images: ImagePayload[], prompt: string): Promise<GeminiOutcome> {
+export async function callGemini(images: ImagePayload[], prompt: string): Promise<ImageOutcome> {
+  if (process.env.GEMINI_MOCK === '1') return mockGemini();
   const model = process.env.GEMINI_IMAGE_MODEL ?? 'gemini-3.1-flash-image';
   const response = await getClient().models.generateContent({
     model,

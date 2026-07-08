@@ -48,16 +48,32 @@ beforeEach(() => {
   mockCallGemini.mockReset();
   process.env.DAILY_USER_LIMIT = '3';
   process.env.DAILY_TOTAL_LIMIT = '200';
+  delete process.env.IMAGE_PROVIDER; // 기본 gemini 경로 사용
 });
 
 describe('POST /api/generate', () => {
-  it('성공: 이미지+무드+남은횟수 반환, 카운터 증가', async () => {
+  it('성공: 히어로+팁세트+무드+남은횟수 반환, 카운터 증가', async () => {
     mockCallGemini.mockResolvedValue(GEMINI_OK);
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.image).toBe('cmVzdWx0');
+    expect(json.hero).toEqual({ image: 'cmVzdWx0', mimeType: 'image/png' });
+    expect(json.tipSet).toEqual({ image: 'cmVzdWx0', mimeType: 'image/png' });
     expect(json.mood.keywords).toEqual(['몽환']);
+    expect(mockCallGemini).toHaveBeenCalledTimes(2); // 히어로 + 팁세트
+    expect(json.remaining).toBe(2);
+  });
+
+  it('팁세트만 실패해도 히어로 있으면 성공(tipSet=null), 1회 차감', async () => {
+    // 생성 순서: 팁세트 먼저, 히어로 다음
+    mockCallGemini
+      .mockRejectedValueOnce(new Error('tip timeout')) // 팁세트 실패
+      .mockResolvedValueOnce(GEMINI_OK); // 히어로 성공
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.hero.image).toBe('cmVzdWx0');
+    expect(json.tipSet).toBeNull();
     expect(json.remaining).toBe(2);
   });
 

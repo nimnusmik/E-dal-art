@@ -19,10 +19,12 @@ export default function GeneratingScreen() {
 
   return (
     <div className="generating">
-      <div className="spinner" />
-      <p className="generating-msg" key={index}>
-        {MESSAGES[index]}
-      </p>
+      <div className="spinner" aria-hidden />
+      <div role="status" aria-live="polite">
+        <p className="generating-msg" key={index}>
+          {MESSAGES[index]}
+        </p>
+      </div>
     </div>
   );
 }

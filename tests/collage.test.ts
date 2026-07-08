@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { collageLayout, coverRect } from '@/lib/collage';
+import { collageLayout, coverRect, quantizeColors } from '@/lib/collage';
 
 const W = 1080;
 const H = 1350;
@@ -58,5 +58,39 @@ describe('coverRect', () => {
 
   it('비율 일치 → 크롭 없음', () => {
     expect(coverRect(1080, 1350, 1080, 1350)).toEqual({ sx: 0, sy: 0, sw: 1080, sh: 1350 });
+  });
+});
+
+/** RGBA 픽셀 배열 헬퍼: [r,g,b] 색을 n개 반복 */
+function pixels(colors: [number, number, number][], repeats: number[]): Uint8ClampedArray {
+  const out: number[] = [];
+  colors.forEach((c, i) => {
+    for (let k = 0; k < repeats[i]; k++) out.push(c[0], c[1], c[2], 255);
+  });
+  return new Uint8ClampedArray(out);
+}
+
+describe('quantizeColors', () => {
+  it('가장 빈도 높은 색을 우선 반환', () => {
+    const data = pixels([[255, 0, 0], [0, 128, 0]], [10, 2]);
+    const colors = quantizeColors(data, 2);
+    expect(colors[0]).toBe('#f80808'); // 빨강 버킷 대표값 (15,0,0)
+    expect(colors).toHaveLength(2);
+  });
+
+  it('투명 픽셀은 무시', () => {
+    const data = new Uint8ClampedArray([0, 0, 255, 0, 255, 0, 0, 255]); // 파랑(투명) + 빨강(불투명)
+    const colors = quantizeColors(data, 3);
+    expect(colors).toEqual(['#f80808']); // 불투명 빨강만
+  });
+
+  it('요청 개수보다 색이 적으면 있는 만큼만 반환', () => {
+    const data = pixels([[255, 0, 0]], [5]);
+    expect(quantizeColors(data, 3)).toHaveLength(1);
+  });
+
+  it('#RRGGBB 형식', () => {
+    const data = pixels([[16, 32, 48]], [3]);
+    expect(quantizeColors(data, 1)[0]).toMatch(/^#[0-9a-f]{6}$/);
   });
 });

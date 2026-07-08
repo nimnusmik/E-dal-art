@@ -38,7 +38,8 @@ export default function InspirationTray({
             type="file"
             accept="image/*"
             multiple
-            hidden
+            className="visually-hidden"
+            aria-label="영감 사진 추가"
             onChange={(e) => {
               if (e.target.files?.length) onAdd(e.target.files);
               e.target.value = '';

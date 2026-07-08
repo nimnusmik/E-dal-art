@@ -47,4 +47,15 @@ describe('buildPrompt', () => {
     expect(prompt).toContain('"keywords"');
     expect(prompt).toContain('"colors"');
   });
+
+  it('팁 참조가 있으면 팁과 동일하게 그리라는 지시 포함', () => {
+    const withRef = buildPrompt('almond', 'medium', [], 1, true);
+    expect(withRef).toMatch(/replicate|copy them faithfully/i);
+    expect(withRef).toContain('SET of finished nail tip designs');
+  });
+
+  it('팁 참조가 없으면 영감 사진 기반 지시 사용', () => {
+    const noRef = buildPrompt('almond', 'medium', [], 1, false);
+    expect(noRef).not.toContain('SET of finished nail tip designs');
+  });
 });

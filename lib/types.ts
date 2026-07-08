@@ -11,15 +11,27 @@ export interface ImagePayload {
   mimeType: string;
 }
 
+/** 이미지 생성 공급자(Gemini·Seedream) 공통 결과 형태 */
+export interface ImageOutcome {
+  image: ImagePayload | null;
+  mood: Mood | null;
+  safetyBlocked: boolean;
+}
+
 export interface GenerateRequest {
   images: ImagePayload[];
   shape: NailShape;
   length: NailLength;
 }
 
-export interface GenerateSuccess {
+export interface GeneratedImage {
   image: string; // base64
   mimeType: string;
+}
+
+export interface GenerateSuccess {
+  hero: GeneratedImage; // 손 착용샷 (콜라주 히어로)
+  tipSet: GeneratedImage | null; // 개별 팁 10개 플랫레이 (실패 시 null)
   mood: Mood | null;
   remaining: number;
 }

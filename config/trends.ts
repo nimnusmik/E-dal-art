@@ -4,7 +4,8 @@
  */
 export const DEFAULT_TREND_KEYWORDS = [
   'glazed donut glossy finish',
-  'chrome magnetic cat-eye shimmer',
+  // "cat-eye"는 이미지 모델이 실제 눈알로 오해하므로 효과만 서술
+  'chrome magnetic velvet shimmer (single sweeping light streak)',
   'syrup gradient sheer layers',
   'subtle 3D charm parts (ribbon, pearl, flower)',
 ];

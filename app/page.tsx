@@ -15,9 +15,14 @@ export interface TrayPhoto {
   previewUrl: string;
 }
 
-export interface GenerationResult {
+export interface GeneratedImage {
   image: string; // base64
   mimeType: string;
+}
+
+export interface GenerationResult {
+  hero: GeneratedImage; // 손 착용샷 (콜라주 히어로)
+  tipSet: GeneratedImage | null; // 개별 팁 10개 세트
   mood: Mood | null;
 }
 
@@ -51,13 +56,24 @@ export default function Home() {
     const freeSlots = MAX_PHOTOS - photos.length;
     if (freeSlots <= 0) return;
     const incoming = Array.from(files).slice(0, freeSlots);
-    const resized = await Promise.all(
+    const settled = await Promise.allSettled(
       incoming.map(async (file) => {
         const payload = await fileToResizedPayload(file);
         return { id: crypto.randomUUID(), ...payload };
       }),
     );
-    setPhotos((prev) => [...prev, ...resized].slice(0, MAX_PHOTOS));
+    const resized = settled
+      .filter((s): s is PromiseFulfilledResult<TrayPhoto> => s.status === 'fulfilled')
+      .map((s) => s.value);
+    if (files.length > freeSlots) {
+      setError(`사진은 최대 ${MAX_PHOTOS}장까지 올릴 수 있어요`);
+    }
+    if (resized.length < incoming.length) {
+      setError('불러올 수 없는 사진이 있어요. 다른 사진으로 시도해주세요');
+    }
+    if (resized.length > 0) {
+      setPhotos((prev) => [...prev, ...resized].slice(0, MAX_PHOTOS));
+    }
   }, [photos]);
 
   const removePhoto = useCallback((id: string) => {
@@ -79,7 +95,7 @@ export default function Home() {
       });
       const json = await res.json();
       if (res.ok) {
-        setResult({ image: json.image, mimeType: json.mimeType, mood: json.mood });
+        setResult({ hero: json.hero, tipSet: json.tipSet, mood: json.mood });
         setRemaining(json.remaining);
         setPhase('result');
         return;
@@ -161,7 +177,7 @@ export default function Home() {
         <div className="blocked">
           <span className="big">🌙</span>
           <h2 className="headline">내일 다시 만나요</h2>
-          <p className="sub">오늘의 3회를 모두 사용했어요. 자정에 다시 채워져요.</p>
+          <p className="sub">오늘의 생성 횟수를 모두 사용했어요. 자정에 다시 채워져요.</p>
         </div>
       </main>
     );

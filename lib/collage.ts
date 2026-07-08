@@ -24,6 +24,60 @@ export function collageLayout(count: 1 | 2 | 3, width: number, height: number): 
   return [topLeft, midRight, bottomLeft];
 }
 
+/** 4비트 버킷 키(0~4095)를 대표 #RRGGBB로 변환 */
+function bucketToHex(key: number): string {
+  const to = (b: number) => (b * 16 + 8).toString(16).padStart(2, '0');
+  return `#${to((key >> 8) & 15)}${to((key >> 4) & 15)}${to(key & 15)}`;
+}
+
+/** 두 버킷의 색 차이 (채널 절댓값 합, 0~45) */
+function bucketDistance(a: number, b: number): number {
+  return (
+    Math.abs(((a >> 8) & 15) - ((b >> 8) & 15)) +
+    Math.abs(((a >> 4) & 15) - ((b >> 4) & 15)) +
+    Math.abs((a & 15) - (b & 15))
+  );
+}
+
+/**
+ * RGBA 픽셀 배열 → 대표 색상 count개(#RRGGBB).
+ * 채널당 4비트로 양자화해 빈도순 정렬 후, 서로 충분히 구별되는 색을 우선 선택.
+ * 순수 함수 — 단위 테스트 가능.
+ */
+export function quantizeColors(data: Uint8ClampedArray, count = 3): string[] {
+  const freq = new Map<number, number>();
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue; // 투명 픽셀 제외
+    const key = ((data[i] >> 4) << 8) | ((data[i + 1] >> 4) << 4) | (data[i + 2] >> 4);
+    freq.set(key, (freq.get(key) ?? 0) + 1);
+  }
+  const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => k);
+  const picked: number[] = [];
+  for (const key of sorted) {
+    if (picked.length >= count) break;
+    if (picked.every((p) => bucketDistance(p, key) >= 3)) picked.push(key);
+  }
+  // 구별되는 색이 부족하면 빈도순으로 채움
+  for (const key of sorted) {
+    if (picked.length >= count) break;
+    if (!picked.includes(key)) picked.push(key);
+  }
+  return picked.map(bucketToHex);
+}
+
+/** 브라우저 전용: 이미지에서 대표 색상 추출 (무드 색상 폴백용) */
+export function extractColors(bitmap: ImageBitmap, count = 3): string[] {
+  const w = 64;
+  const h = Math.max(1, Math.round((bitmap.height / bitmap.width) * w));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return [];
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  return quantizeColors(ctx.getImageData(0, 0, w, h).data, count);
+}
+
 /** cover-fit: 소스에서 대상 비율에 맞게 중앙 크롭할 영역 */
 export function coverRect(
   srcW: number,

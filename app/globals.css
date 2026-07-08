@@ -77,7 +77,8 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
   transition: border-color 0.2s;
 }
 
-.slot-add:active { border-color: var(--accent); color: var(--accent); }
+.slot-add:active,
+.slot:focus-within .slot-add { border-color: var(--accent); color: var(--accent); }
 
 .slot-add .plus { font-size: 26px; line-height: 1; font-weight: 300; }
 
@@ -95,6 +96,13 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
+}
+
+/* 보이는 크기는 유지하고 탭 영역만 44px 수준으로 확장 */
+.slot-remove::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
 }
 
 /* 옵션 */
@@ -117,6 +125,12 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
   background: var(--ink);
   color: #fff;
   border-color: var(--ink);
+}
+
+@media (hover: hover) {
+  .pill:not(.active):hover { border-color: var(--muted); }
+  .slot-add:hover { border-color: var(--accent); color: var(--accent); }
+  .cta:not(:disabled):hover { opacity: 0.92; }
 }
 
 /* 버튼 */
@@ -190,6 +204,18 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+/* 디자인 팁 세트 */
+.tipset-block { display: flex; flex-direction: column; gap: 10px; }
+
+.tipset-img {
+  width: 100%;
+  border-radius: var(--radius);
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--line);
+  animation: fadeIn 0.6s;
+}
+
 .actions { display: flex; flex-direction: column; gap: 10px; }
 
 .btn {
@@ -230,10 +256,24 @@ button { font: inherit; border: none; background: none; cursor: pointer; color: 
   background: var(--ink);
   color: #fff;
   padding: 13px 22px;
-  border-radius: 999px;
+  border-radius: 22px;
   font-size: 14px;
   font-weight: 600;
-  white-space: nowrap;
+  line-height: 1.45;
+  width: max-content;
+  max-width: calc(100vw - 44px);
+  text-align: center;
+  word-break: keep-all;
   animation: fadeIn 0.3s;
   z-index: 10;
+}
+
+/* 시각적으로만 숨김 — 키보드·스크린리더 접근 유지 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
