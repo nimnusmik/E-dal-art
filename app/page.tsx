@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
@@ -9,6 +9,7 @@ import BrandBadge from '@/components/retro/BrandBadge';
 import Marquee from '@/components/retro/Marquee';
 import RetroWindow from '@/components/retro/RetroWindow';
 import DecorLayer from '@/components/retro/Sparkles';
+import StoryLanding from '@/components/story/StoryLanding';
 import { DEFAULT_TREND_KEYWORDS } from '@/config/trends';
 import { fileToResizedPayload } from '@/lib/resize';
 import type { Mood, NailLength, NailShape } from '@/lib/types';
@@ -43,6 +44,18 @@ export default function Home() {
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 진화(evolve)로 start에 복귀할 때 툴 섹션으로 즉시 앵커하기 위한 플래그
+  const anchorToolRef = useRef(false);
+
+  useEffect(() => {
+    if (phase === 'start' && anchorToolRef.current) {
+      anchorToolRef.current = false;
+      document.getElementById('tool')?.scrollIntoView({ behavior: 'instant', block: 'start' });
+    } else if (phase === 'generating' || phase === 'result') {
+      // 전체 뷰 전환 — 스토리의 스크롤 위치가 남아 화면이 중간에서 시작하는 것 방지
+      window.scrollTo(0, 0);
+    }
+  }, [phase]);
 
   useEffect(() => {
     fetch('/api/generate')
@@ -121,28 +134,33 @@ export default function Home() {
 
   if (phase === 'start') {
     return (
-      <main className="screen">
-        <DecorLayer />
-        <BrandBadge />
-        <h1 className="headline">
-          영감 사진을 올리면,
-          <br />
-          이달의 네일 아트
-          <br />
-          시안이 나와요
-        </h1>
-        <p className="sub">사진을 더할수록 디자인이 진화해요 (최대 3장)</p>
-        <Marquee items={DEFAULT_TREND_KEYWORDS} />
-        <InspirationTray photos={photos} onAdd={addPhotos} onRemove={removePhoto} />
-        {photos.length > 0 && (
-          <OptionsPicker shape={shape} length={length} onShape={setShape} onLength={setLength} />
-        )}
-        <button className="cta" disabled={photos.length === 0} onClick={generate}>
-          네일 디자인 만들기
-        </button>
-        {remaining !== null && <p className="remaining">오늘 {remaining}회 남음</p>}
-        {error && <div className="error-toast">{error}</div>}
-      </main>
+      <StoryLanding
+        toolSlot={
+          <>
+            <DecorLayer />
+            <BrandBadge />
+            {/* h1은 스토리 히어로가 차지 — 툴 섹션 헤드라인은 h2로 강등 */}
+            <h2 className="headline">
+              영감 사진을 올리면,
+              <br />
+              이달의 네일 아트
+              <br />
+              시안이 나와요
+            </h2>
+            <p className="sub">사진을 더할수록 디자인이 진화해요 (최대 3장)</p>
+            <Marquee items={DEFAULT_TREND_KEYWORDS} />
+            <InspirationTray photos={photos} onAdd={addPhotos} onRemove={removePhoto} />
+            {photos.length > 0 && (
+              <OptionsPicker shape={shape} length={length} onShape={setShape} onLength={setLength} />
+            )}
+            <button className="cta" disabled={photos.length === 0} onClick={generate}>
+              네일 디자인 만들기
+            </button>
+            {remaining !== null && <p className="remaining">오늘 {remaining}회 남음</p>}
+            {error && <div className="error-toast">{error}</div>}
+          </>
+        }
+      />
     );
   }
 
@@ -165,7 +183,10 @@ export default function Home() {
           result={result}
           photos={photos}
           remaining={remaining}
-          onEvolve={() => setPhase('start')}
+          onEvolve={() => {
+            anchorToolRef.current = true;
+            setPhase('start');
+          }}
           onRegenerate={generate}
           onReset={() => {
             setPhotos([]);

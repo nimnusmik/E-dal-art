@@ -544,6 +544,265 @@ label.tray-window:focus-within .slot-add { color: var(--accent); background: var
   white-space: nowrap;
 }
 
+/* ─── 스토리 랜딩 ────────────────────────────────────────────── */
+.story { position: relative; overflow-x: clip; }
+
+/* S1. 히어로 — 3D 네일 팁 링 */
+.story-hero {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 48px 24px 56px;
+  overflow: clip;
+}
+
+.ring-stage {
+  --ring-w: 108px;
+  --ring-h: 270px;
+  --ring-r: 245px;
+  perspective: 1100px;
+  width: 100%;
+  max-width: 780px;
+  height: 430px;
+  display: grid;
+  place-items: center;
+}
+
+.ring-tilt { transform: rotateX(-12deg); transform-style: preserve-3d; }
+
+.ring {
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  animation: ring-spin 40s linear infinite;
+  will-change: transform;
+}
+
+.is-paused .ring { animation-play-state: paused; }
+
+.ring-item {
+  position: absolute;
+  width: var(--ring-w);
+  left: calc(var(--ring-w) / -2);
+  top: calc(var(--ring-h) / -2);
+  transform: rotateY(calc(var(--i) * 36deg)) translateZ(var(--ring-r));
+}
+
+.ring-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--card);
+  border: var(--frame);
+  border-radius: 10px;
+  box-shadow: var(--shadow-pop-sm);
+}
+
+@keyframes ring-spin {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+.hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  z-index: 1;
+}
+
+.hero-title { font-size: clamp(64px, 12vw, 110px); line-height: 1.08; }
+.hero-tagline { font-size: clamp(17px, 2.4vw, 22px); font-weight: 800; word-break: keep-all; }
+.hero-sub { font-family: var(--font-pixel); font-size: 14px; color: var(--muted); }
+
+.hero-scroll-cue {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  animation: cue-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes cue-bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, 6px); }
+}
+
+/* S2. 어떻게 작동하나 */
+.story-hiw {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 80px 22px;
+}
+
+.hiw-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  width: 100%;
+  max-width: 980px;
+}
+
+.hiw-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 18px 22px;
+  background: var(--paper);
+  min-height: 150px;
+}
+
+.hiw-body h3 { font-size: 19px; font-weight: 800; word-break: keep-all; }
+.hiw-body p { font-size: 14px; color: var(--muted); line-height: 1.6; word-break: keep-all; }
+
+/* 스크롤 진입 reveal 유틸 */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--d, 0ms);
+}
+
+.is-revealed .reveal, .is-revealed.reveal { opacity: 1; transform: none; }
+
+/* S3. 쇼케이스 — sticky + 가로 이동 */
+.showcase-wrap { height: 340dvh; }
+
+.showcase-sticky {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow: clip;
+}
+
+.showcase-heading {
+  position: absolute;
+  top: 28px;
+  left: 24px;
+  z-index: 2;
+  font-family: var(--font-pixel);
+  font-size: clamp(17px, 2.6vw, 24px);
+  font-weight: 400;
+  background: var(--card);
+  border: var(--frame);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
+  padding: 12px 16px;
+  word-break: keep-all;
+}
+
+.showcase-track {
+  display: flex;
+  height: 100%;
+  width: max-content;
+  transform: translate3d(calc(var(--sx, 0) * -300vw), 0, 0);
+  will-change: transform;
+}
+
+.showcase-panel {
+  position: relative;
+  flex: none;
+  width: 100vw;
+  height: 100%;
+}
+
+.showcase-panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.showcase-caption { position: absolute; left: 24px; bottom: 28px; width: 230px; }
+
+.showcase-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  background: var(--paper);
+}
+
+.showcase-next {
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: #fff;
+  text-align: center;
+  padding: 24px;
+}
+
+.showcase-next p { font-size: clamp(26px, 4vw, 42px); font-weight: 900; word-break: keep-all; }
+
+/* 모바일·모션 저감: 가로 스크롤 → 세로 스택 폴백 (CSS만으로) */
+@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  .showcase-wrap { height: auto; }
+  .showcase-sticky { position: static; height: auto; }
+  .showcase-heading { position: static; display: inline-block; margin: 28px 22px 20px; }
+  .showcase-track { flex-direction: column; width: 100%; transform: none !important; will-change: auto; }
+  .showcase-panel { width: 100%; height: 72dvh; }
+  .showcase-next { height: 42dvh; }
+}
+
+/* S4. 툴 섹션 — .screen의 복제 컬럼 (기존 .screen은 무수정) */
+.story-tool { position: relative; }
+
+.tool-column {
+  position: relative;
+  max-width: 430px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 22px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* S5. 푸터 */
+.story-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 44px 0 30px;
+}
+
+/* 푸터 마퀴는 풀블리드 수평 (기본 마퀴의 기울기/네거티브 마진 해제) */
+.story-footer .marquee { width: 100%; margin: 0; transform: none; }
+
+.footer-credit {
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 모바일 링 축소 — CSS 변수만 교체 */
+@media (max-width: 767px) {
+  .ring-stage {
+    --ring-w: 88px;
+    --ring-h: 220px;
+    --ring-r: 190px;
+    height: 270px;
+    perspective: 820px;
+  }
+  .story-hero { min-height: 92dvh; }
+  .hiw-grid { grid-template-columns: 1fr; max-width: 430px; }
+  .story-hiw { min-height: auto; padding: 64px 22px; }
+}
+
 /* ─── 모션 저감 ──────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
@@ -551,6 +810,10 @@ label.tray-window:focus-within .slot-add { color: var(--accent); background: var
   /* 채움 애니 대신 저자극 펄스 — "진행 중" 신호는 남김 */
   .rprog-fill { animation: rprog-pulse 2s ease-in-out infinite; width: 60%; }
   .generating-msg, .result-img, .tipset-img, .error-toast { animation-duration: 0.01ms; }
+  /* 스토리: 링 정지(10개가 다 보이는 각), 스크롤 큐 정지, reveal 즉시 */
+  .ring { animation: none; transform: rotateY(18deg); }
+  .hero-scroll-cue { animation: none; }
+  .reveal { transition-duration: 0.01ms; }
 }
 
 @keyframes rprog-pulse {
