@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import RetroWindow from '@/components/retro/RetroWindow';
 
 const MESSAGES = [
   '사진의 색감을 읽는 중...',
@@ -19,12 +20,16 @@ export default function GeneratingScreen() {
 
   return (
     <div className="generating">
-      <div className="spinner" aria-hidden />
-      <div role="status" aria-live="polite">
-        <p className="generating-msg" key={index}>
-          {MESSAGES[index]}
-        </p>
-      </div>
+      <RetroWindow title="IDALA.EXE" className="gen-window" barClassName="rwin-bar-blue">
+        <div className="rprog" aria-hidden>
+          <div className="rprog-fill" />
+        </div>
+        <div role="status" aria-live="polite">
+          <p className="generating-msg" key={index}>
+            {MESSAGES[index]}
+          </p>
+        </div>
+      </RetroWindow>
     </div>
   );
 }

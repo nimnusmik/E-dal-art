@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { drawCollage, extractColors } from '@/lib/collage';
+import RetroWindow from '@/components/retro/RetroWindow';
 import type { GenerationResult, TrayPhoto } from '@/app/page';
 
 async function base64ToBitmap(data: string, mimeType: string): Promise<ImageBitmap> {
@@ -93,12 +94,18 @@ export default function ResultScreen({
 
   return (
     <>
-      {collageUrl ? (
-        // 길게 눌러 저장(iOS)도 되도록 img로 렌더
-        <img className="result-img" src={collageUrl} alt="생성된 네일 디자인 콜라주" />
-      ) : (
-        <div className="generating"><div className="spinner" aria-hidden /></div>
-      )}
+      <RetroWindow title="RESULT.JPG" className="result-window">
+        {collageUrl ? (
+          // 길게 눌러 저장(iOS)도 되도록 img로 렌더
+          <img className="result-img" src={collageUrl} alt="생성된 네일 디자인 콜라주" />
+        ) : (
+          <div className="result-loading" aria-hidden>
+            <div className="rprog">
+              <div className="rprog-fill" />
+            </div>
+          </div>
+        )}
+      </RetroWindow>
 
       {(keywords.length > 0 || colors.length > 0) && (
         <div className="mood-chips">
@@ -118,28 +125,36 @@ export default function ResultScreen({
       {tipSetUrl && (
         <div className="tipset-block">
           <span className="option-label">이런 디자인들은 어때요</span>
-          <img className="tipset-img" src={tipSetUrl} alt="이달의 네일 디자인 10종 세트" />
+          <RetroWindow title="TIPSET.PNG" className="result-window" barClassName="rwin-bar-blue">
+            <img className="tipset-img" src={tipSetUrl} alt="이달의 네일 디자인 10종 세트" />
+          </RetroWindow>
         </div>
       )}
 
+      {/* 버튼 위계: 핵심 루프(진화)를 프라이머리로, 저장 2종은 세컨더리, 나머지는 링크 */}
       <div className="actions">
-        <button className="btn btn-accent" onClick={save} disabled={!collageUrl}>
-          이미지 저장
+        <button className="btn btn-hero" onClick={evolve}>
+          ✦ 사진 더하고 진화시키기
         </button>
-        {tipSetUrl && (
-          <button className="btn btn-ghost" onClick={saveTipSet}>
-            디자인 세트 저장
+        <div className="actions-row">
+          <button className="btn btn-second" onClick={save} disabled={!collageUrl}>
+            이미지 저장
           </button>
-        )}
-        <button className="btn btn-primary" onClick={evolve}>
-          사진 더하고 진화시키기
-        </button>
-        <button className="btn btn-ghost" onClick={onRegenerate}>
-          다시 생성
-        </button>
-        <button className="btn btn-ghost" onClick={onReset}>
-          새로 시작
-        </button>
+          {tipSetUrl && (
+            <button className="btn btn-second" onClick={saveTipSet}>
+              세트 저장
+            </button>
+          )}
+        </div>
+        <div className="actions-links">
+          <button className="btn-link" onClick={onRegenerate}>
+            다시 생성
+          </button>
+          <span aria-hidden>·</span>
+          <button className="btn-link" onClick={onReset}>
+            새로 시작
+          </button>
+        </div>
       </div>
       {remaining !== null && <p className="remaining">오늘 {remaining}회 남음</p>}
     </>

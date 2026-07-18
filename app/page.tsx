@@ -5,6 +5,11 @@ import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
 import ResultScreen from '@/components/ResultScreen';
+import BrandBadge from '@/components/retro/BrandBadge';
+import Marquee from '@/components/retro/Marquee';
+import RetroWindow from '@/components/retro/RetroWindow';
+import DecorLayer from '@/components/retro/Sparkles';
+import { DEFAULT_TREND_KEYWORDS } from '@/config/trends';
 import { fileToResizedPayload } from '@/lib/resize';
 import type { Mood, NailLength, NailShape } from '@/lib/types';
 
@@ -117,7 +122,8 @@ export default function Home() {
   if (phase === 'start') {
     return (
       <main className="screen">
-        <span className="brand">이달아</span>
+        <DecorLayer />
+        <BrandBadge />
         <h1 className="headline">
           영감 사진을 올리면,
           <br />
@@ -126,6 +132,7 @@ export default function Home() {
           시안이 나와요
         </h1>
         <p className="sub">사진을 더할수록 디자인이 진화해요 (최대 3장)</p>
+        <Marquee items={DEFAULT_TREND_KEYWORDS} />
         <InspirationTray photos={photos} onAdd={addPhotos} onRemove={removePhoto} />
         {photos.length > 0 && (
           <OptionsPicker shape={shape} length={length} onShape={setShape} onLength={setLength} />
@@ -142,7 +149,8 @@ export default function Home() {
   if (phase === 'generating') {
     return (
       <main className="screen">
-        <span className="brand">이달아</span>
+        <DecorLayer variant="compact" />
+        <BrandBadge />
         <GeneratingScreen />
       </main>
     );
@@ -151,7 +159,8 @@ export default function Home() {
   if (phase === 'result' && result) {
     return (
       <main className="screen">
-        <span className="brand">이달아</span>
+        <DecorLayer variant="compact" />
+        <BrandBadge />
         <ResultScreen
           result={result}
           photos={photos}
@@ -173,11 +182,14 @@ export default function Home() {
   if (phase === 'blocked-user') {
     return (
       <main className="screen">
-        <span className="brand">이달아</span>
+        <DecorLayer variant="compact" />
+        <BrandBadge />
         <div className="blocked">
-          <span className="big">🌙</span>
-          <h2 className="headline">내일 다시 만나요</h2>
-          <p className="sub">오늘의 생성 횟수를 모두 사용했어요. 자정에 다시 채워져요.</p>
+          <RetroWindow title="NOTICE.TXT" className="blocked-window">
+            <span className="big">🌙</span>
+            <h2 className="headline">내일 다시 만나요</h2>
+            <p className="sub">오늘의 생성 횟수를 모두 사용했어요. 자정에 다시 채워져요.</p>
+          </RetroWindow>
         </div>
       </main>
     );
@@ -185,11 +197,14 @@ export default function Home() {
 
   return (
     <main className="screen">
-      <span className="brand">이달아</span>
+      <DecorLayer variant="compact" />
+      <BrandBadge />
       <div className="blocked">
-        <span className="big">💅</span>
-        <h2 className="headline">오늘 준비된 생성이 모두 끝났어요</h2>
-        <p className="sub">내일 다시 찾아와주세요.</p>
+        <RetroWindow title="NOTICE.TXT" className="blocked-window">
+          <span className="big">💅</span>
+          <h2 className="headline">오늘 준비된 생성이 모두 끝났어요</h2>
+          <p className="sub">내일 다시 찾아와주세요.</p>
+        </RetroWindow>
       </div>
     </main>
   );

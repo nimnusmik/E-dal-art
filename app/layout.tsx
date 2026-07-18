@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#f7f4ef',
+  themeColor: '#ffeaf4',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +20,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+        />
+        {/* Y2K 픽셀 액센트 폰트 — 타이틀바·마퀴·라벨 한정 사용 */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/neodgm-webfont@latest/neodgm/style.css"
         />
       </head>
       <body>{children}</body>
