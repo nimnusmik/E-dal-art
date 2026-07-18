@@ -5,12 +5,9 @@ import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
 import ResultScreen from '@/components/ResultScreen';
-import BrandBadge from '@/components/retro/BrandBadge';
-import Marquee from '@/components/retro/Marquee';
-import RetroWindow from '@/components/retro/RetroWindow';
-import DecorLayer from '@/components/retro/Sparkles';
+import Masthead from '@/components/editorial/Masthead';
 import StoryLanding from '@/components/story/StoryLanding';
-import { DEFAULT_TREND_KEYWORDS } from '@/config/trends';
+import { currentIssue } from '@/lib/issue';
 import { fileToResizedPayload } from '@/lib/resize';
 import type { Mood, NailLength, NailShape } from '@/lib/types';
 
@@ -137,18 +134,18 @@ export default function Home() {
       <StoryLanding
         toolSlot={
           <>
-            <DecorLayer />
-            <BrandBadge />
-            {/* h1은 스토리 히어로가 차지 — 툴 섹션 헤드라인은 h2로 강등 */}
-            <h2 className="headline">
-              영감 사진을 올리면,
-              <br />
-              이달의 네일 아트
-              <br />
-              시안이 나와요
-            </h2>
+            <div className="tool-head">
+              <p className="overline" suppressHydrationWarning>
+                Make Your Own — Vol.{currentIssue().vol}
+              </p>
+              {/* h1은 스토리 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
+              <h2 className="headline">
+                영감 사진을 올리면,
+                <br />
+                이달의 네일 아트 시안이 나와요
+              </h2>
+            </div>
             <p className="sub">사진을 더할수록 디자인이 진화해요 (최대 3장)</p>
-            <Marquee items={DEFAULT_TREND_KEYWORDS} />
             <InspirationTray photos={photos} onAdd={addPhotos} onRemove={removePhoto} />
             {photos.length > 0 && (
               <OptionsPicker shape={shape} length={length} onShape={setShape} onLength={setLength} />
@@ -167,8 +164,7 @@ export default function Home() {
   if (phase === 'generating') {
     return (
       <main className="screen">
-        <DecorLayer variant="compact" />
-        <BrandBadge />
+        <Masthead />
         <GeneratingScreen />
       </main>
     );
@@ -177,8 +173,7 @@ export default function Home() {
   if (phase === 'result' && result) {
     return (
       <main className="screen">
-        <DecorLayer variant="compact" />
-        <BrandBadge />
+        <Masthead />
         <ResultScreen
           result={result}
           photos={photos}
@@ -203,14 +198,13 @@ export default function Home() {
   if (phase === 'blocked-user') {
     return (
       <main className="screen">
-        <DecorLayer variant="compact" />
-        <BrandBadge />
+        <Masthead />
         <div className="blocked">
-          <RetroWindow title="NOTICE.TXT" className="blocked-window">
-            <span className="big">🌙</span>
-            <h2 className="headline">내일 다시 만나요</h2>
-            <p className="sub">오늘의 생성 횟수를 모두 사용했어요. 자정에 다시 채워져요.</p>
-          </RetroWindow>
+          <div className="blocked-card">
+            <p className="overline">Sold Out</p>
+            <h2 className="headline">오늘의 발행이 마감됐어요</h2>
+            <p className="sub">자정에 다시 채워져요. 내일 다시 만나요.</p>
+          </div>
         </div>
       </main>
     );
@@ -218,14 +212,13 @@ export default function Home() {
 
   return (
     <main className="screen">
-      <DecorLayer variant="compact" />
-      <BrandBadge />
+      <Masthead />
       <div className="blocked">
-        <RetroWindow title="NOTICE.TXT" className="blocked-window">
-          <span className="big">💅</span>
-          <h2 className="headline">오늘 준비된 생성이 모두 끝났어요</h2>
-          <p className="sub">내일 다시 찾아와주세요.</p>
-        </RetroWindow>
+        <div className="blocked-card">
+          <p className="overline">Sold Out</p>
+          <h2 className="headline">이번 호가 매진됐어요</h2>
+          <p className="sub">오늘 준비된 생성이 모두 끝났어요. 내일 다시 찾아와주세요.</p>
+        </div>
       </div>
     </main>
   );

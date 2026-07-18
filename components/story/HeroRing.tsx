@@ -2,15 +2,18 @@
 
 import { useEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
+import Masthead from '@/components/editorial/Masthead';
+import { currentIssue } from '@/lib/issue';
 
 const RING_IMAGES = Array.from(
   { length: 10 },
   (_, i) => `/samples/ring-${String(i + 1).padStart(2, '0')}.webp`,
 );
 
-/** 네일 팁 10장이 3D 링으로 자동 회전하는 히어로. 오프스크린 시 IO로 pause. */
+/** 표지 — 발행호 + 세리프 헤드라인 + 네일 팁 3D 링(앞 아치만, 70s 감상 속도) */
 export default function HeroRing() {
   const stageRef = useRef<HTMLDivElement>(null);
+  const issue = currentIssue();
 
   useEffect(() => {
     const el = stageRef.current;
@@ -25,28 +28,32 @@ export default function HeroRing() {
 
   return (
     <section className="story-hero" aria-label="이달아 — 이달의 네일 아트">
-      <div className="ring-stage" ref={stageRef} aria-hidden>
-        <div className="ring-tilt">
-          <div className="ring">
-            {RING_IMAGES.map((src, i) => (
-              <div
-                className="ring-item"
-                style={{ '--i': i } as CSSProperties}
-                key={src}
-              >
-                <img src={src} alt="" width={136} height={340} loading="eager" decoding="async" />
-              </div>
-            ))}
+      <Masthead />
+      <div className="hero-body">
+        <p className="overline" suppressHydrationWarning>{issue.label}</p>
+        <h1 className="hero-title">
+          이달의 네일을,
+          <br />
+          먼저 만나요
+        </h1>
+        <p className="hero-sub">영감 사진 한 장이면, 당신의 다음 시안이 나와요</p>
+        <a className="btn-fill hero-cta" href="#tool">
+          이번 호 시안 만들기
+        </a>
+        <div className="ring-stage" ref={stageRef} aria-hidden>
+          <div className="ring-tilt">
+            <div className="ring">
+              {RING_IMAGES.map((src, i) => (
+                <div className="ring-item" style={{ '--i': i } as CSSProperties} key={src}>
+                  <img src={src} alt="" width={136} height={340} loading="eager" decoding="async" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-      <div className="hero-copy">
-        <h1 className="hero-title brand-chrome">이달아</h1>
-        <p className="hero-tagline">이달의 네일, 사진 한 장이면 미리 만나요</p>
-        <p className="hero-sub">영감 사진 1~3장 → AI 네일 아트 시안</p>
-      </div>
-      <div className="hero-scroll-cue" aria-hidden>
-        SCROLL ▼
+      <div className="hero-cue" aria-hidden>
+        Scroll
       </div>
     </section>
   );

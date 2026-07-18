@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#ffeaf4',
+  themeColor: '#FCFAF7',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -21,10 +21,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
-        {/* Y2K 픽셀 액센트 폰트 — 타이틀바·마퀴·라벨 한정 사용 */}
+        {/* 에디토리얼 세리프 디스플레이 — 헤드라인·발행호 전용 (MaruBuri, 네이버 무료 배포) */}
+        <link rel="preconnect" href="https://hangeul.pstatic.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/neodgm-webfont@latest/neodgm/style.css"
+          href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css"
         />
       </head>
       <body>{children}</body>

@@ -1,6 +1,5 @@
 'use client';
 
-import RetroWindow from '@/components/retro/RetroWindow';
 import type { TrayPhoto } from '@/app/page';
 
 const MAX_PHOTOS = 3;
@@ -18,26 +17,25 @@ export default function InspirationTray({
   return (
     <div className="tray">
       {photos.map((photo, i) => (
-        <RetroWindow
-          key={photo.id}
-          title={`PHOTO_0${i + 1}.JPG`}
-          className="tray-window"
-          onClose={() => onRemove(photo.id)}
-          closeLabel="사진 삭제"
-        >
+        <div className="slot" key={photo.id}>
           <img src={photo.previewUrl} alt="영감 사진" />
-        </RetroWindow>
+          <span className="slot-index" aria-hidden>
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <button
+            className="slot-x"
+            aria-label="사진 삭제"
+            onClick={() => onRemove(photo.id)}
+          >
+            ✕
+          </button>
+        </div>
       ))}
       {emptySlots > 0 && (
         // label이 file input을 감싸는 구조 유지 (클릭→파일선택 동작의 근간)
-        <label className="rwin tray-window">
-          <span className="rwin-bar" aria-hidden>
-            <span className="rwin-dots">▪▪</span>
-            <span className="rwin-title">NEW.JPG</span>
-            <span className="rwin-x">✕</span>
-          </span>
-          <span className="rwin-body slot-add">
-            <span className="plus" aria-hidden>📁</span>
+        <label className="slot">
+          <span className="slot-add">
+            <span className="plus" aria-hidden>＋</span>
             <span>{photos.length === 0 ? '사진 추가' : '더 추가'}</span>
           </span>
           <input

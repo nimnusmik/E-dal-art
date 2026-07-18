@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { drawCollage, extractColors } from '@/lib/collage';
-import RetroWindow from '@/components/retro/RetroWindow';
+import { currentIssue } from '@/lib/issue';
 import type { GenerationResult, TrayPhoto } from '@/app/page';
 
 async function base64ToBitmap(data: string, mimeType: string): Promise<ImageBitmap> {
@@ -47,6 +47,7 @@ export default function ResultScreen({
 }) {
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  const issue = currentIssue();
 
   const { hero, tipSet } = result;
   const tipSetUrl = tipSet ? `data:${tipSet.mimeType};base64,${tipSet.image}` : null;
@@ -94,24 +95,27 @@ export default function ResultScreen({
 
   return (
     <>
-      <RetroWindow title="RESULT.JPG" className="result-window">
+      <div className="result-figure">
+        <p className="overline" suppressHydrationWarning>
+          Your Look — {issue.monthLabel}
+        </p>
         {collageUrl ? (
           // 길게 눌러 저장(iOS)도 되도록 img로 렌더
           <img className="result-img" src={collageUrl} alt="생성된 네일 디자인 콜라주" />
         ) : (
           <div className="result-loading" aria-hidden>
-            <div className="rprog">
-              <div className="rprog-fill" />
+            <div className="progress-track">
+              <div className="progress-fill" />
             </div>
           </div>
         )}
-      </RetroWindow>
+      </div>
 
       {(keywords.length > 0 || colors.length > 0) && (
-        <div className="mood-chips">
-          {keywords.map((k, i) => (
-            <span className="chip" key={i}>{k}</span>
-          ))}
+        <div className="mood-line">
+          {keywords.length > 0 && (
+            <span className="mood-keywords">{keywords.join(' · ')}</span>
+          )}
           {colors.length > 0 && (
             <span className="swatches">
               {colors.slice(0, 3).map((c, i) => (
@@ -124,24 +128,22 @@ export default function ResultScreen({
 
       {tipSetUrl && (
         <div className="tipset-block">
-          <span className="option-label">이런 디자인들은 어때요</span>
-          <RetroWindow title="TIPSET.PNG" className="result-window" barClassName="rwin-bar-blue">
-            <img className="tipset-img" src={tipSetUrl} alt="이달의 네일 디자인 10종 세트" />
-          </RetroWindow>
+          <p className="overline">Also In This Issue</p>
+          <img className="tipset-img" src={tipSetUrl} alt="이달의 네일 디자인 10종 세트" />
         </div>
       )}
 
       {/* 버튼 위계: 핵심 루프(진화)를 프라이머리로, 저장 2종은 세컨더리, 나머지는 링크 */}
       <div className="actions">
-        <button className="btn btn-hero" onClick={evolve}>
-          ✦ 사진 더하고 진화시키기
+        <button className="btn-fill" onClick={evolve}>
+          사진 더해 진화시키기
         </button>
         <div className="actions-row">
-          <button className="btn btn-second" onClick={save} disabled={!collageUrl}>
+          <button className="btn-outline" onClick={save} disabled={!collageUrl}>
             이미지 저장
           </button>
           {tipSetUrl && (
-            <button className="btn btn-second" onClick={saveTipSet}>
+            <button className="btn-outline" onClick={saveTipSet}>
               세트 저장
             </button>
           )}
