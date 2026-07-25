@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import HeroRing from './HeroRing';
+import HeroHand from './HeroHand';
 import HowItWorks from './HowItWorks';
 import Showcase from './Showcase';
 import StoryFooter from './StoryFooter';
@@ -11,7 +11,7 @@ import StoryFooter from './StoryFooter';
 export default function StoryLanding({ toolSlot }: { toolSlot: ReactNode }) {
   return (
     <main className="story">
-      <HeroRing />
+      <HeroHand />
       <HowItWorks />
       <Showcase />
       <section className="story-tool" id="tool">
