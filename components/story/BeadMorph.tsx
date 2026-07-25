@@ -10,10 +10,6 @@ const clamp01 = (t: number) => Math.max(0, Math.min(1, t));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
-const easeOutBack = (t: number) => {
-  const c1 = 1.70158, c3 = c1 + 1;
-  return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
-};
 
 /**
  * 영감 사진 각각이 광택 구슬 1개가 되어 중앙으로 모여 소용돌이(섞임) →
@@ -71,29 +67,32 @@ export default function BeadMorph() {
     beadRefs.current.forEach((el, i) => {
       if (!el) return;
       const ang = (i / N) * Math.PI * 2 + spin;
-      const x = cx + Math.cos(ang) * R;
-      const y = cy + Math.sin(ang) * R * 0.72; // 살짝 타원 궤도
+      // 반경에 구슬별 위상 흔들림 — 기계적 등속 원운동 탈피
+      const wob = 1 + 0.06 * Math.sin(spin * 2 + i * 1.7);
+      const x = cx + Math.cos(ang) * R * wob;
+      const y = cy + Math.sin(ang) * R * wob * 0.72; // 살짝 타원 궤도
       const s = el.offsetWidth || 1;
       el.style.transform = `translate(${x - s / 2}px, ${y - s / 2}px) scale(${beadScale})`;
       el.style.opacity = String(beadAlpha);
     });
 
-    // 결과 "짠" 등장 (오버슈트)
+    // 결과 — 구슬이 모인 중심에서 원형으로 번져 나옴 (서클 리빌)
     const res = resultRef.current;
     if (res) {
-      if (p < 0.76) {
+      if (p < 0.68) {
         res.style.opacity = '0';
-        res.style.transform = 'scale(0.3)';
+        res.style.clipPath = 'circle(0% at 50% 50%)';
       } else {
-        const t = clamp01((p - 0.76) / 0.24);
-        res.style.opacity = String(clamp01(t * 1.6));
-        res.style.transform = `scale(${lerp(0.3, 1, easeOutBack(t))})`;
+        const t = easeInOut(clamp01((p - 0.68) / 0.3));
+        res.style.opacity = String(clamp01(t * 2.2));
+        res.style.clipPath = `circle(${(t * 78).toFixed(2)}% at 50% 50%)`;
       }
+      res.style.transform = 'none';
     }
 
-    // 합쳐지는 순간 번쩍
+    // 합쳐지는 순간 은은한 광
     const fl = flashRef.current;
-    if (fl) fl.style.opacity = p >= 0.7 && p < 0.88 ? String(Math.max(0, 1 - Math.abs(p - 0.79) / 0.09)) : '0';
+    if (fl) fl.style.opacity = p >= 0.66 && p < 0.86 ? String(Math.max(0, 0.5 - Math.abs(p - 0.74) / 0.16)) : '0';
   }, [N]);
 
   const play = useCallback(() => {
@@ -127,8 +126,12 @@ export default function BeadMorph() {
 
   return (
     <section className="story-morph" aria-label="영감에서 시안으로">
+      <span className="section-ghost" aria-hidden>02</span>
       <div className="section-head">
-        <p className="overline">Before &amp; After</p>
+        <div className="section-meta">
+          <span className="section-no">No.02</span>
+          <span className="overline">Before &amp; After</span>
+        </div>
         <h2 className="section-title">영감 한 장이, 시안이 되기까지</h2>
       </div>
       <div className="morph-stage" ref={stageRef}>

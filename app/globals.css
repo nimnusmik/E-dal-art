@@ -18,6 +18,9 @@
   --font-serif: 'Black Han Sans', 'Noto Serif KR', sans-serif;
   --font-latin: 'Playfair Display', 'Black Han Sans', serif;
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
+
+  /* 시그니처 포인트 — 폴리시 핑크레드 (단 하나의 컬러) */
+  --accent: #e14b6e;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -45,8 +48,8 @@ a { color: inherit; text-decoration: none; }
   text-transform: uppercase;
   color: var(--muted);
 }
-/* 오버라인 뒤 작은 별표 오너먼트 (모노톤 — 색 없이) */
-.overline::after { content: ' ✦'; color: var(--muted); font-size: 0.85em; opacity: 0.6; }
+/* 오버라인 뒤 작은 별표 오너먼트 — 시그니처 포인트 */
+.overline::after { content: ' ✦'; color: var(--accent); font-size: 0.85em; }
 .masthead-issue.overline::after { content: none; }
 
 .serif { font-family: var(--font-serif); }
@@ -96,11 +99,12 @@ a { color: inherit; text-decoration: none; }
   display: inline-block;
   padding: 15px 32px;
   border-radius: 999px; /* 라운드 필 */
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  color: #fff;
   font-size: 15px;
   font-weight: 700;
   text-align: center;
+  box-shadow: 0 6px 16px rgba(225, 75, 110, 0.32);
   transition: opacity 0.2s, transform 0.15s;
 }
 
@@ -160,12 +164,96 @@ a { color: inherit; text-decoration: none; }
   z-index: 0;
   font-family: var(--font-latin);
   font-weight: 900;
-  font-size: clamp(220px, 42vw, 620px);
+  font-size: clamp(160px, 30vw, 430px);
   line-height: 0.72;
   color: var(--ink);
   opacity: 0.045;
   pointer-events: none;
   user-select: none;
+}
+
+/* 표지 커버라인 — 잡지 표지의 흩어진 문구 */
+.coverline {
+  position: absolute;
+  z-index: 2;
+  font-family: var(--font-latin);
+  font-weight: 700;
+  font-style: italic;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  pointer-events: none;
+}
+.coverline em { font-style: inherit; color: var(--accent); }
+.cl-left {
+  left: clamp(14px, 3vw, 40px);
+  top: 34%;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.cl-right { right: clamp(14px, 3vw, 40px); top: 46%; text-align: right; }
+
+/* 표지 바코드 + 가격 — "진짜 발행물" 장치 */
+.hero-issue-tag {
+  position: absolute;
+  z-index: 2;
+  right: clamp(16px, 4vw, 48px);
+  bottom: 26px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.barcode {
+  width: 72px;
+  height: 30px;
+  background: repeating-linear-gradient(90deg,
+    var(--ink) 0 2px, transparent 2px 4px,
+    var(--ink) 4px 5px, transparent 5px 9px,
+    var(--ink) 9px 12px, transparent 12px 14px);
+}
+.issue-price {
+  font-family: var(--font-latin);
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.issue-price em { font-style: normal; color: var(--accent); }
+
+@media (max-width: 767px) {
+  .coverline { display: none; }
+  .hero-issue-tag { bottom: 18px; }
+}
+
+/* 마퀴 티커 — 섹션 사이 러닝 스트립 */
+.ticker {
+  overflow: hidden;
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  background: var(--accent);
+  color: #fff;
+  padding: 11px 0;
+  white-space: nowrap;
+}
+.ticker-track {
+  display: inline-block;
+  animation: ticker-run 26s linear infinite;
+}
+.ticker-track span {
+  font-family: var(--font-latin);
+  font-weight: 900;
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-right: 34px;
+}
+@keyframes ticker-run {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
 }
 
 /* 아트프린트 등록(크롭) 마크 — 네 모서리 L */
@@ -189,10 +277,10 @@ a { color: inherit; text-decoration: none; }
 
 .hero-title {
   font-family: var(--font-serif);
-  font-size: clamp(52px, 9.5vw, 116px); /* 과감한 대형 타입 */
+  font-size: clamp(40px, 6.4vw, 72px);
   font-weight: 700;
-  line-height: 1.04;
-  letter-spacing: -0.035em;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
   word-break: keep-all;
   color: var(--ink);
 }
@@ -313,58 +401,99 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* 섹션 공통 헤더 */
+/* 편집 섹션 헤더 시스템 — 잉크 규칙선 + No.넘버 러닝라인 + 대형 타이틀 */
 .section-head {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: clamp(48px, 7vh, 80px);
+  position: relative;
+  z-index: 1;
+  border-top: 1.5px solid var(--ink);
+  padding-top: 16px;
+  margin-bottom: clamp(40px, 6vh, 72px);
 }
+.section-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: clamp(22px, 4vh, 44px);
+}
+.section-no {
+  font-family: var(--font-latin);
+  font-weight: 900;
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.section-meta .overline::after { content: none; } /* 러닝라인에선 별표 생략 */
 
 .section-title {
   font-family: var(--font-serif);
-  font-size: clamp(28px, 3.6vw, 40px);
+  font-size: clamp(26px, 3.8vw, 46px);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
   word-break: keep-all;
+}
+
+/* 거대 고스트 섹션 넘버 — 편집 워터마크 */
+.section-ghost {
+  position: absolute;
+  z-index: 0;
+  right: -1%;
+  top: 2%;
+  font-family: var(--font-latin);
+  font-weight: 900;
+  font-size: clamp(130px, 22vw, 300px);
+  line-height: 0.72;
+  color: var(--ink);
+  opacity: 0.04;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* S2. 작동 방식 — 매거진 목차식 3컬럼 */
 .story-hiw {
+  position: relative;
+  overflow: clip;
   padding: var(--space-section) clamp(22px, 5vw, 56px);
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
   width: 100%;
 }
 
 .hiw-grid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(28px, 4vw, 48px);
+  gap: clamp(28px, 4vw, 56px);
 }
 
 .hiw-col {
-  border-top: 1px solid var(--line);
-  padding-top: 22px;
+  border-top: 1px solid var(--ink);
+  padding-top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .hiw-num {
-  font-family: var(--font-serif);
-  font-size: 30px;
-  font-weight: 700;
-  color: var(--muted);
+  font-family: var(--font-latin);
+  font-size: clamp(56px, 6vw, 88px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .hiw-col h3 {
   font-family: var(--font-serif);
-  font-size: 20px;
+  font-size: clamp(20px, 2vw, 26px);
   font-weight: 700;
   word-break: keep-all;
 }
 
-.hiw-col p { font-size: 14px; color: var(--muted); line-height: 1.7; word-break: keep-all; }
+.hiw-col p { font-size: 14px; color: var(--muted); line-height: 1.75; word-break: keep-all; }
 
 /* 스크롤 진입 reveal */
 .reveal {
@@ -380,12 +509,14 @@ a { color: inherit; text-decoration: none; }
 
 /* S3. 비포/애프터 — 영감→시안 구슬 변신 (Canvas) */
 .story-morph {
-  max-width: 900px;
+  position: relative;
+  overflow: clip;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: var(--space-section) 24px;
+  padding: var(--space-section) clamp(22px, 5vw, 56px);
 }
-
-.story-morph .section-head { align-items: center; text-align: center; }
+/* 좌측 정렬 편집 헤더 위에 중앙 무대 — 비대칭 긴장 */
+.morph-stage { position: relative; z-index: 1; }
 
 .morph-stage {
   position: relative;
@@ -464,11 +595,12 @@ a { color: inherit; text-decoration: none; }
 .morph-replay:hover { background: var(--bg-deep); }
 
 /* S4. 툴 섹션 */
-.story-tool { border-top: 1px solid var(--line); }
+.story-tool { position: relative; overflow: clip; border-top: 1.5px solid var(--ink); }
 
 .tool-column {
   position: relative;
-  max-width: 460px;
+  z-index: 1;
+  max-width: 480px;
   min-height: 100dvh;
   margin: 0 auto;
   padding: var(--space-section) 22px 64px;
@@ -477,7 +609,9 @@ a { color: inherit; text-decoration: none; }
   gap: 26px;
 }
 
-.tool-head { display: flex; flex-direction: column; gap: 14px; }
+/* 툴 헤더 — 좁은 컬럼에 맞춰 자체 규칙선/과대 타이틀 억제 */
+.tool-head { border-top: none; padding-top: 0; margin-bottom: 6px; }
+.tool-head .section-title { font-size: clamp(28px, 4.4vw, 44px); line-height: 1.12; }
 
 /* 데스크톱: 콘텐츠가 짧아 min-height+margin-auto가 트레이~CTA 사이 큰 공백을 만들던 문제 */
 @media (min-width: 768px) {
@@ -616,11 +750,12 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   margin-top: auto;
   padding: 17px;
   border-radius: var(--radius-btn);
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent);
+  color: #fff;
   font-size: 16px;
   font-weight: 700;
   text-align: center;
+  box-shadow: 0 6px 16px rgba(225, 75, 110, 0.32);
   transition: opacity 0.2s, transform 0.15s;
 }
 

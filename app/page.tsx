@@ -134,12 +134,15 @@ export default function Home() {
       <StoryLanding
         toolSlot={
           <>
-            <div className="tool-head">
-              <p className="overline" suppressHydrationWarning>
-                Make Your Own — Vol.{currentIssue().vol}
-              </p>
+            <div className="section-head tool-head">
+              <div className="section-meta">
+                <span className="section-no">No.03</span>
+                <span className="overline" suppressHydrationWarning>
+                  Make Your Own — Vol.{currentIssue().vol}
+                </span>
+              </div>
               {/* h1은 스토리 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
-              <h2 className="headline">
+              <h2 className="section-title">
                 영감 사진을 올리면,
                 <br />
                 이달의 네일 아트 시안이 나와요

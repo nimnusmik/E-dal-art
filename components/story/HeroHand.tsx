@@ -15,6 +15,22 @@ export default function HeroHand() {
       <span className="hero-volnum" aria-hidden suppressHydrationWarning>
         {String(issue.vol).padStart(2, '0')}
       </span>
+      {/* 표지 커버라인 — 잡지 표지 문구 */}
+      <span className="coverline cl-left" aria-hidden>
+        K-Nail Trend Report — <em>Glazed · Chrome · 3D</em>
+      </span>
+      <span className="coverline cl-right" aria-hidden>
+        Your Photo,
+        <br />
+        <em>This Month&apos;s Nails</em>
+      </span>
+      {/* 바코드 + 가격 — 진짜 발행물 장치 */}
+      <div className="hero-issue-tag" aria-hidden>
+        <span className="barcode" />
+        <span className="issue-price" suppressHydrationWarning>
+          FREE ISSUE · <em>₩0</em>
+        </span>
+      </div>
       <Masthead />
       <div className="hero-body">
         <p className="overline" suppressHydrationWarning>{issue.label}</p>

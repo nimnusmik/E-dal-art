@@ -26,8 +26,12 @@ export default function HowItWorks() {
   const ref = useReveal<HTMLDivElement>();
   return (
     <section className="story-hiw" aria-label="어떻게 작동하나요">
+      <span className="section-ghost" aria-hidden>01</span>
       <div className="section-head">
-        <p className="overline">How It Works</p>
+        <div className="section-meta">
+          <span className="section-no">No.01</span>
+          <span className="overline">How It Works</span>
+        </div>
         <h2 className="section-title">시안이 만들어지는 과정</h2>
       </div>
       <div className="hiw-grid" ref={ref}>
