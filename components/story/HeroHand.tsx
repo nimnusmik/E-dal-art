@@ -9,6 +9,12 @@ export default function HeroHand() {
   const issue = currentIssue();
   return (
     <section className="story-hero" aria-label="이달아 — 이달의 네일 아트">
+      {/* 아트프린트 등록(크롭) 마크 — 네 모서리 */}
+      <div className="hero-marks" aria-hidden><i /><i /><i /><i /></div>
+      {/* 거대한 고스트 발행호 숫자 — 편집 워터마크 */}
+      <span className="hero-volnum" aria-hidden suppressHydrationWarning>
+        {String(issue.vol).padStart(2, '0')}
+      </span>
       <Masthead />
       <div className="hero-body">
         <p className="overline" suppressHydrationWarning>{issue.label}</p>
