@@ -3,20 +3,17 @@
  *
  *   npx tsx scripts/generate-samples.mts            # 실호출 (API 4회, 소액 과금)
  *   npx tsx scripts/generate-samples.mts --mock     # 드라이런 (목 응답으로 파이프라인 검증)
- *   npx tsx scripts/generate-samples.mts --crop-only # 팁세트 재크롭만 (재생성 없음)
  *   npx tsx scripts/generate-samples.mts --force    # 기존 산출물 덮어쓰기
- *   npx tsx scripts/generate-samples.mts --inset=0.12 # 크롭 여백 비율 조정
  *
- * 산출물: public/samples/ring-01..10.webp (256px), showcase-1..3.webp (1600px)
+ * 산출물: public/samples/showcase-1..3.webp (1600px)
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = resolve(ROOT, 'public/samples');
-const RAW_TIPSET = resolve(OUT_DIR, '_tipset-raw.png');
 
 // ── .env.local 수동 로드 (tsx는 자동 로드하지 않음) ──────────────
 for (const line of readFileSync(resolve(ROOT, '.env.local'), 'utf8').split('\n')) {
@@ -25,10 +22,7 @@ for (const line of readFileSync(resolve(ROOT, '.env.local'), 'utf8').split('\n')
 }
 
 const args = new Set(process.argv.slice(2).map((a) => a.split('=')[0]));
-const insetArg = process.argv.find((a) => a.startsWith('--inset='));
-const INSET = insetArg ? Number(insetArg.split('=')[1]) : 0.12; // 셀 가장자리 여백 비율
 const FORCE = args.has('--force');
-const CROP_ONLY = args.has('--crop-only');
 
 // 목은 --mock일 때만 — .env.local의 개발용 목 플래그가 실수로 적용되는 것 방지
 if (!args.has('--mock')) {
@@ -41,7 +35,7 @@ if (!args.has('--mock')) {
 
 // env 세팅 후에 동적 import (모듈이 env를 읽기 전에 확정)
 const { generateImage, imageProvider } = await import('../lib/provider');
-const { buildPrompt, buildTipSetPrompt } = await import('../lib/prompt');
+const { buildPrompt } = await import('../lib/prompt');
 const { DEFAULT_TREND_KEYWORDS } = await import('../config/trends');
 const type = await import('../lib/types');
 type NailShape = import('../lib/types').NailShape;
@@ -70,69 +64,27 @@ async function generateOrSkip(outPath: string, prompt: string): Promise<Buffer |
   return Buffer.from(outcome.image.data, 'base64');
 }
 
-/** 팁세트(2행×5열 흰 배경)를 셀 중앙 (1-2*INSET) 비율로 크롭 → ring-NN.webp */
-async function cropTipSet(): Promise<void> {
-  const img = sharp(RAW_TIPSET);
-  const { width, height } = await img.metadata();
-  if (!width || !height) throw new Error('팁세트 메타데이터 읽기 실패');
-  const cellW = width / 5;
-  const cellH = height / 2;
-  let n = 0;
-  for (let row = 0; row < 2; row++) {
-    for (let col = 0; col < 5; col++) {
-      n++;
-      const left = Math.round(col * cellW + cellW * INSET);
-      const top = Math.round(row * cellH + cellH * INSET);
-      const w = Math.round(cellW * (1 - 2 * INSET));
-      const h = Math.round(cellH * (1 - 2 * INSET));
-      const out = resolve(OUT_DIR, `ring-${String(n).padStart(2, '0')}.webp`);
-      // 팁은 세로로 긴 형태 — 셀 비율 그대로 유지 (정방형 cover는 팁을 확대해버림)
-      await sharp(RAW_TIPSET)
-        .extract({ left, top, width: w, height: h })
-        .resize({ height: 340 })
-        .webp({ quality: 82 })
-        .toFile(out);
-      console.log(`✓ ${out}`);
-    }
-  }
-}
-
 async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
-  console.log(`공급자: ${imageProvider()}${args.has('--mock') ? ' (MOCK)' : ''}, inset=${INSET}`);
+  console.log(`공급자: ${imageProvider()}${args.has('--mock') ? ' (MOCK)' : ''}`);
 
-  // 1) 팁세트 1장 → 링 아이템 10개 (개별 생성 대비 비용 1/10)
-  if (!CROP_ONLY) {
-    const buf = await generateOrSkip(
-      RAW_TIPSET,
-      buildTipSetPrompt('almond', 'medium', DEFAULT_TREND_KEYWORDS, 1),
-    );
+  // 쇼케이스 3장 (shape/length 바리에이션)
+  const variants: [NailShape, NailLength][] = [
+    ['almond', 'medium'],
+    ['round', 'short'],
+    ['square', 'long'],
+  ];
+  for (let i = 0; i < variants.length; i++) {
+    const [shape, length] = variants[i];
+    const out = resolve(OUT_DIR, `showcase-${i + 1}.webp`);
+    // 입력 레퍼런스의 인스타 콜라주 레이아웃/UI가 따라 나오는 것 차단
+    const prompt =
+      buildPrompt(shape, length, DEFAULT_TREND_KEYWORDS, 1) +
+      '\n- Output ONE single clean photograph only: no collage, no inset thumbnails, no UI icons, no page indicators, no text or number overlays of any kind.';
+    const buf = await generateOrSkip(out, prompt);
     if (buf) {
-      writeFileSync(RAW_TIPSET, buf);
-      console.log(`✓ 팁세트 원본: ${RAW_TIPSET}`);
-    }
-  }
-  if (existsSync(RAW_TIPSET)) await cropTipSet();
-
-  // 2) 쇼케이스 3장 (shape/length 바리에이션)
-  if (!CROP_ONLY) {
-    const variants: [NailShape, NailLength][] = [
-      ['almond', 'medium'],
-      ['round', 'short'],
-      ['square', 'long'],
-    ];
-    for (let i = 0; i < variants.length; i++) {
-      const [shape, length] = variants[i];
-      const out = resolve(OUT_DIR, `showcase-${i + 1}.webp`);
-      // 입력 레퍼런스의 인스타 콜라주 레이아웃/UI가 따라 나오는 것 차단
-      const prompt =
-        buildPrompt(shape, length, DEFAULT_TREND_KEYWORDS, 1) +
-        '\n- Output ONE single clean photograph only: no collage, no inset thumbnails, no UI icons, no page indicators, no text or number overlays of any kind.';
-      const buf = await generateOrSkip(out, prompt);
-      if (buf) {
-        await sharp(buf).resize({ width: 1600 }).webp({ quality: 75 }).toFile(out);
-        console.log(`✓ ${out}`);
-      }
+      await sharp(buf).resize({ width: 1600 }).webp({ quality: 75 }).toFile(out);
+      console.log(`✓ ${out}`);
     }
   }
 
