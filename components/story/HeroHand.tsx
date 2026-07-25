@@ -33,26 +33,15 @@ export default function HeroHand() {
           />
           {HERO_INSPO.map((cut) => (
             <figure className={`inspo-cut at-${cut.at}`} key={cut.src}>
+              <span className="inspo-no">{cut.no}</span>
               <img className="inspo-img" src={cut.src} alt={`영감 예시 — ${cut.label}`} width={132} height={132} loading="eager" decoding="async" />
-              <figcaption className="inspo-cap">
-                <span className="inspo-no">{cut.no}</span>
-                {cut.label}
-              </figcaption>
+              <figcaption className="inspo-cap">{cut.label}</figcaption>
             </figure>
           ))}
         </div>
       </div>
       <div className="hero-cue" aria-hidden>
         Scroll
-      </div>
-      {/* Y2K 스파클 스티커 — 흩뿌린 반짝이 */}
-      <div className="hero-sparkles" aria-hidden>
-        <span className="spark s1">✦</span>
-        <span className="spark s2">✧</span>
-        <span className="spark s3">❁</span>
-        <span className="spark s4">✦</span>
-        <span className="spark s5">✧</span>
-        <span className="spark s6">✦</span>
       </div>
     </section>
   );
