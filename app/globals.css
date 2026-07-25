@@ -816,6 +816,8 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .hand-img, .inspo-cut { animation: none; opacity: 1; }
+  /* hover 모션도 함께 생략 */
+  .inspo-cut, .inspo-cut:hover { transition: none; transform: none; }
   .reveal { transition-duration: 0.01ms; }
   .progress-fill { animation: progress-pulse 2s ease-in-out infinite; width: 60%; }
   .generating-msg, .result-img, .tipset-img, .error-toast { animation-duration: 0.01ms; }
