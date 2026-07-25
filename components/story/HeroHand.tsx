@@ -21,7 +21,7 @@ export default function HeroHand() {
         <a className="btn-fill hero-cta" href="#tool">
           이번 호 시안 만들기
         </a>
-        <div className="hand-stage" aria-label="영감 사진이 손 위에서 이달의 네일이 되는 장면">
+        <div className="hand-stage" role="img" aria-label="영감 사진이 손 위에서 이달의 네일이 되는 장면">
           <img
             className="hand-img"
             src="/hero/hand.webp"
@@ -34,7 +34,7 @@ export default function HeroHand() {
           {HERO_INSPO.map((cut) => (
             <figure className={`inspo-cut at-${cut.at}`} key={cut.src}>
               <span className="inspo-line" aria-hidden />
-              <img className="inspo-img" src={cut.src} alt={`영감 예시 — ${cut.label}`} loading="eager" decoding="async" />
+              <img className="inspo-img" src={cut.src} alt={`영감 예시 — ${cut.label}`} width={132} height={132} loading="eager" decoding="async" />
               <figcaption className="inspo-cap">
                 <span className="inspo-no">{cut.no}</span>
                 {cut.label}
