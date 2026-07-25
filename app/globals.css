@@ -47,7 +47,8 @@ a { color: inherit; text-decoration: none; }
 
 .headline {
   font-family: var(--font-serif);
-  font-size: clamp(30px, 4.6vw, 44px);
+  /* .section-title과 동일 스케일 — H2 크기 체계 통일 */
+  font-size: clamp(28px, 3.6vw, 40px);
   font-weight: 700;
   line-height: 1.34;
   letter-spacing: -0.01em;
