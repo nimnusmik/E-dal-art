@@ -45,6 +45,15 @@ export default function HeroHand() {
       <div className="hero-cue" aria-hidden>
         Scroll
       </div>
+      {/* Y2K 스파클 스티커 — 흩뿌린 반짝이 */}
+      <div className="hero-sparkles" aria-hidden>
+        <span className="spark s1">✦</span>
+        <span className="spark s2">✧</span>
+        <span className="spark s3">❁</span>
+        <span className="spark s4">✦</span>
+        <span className="spark s5">✧</span>
+        <span className="spark s6">✦</span>
+      </div>
     </section>
   );
 }
