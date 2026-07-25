@@ -141,11 +141,11 @@ export default function ResultScreen({
         </button>
         <div className="actions-row">
           <button className="btn-outline" onClick={save} disabled={!collageUrl}>
-            이미지 저장
+            착용샷 저장
           </button>
           {tipSetUrl && (
             <button className="btn-outline" onClick={saveTipSet}>
-              세트 저장
+              팁 10종 저장
             </button>
           )}
         </div>
