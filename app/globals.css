@@ -424,6 +424,11 @@ a { color: inherit; text-decoration: none; }
 
 .tool-head { display: flex; flex-direction: column; gap: 14px; }
 
+/* 데스크톱: 콘텐츠가 짧아 min-height+margin-auto가 트레이~CTA 사이 큰 공백을 만들던 문제 */
+@media (min-width: 768px) {
+  .tool-column { min-height: 0; }
+}
+
 /* 툴 전체 화면(.screen) — generating/result/blocked 도 동일 체계 */
 .screen {
   position: relative;
