@@ -136,7 +136,7 @@ export default function ResultScreen({
       {/* 버튼 위계: 핵심 루프(진화)를 프라이머리로, 저장 2종은 세컨더리, 나머지는 링크 */}
       <div className="actions">
         <button className="btn-fill" onClick={evolve}>
-          사진 더해 진화시키기
+          사진 더해 시안 진화시키기
         </button>
         <div className="actions-row">
           <button className="btn-outline" onClick={save} disabled={!collageUrl}>

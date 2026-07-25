@@ -151,7 +151,7 @@ export default function Home() {
               <OptionsPicker shape={shape} length={length} onShape={setShape} onLength={setLength} />
             )}
             <button className="cta" disabled={photos.length === 0} onClick={generate}>
-              네일 디자인 만들기
+              이번 호 시안 만들기
             </button>
             {/* 잔여 횟수는 얼마 안 남았을 때만 노출 — 개발용 큰 한도가 그대로 보이는 것 방지 */}
             {remaining !== null && remaining <= 10 && (
