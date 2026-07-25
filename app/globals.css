@@ -19,8 +19,8 @@
   --font-latin: 'Playfair Display', 'Black Han Sans', serif;
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
 
-  /* 시그니처 포인트 — 폴리시 핑크레드 (단 하나의 컬러) */
-  --accent: #e14b6e;
+  /* 시그니처 포인트 — 클랭 블루 (단 하나의 컬러, 시크한 에디토리얼) */
+  --accent: #2337e0;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -104,7 +104,7 @@ a { color: inherit; text-decoration: none; }
   font-size: 15px;
   font-weight: 700;
   text-align: center;
-  box-shadow: 0 6px 16px rgba(225, 75, 110, 0.32);
+  box-shadow: 0 6px 16px rgba(35, 55, 224, 0.28);
   transition: opacity 0.2s, transform 0.15s;
 }
 
@@ -755,7 +755,7 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   font-size: 16px;
   font-weight: 700;
   text-align: center;
-  box-shadow: 0 6px 16px rgba(225, 75, 110, 0.32);
+  box-shadow: 0 6px 16px rgba(35, 55, 224, 0.28);
   transition: opacity 0.2s, transform 0.15s;
 }
 
