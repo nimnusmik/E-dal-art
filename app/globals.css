@@ -519,6 +519,12 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   aspect-ratio: 3 / 4;
   border: 1px dashed var(--line-soft);
   border-radius: var(--radius-img);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--line);
 }
 
 /* ─── 옵션 ───────────────────────────────────────────────────── */

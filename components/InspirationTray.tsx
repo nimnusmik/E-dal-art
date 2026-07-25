@@ -52,7 +52,10 @@ export default function InspirationTray({
         </label>
       )}
       {Array.from({ length: Math.max(0, emptySlots - 1) }).map((_, i) => (
-        <div className="slot-ghost" key={`empty-${i}`} aria-hidden />
+        // 빈 칸이 죽은 자리처럼 보이지 않게 다음 순번을 표시 (추가 슬롯 다음 번호부터)
+        <div className="slot-ghost" key={`empty-${i}`} aria-hidden>
+          {String(photos.length + 2 + i).padStart(2, '0')}
+        </div>
       ))}
     </div>
   );
