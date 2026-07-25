@@ -21,11 +21,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
-        {/* 에디토리얼 세리프 디스플레이 — 헤드라인·발행호 전용 (MaruBuri, 네이버 무료 배포) */}
-        <link rel="preconnect" href="https://hangeul.pstatic.net" crossOrigin="anonymous" />
+        {/* Y2K 편집형 디스플레이 — 헤드라인(Black Han Sans, 한글) + 라틴 액센트(Playfair Display) */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css"
+          href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap"
         />
       </head>
       <body>{children}</body>

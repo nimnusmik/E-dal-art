@@ -14,7 +14,9 @@
 
   --space-section: clamp(96px, 14vh, 168px);
 
-  --font-serif: 'MaruBuri', 'Noto Serif KR', serif;
+  /* 헤드라인 = Y2K 두꺼운 한글 디스플레이(Black Han Sans), 라틴 액센트 = Playfair */
+  --font-serif: 'Black Han Sans', 'Noto Serif KR', sans-serif;
+  --font-latin: 'Playfair Display', 'Black Han Sans', serif;
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
 }
 
@@ -28,6 +30,7 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  font-synthesis: none; /* 단일 굵기 디스플레이 폰트의 가짜 볼드 방지 */
 }
 
 button { font: inherit; border: none; background: none; cursor: pointer; color: inherit; }
@@ -35,10 +38,10 @@ a { color: inherit; text-decoration: none; }
 
 /* ─── 타이포 유틸 ────────────────────────────────────────────── */
 .overline {
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
+  font-family: var(--font-latin); /* Playfair — 라틴 편집형 액센트 */
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
