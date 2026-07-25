@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import HeroHand from './HeroHand';
 import HowItWorks from './HowItWorks';
-import Showcase from './Showcase';
+import BeforeAfter from './BeforeAfter';
 import StoryFooter from './StoryFooter';
 
 /**
@@ -13,7 +13,7 @@ export default function StoryLanding({ toolSlot }: { toolSlot: ReactNode }) {
     <main className="story">
       <HeroHand />
       <HowItWorks />
-      <Showcase />
+      <BeforeAfter />
       <section className="story-tool" id="tool">
         <div className="tool-column">{toolSlot}</div>
       </section>
