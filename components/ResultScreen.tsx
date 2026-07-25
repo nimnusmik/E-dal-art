@@ -129,7 +129,7 @@ export default function ResultScreen({
 
       {tipSetUrl && (
         <div className="tipset-block">
-          <p className="overline">Also In This Issue</p>
+          <p className="overline">Your Tip Set — 10 Looks</p>
           <img className="tipset-img" src={tipSetUrl} alt="이달의 네일 디자인 10종 세트" />
         </div>
       )}
