@@ -166,53 +166,94 @@ a { color: inherit; text-decoration: none; }
 
 .hero-cta { margin-top: 8px; }
 
-/* 3D 링 — 프레임 없는 화보 컷, 앞 아치만 (backface 숨김) */
-.ring-stage {
-  --ring-w: 104px;
-  --ring-h: 260px;
-  --ring-r: 245px;
-  perspective: 1400px;
+/* 손 무대 — 맨손 중심, 영감 사진 4장이 코너 앵커에 라벨·연결선과 함께 뜬다 */
+.hand-stage {
+  position: relative;
   width: 100%;
   max-width: 780px;
-  height: 340px;
-  display: grid;
-  place-items: center;
-  margin-top: 12px;
+  height: 420px;
+  margin: 12px auto 0;
 }
 
-.ring-tilt { transform: rotateX(-8deg); transform-style: preserve-3d; }
-
-.ring {
-  position: relative;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  animation: ring-spin 70s linear infinite;
-  will-change: transform;
-}
-
-.is-paused .ring { animation-play-state: paused; }
-
-.ring-item {
+.hand-img {
   position: absolute;
-  width: var(--ring-w);
-  left: calc(var(--ring-w) / -2);
-  top: calc(var(--ring-h) / -2);
-  transform: rotateY(calc(var(--i) * 36deg)) translateZ(var(--ring-r));
-  backface-visibility: hidden;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%); /* 중앙 고정 — translateY 모션과 충돌하므로 이동 없이 페이드만 */
+  width: clamp(180px, 24vw, 240px);
+  height: auto;
+  border-radius: var(--radius-img);
+  animation: hand-fade 0.7s ease both;
 }
 
-.ring-item img {
+.inspo-cut {
+  position: absolute;
+  width: clamp(96px, 12vw, 132px);
+  margin: 0;
+  opacity: 0;
+  animation: hero-rise 0.6s ease forwards;
+  transition: transform 0.35s ease;
+}
+.inspo-cut.at-top-left     { left: 4%;  top: 2%;  animation-delay: 0.15s; }
+.inspo-cut.at-top-right    { right: 4%; top: 6%;  animation-delay: 0.25s; }
+.inspo-cut.at-bottom-left  { left: 7%;  bottom: 4%; animation-delay: 0.35s; }
+.inspo-cut.at-bottom-right { right: 6%; bottom: 8%; animation-delay: 0.45s; }
+
+.inspo-img {
   width: 100%;
-  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
   display: block;
   border-radius: var(--radius-img);
+  border: 1px solid var(--line);
   box-shadow: var(--shadow-card);
 }
 
-@keyframes ring-spin {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(360deg); }
+.inspo-cap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.inspo-no {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font-size: 10px;
+  color: var(--ink);
+}
+
+/* 손끝에서 컷으로 뻗는 가는 연결선 (데스크톱 장식) */
+.inspo-line {
+  position: absolute;
+  width: 40px;
+  height: 1px;
+  background: var(--line);
+  top: 40%;
+}
+.at-top-left .inspo-line,
+.at-bottom-left .inspo-line   { right: -44px; }
+.at-top-right .inspo-line,
+.at-bottom-right .inspo-line  { left: -44px; }
+
+@media (hover: hover) {
+  .inspo-cut:hover { transform: scale(1.05); }
+  .inspo-cut:hover .inspo-line { background: var(--ink); }
+}
+
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hand-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .hero-cue {
@@ -744,13 +785,29 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 
 /* ─── 모바일 ─────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  .ring-stage {
-    --ring-w: 76px;
-    --ring-h: 190px;
-    --ring-r: 175px;
-    height: 240px;
-    perspective: 1000px;
+  .hand-stage {
+    height: auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding-top: 8px;
+    justify-items: center;
   }
+  .hand-img {
+    position: static;
+    transform: none;
+    grid-column: 1 / -1;
+    width: clamp(160px, 44vw, 200px);
+    margin: 0 auto 4px;
+  }
+  .inspo-cut {
+    position: static;
+    opacity: 1;
+    animation: none;
+    width: 100%;
+    max-width: 150px;
+  }
+  .inspo-line { display: none; }
   .hiw-grid { grid-template-columns: 1fr; gap: 32px; }
   .masthead { padding: 18px 22px 14px; }
 }
@@ -758,7 +815,7 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 /* ─── 모션 저감 ──────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .ring { animation: none; transform: rotateY(18deg); }
+  .hand-img, .inspo-cut { animation: none; opacity: 1; }
   .reveal { transition-duration: 0.01ms; }
   .progress-fill { animation: progress-pulse 2s ease-in-out infinite; width: 60%; }
   .generating-msg, .result-img, .tipset-img, .error-toast { animation-duration: 0.01ms; }
