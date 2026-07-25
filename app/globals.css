@@ -166,59 +166,63 @@ a { color: inherit; text-decoration: none; }
 
 .hero-cta { margin-top: 8px; }
 
-/* 손 무대 — 맨손 중심, 영감 사진 4장이 코너 앵커에 라벨·연결선과 함께 뜬다 */
+/* 손 무대 — 누끼 딴 큰 손 위에 영감 사진 4장이 번호·라벨과 함께 얹힘(레퍼런스 인덱스) */
 .hand-stage {
   position: relative;
   width: 100%;
-  max-width: 780px;
-  height: 420px;
-  margin: 12px auto 0;
+  max-width: 560px;
+  aspect-ratio: 3 / 4;
+  margin: 8px auto 0;
 }
 
 .hand-img {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%); /* 중앙 고정 — translateY 모션과 충돌하므로 이동 없이 페이드만 */
-  width: clamp(180px, 24vw, 240px);
-  height: auto;
-  /* 따뜻한 사진 배경을 크림 지면에 녹임 — 중앙 불투명, 가장자리 부드럽게 페이드 */
-  -webkit-mask-image: radial-gradient(ellipse 74% 82% at 50% 50%, #000 52%, transparent 100%);
-          mask-image: radial-gradient(ellipse 74% 82% at 50% 50%, #000 52%, transparent 100%);
-  animation: hand-fade 0.7s ease both;
+  transform: translate(-50%, -50%);
+  height: 100%;
+  width: auto;
+  max-width: none;
+  animation: hand-fade 0.8s ease both;
 }
 
 .inspo-cut {
   position: absolute;
-  width: clamp(96px, 12vw, 132px);
+  width: clamp(88px, 24%, 120px);
   margin: 0;
   opacity: 0;
   animation: hero-rise 0.6s ease forwards;
   transition: transform 0.35s ease;
 }
-.inspo-cut.at-top-left     { left: 4%;  top: 2%;  animation-delay: 0.15s; }
-.inspo-cut.at-top-right    { right: 4%; top: 6%;  animation-delay: 0.25s; }
-.inspo-cut.at-bottom-left  { left: 7%;  bottom: 4%; animation-delay: 0.35s; }
-.inspo-cut.at-bottom-right { right: 6%; bottom: 8%; animation-delay: 0.45s; }
+/* 손 위 겹침 위치 (백분율 → 반응형) */
+.inspo-cut.at-top-left     { left: 1%;   top: 20%; animation-delay: 0.15s; }
+.inspo-cut.at-top-right    { right: 0%;  top: 33%; animation-delay: 0.25s; }
+.inspo-cut.at-bottom-left  { left: 8%;   top: 58%; animation-delay: 0.35s; }
+.inspo-cut.at-bottom-right { right: 5%;  top: 68%; animation-delay: 0.45s; }
 
 .inspo-img {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
   display: block;
-  border-radius: var(--radius-img);
+  border-radius: 10px;
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 6px 18px rgba(26, 24, 21, 0.14);
 }
 
 .inspo-cap {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 7px;
+  padding: 3px 8px;
+  width: fit-content;
   font-size: 12px;
   letter-spacing: 0.02em;
-  color: var(--muted);
+  color: var(--ink);
+  background: rgba(252, 250, 247, 0.82);
+  backdrop-filter: blur(3px);
+  border-radius: 999px;
 }
 .inspo-no {
   display: inline-grid;
@@ -231,22 +235,8 @@ a { color: inherit; text-decoration: none; }
   color: var(--ink);
 }
 
-/* 손끝에서 컷으로 뻗는 가는 연결선 (데스크톱 장식) */
-.inspo-line {
-  position: absolute;
-  width: 40px;
-  height: 1px;
-  background: var(--line);
-  top: 40%;
-}
-.at-top-left .inspo-line,
-.at-bottom-left .inspo-line   { right: -44px; }
-.at-top-right .inspo-line,
-.at-bottom-right .inspo-line  { left: -44px; }
-
 @media (hover: hover) {
   .inspo-cut:hover { transform: scale(1.05); }
-  .inspo-cut:hover .inspo-line { background: var(--ink); }
 }
 
 @keyframes hero-rise {
@@ -767,29 +757,10 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 
 /* ─── 모바일 ─────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-  .hand-stage {
-    height: auto;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    padding-top: 8px;
-    justify-items: center;
-  }
-  .hand-img {
-    position: static;
-    transform: none;
-    grid-column: 1 / -1;
-    width: clamp(160px, 44vw, 200px);
-    margin: 0 auto 4px;
-  }
-  .inspo-cut {
-    position: static;
-    opacity: 1;
-    animation: none;
-    width: 100%;
-    max-width: 150px;
-  }
-  .inspo-line { display: none; }
+  /* 손 위 겹침 레이아웃 유지 — 무대만 살짝 키워 캡션 가독성 확보 */
+  .hand-stage { max-width: 420px; }
+  .inspo-cut { width: clamp(78px, 27%, 104px); }
+  .inspo-cap { font-size: 11px; }
   .hiw-grid { grid-template-columns: 1fr; gap: 32px; }
   .masthead { padding: 18px 22px 14px; }
 }
