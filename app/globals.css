@@ -182,7 +182,9 @@ a { color: inherit; text-decoration: none; }
   transform: translate(-50%, -50%); /* 중앙 고정 — translateY 모션과 충돌하므로 이동 없이 페이드만 */
   width: clamp(180px, 24vw, 240px);
   height: auto;
-  border-radius: var(--radius-img);
+  /* 따뜻한 사진 배경을 크림 지면에 녹임 — 중앙 불투명, 가장자리 부드럽게 페이드 */
+  -webkit-mask-image: radial-gradient(ellipse 74% 82% at 50% 50%, #000 52%, transparent 100%);
+          mask-image: radial-gradient(ellipse 74% 82% at 50% 50%, #000 52%, transparent 100%);
   animation: hand-fade 0.7s ease both;
 }
 
