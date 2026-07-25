@@ -113,9 +113,10 @@ export default function ResultScreen({
 
       {(keywords.length > 0 || colors.length > 0) && (
         <div className="mood-line">
-          {keywords.length > 0 && (
-            <span className="mood-keywords">{keywords.join(' · ')}</span>
-          )}
+          {/* 키워드가 없을 땐(색상 추출 모드) 스와치만 덩그러니 놓이지 않게 라벨을 붙인다 */}
+          <span className="mood-keywords">
+            {keywords.length > 0 ? keywords.join(' · ') : '이 시안의 컬러'}
+          </span>
           {colors.length > 0 && (
             <span className="swatches">
               {colors.slice(0, 3).map((c, i) => (
