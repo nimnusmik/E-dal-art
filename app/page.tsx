@@ -153,7 +153,10 @@ export default function Home() {
             <button className="cta" disabled={photos.length === 0} onClick={generate}>
               네일 디자인 만들기
             </button>
-            {remaining !== null && <p className="remaining">오늘 {remaining}회 남음</p>}
+            {/* 잔여 횟수는 얼마 안 남았을 때만 노출 — 개발용 큰 한도가 그대로 보이는 것 방지 */}
+            {remaining !== null && remaining <= 10 && (
+              <p className="remaining">오늘 {remaining}회 남음</p>
+            )}
             {error && <div className="error-toast">{error}</div>}
           </>
         }
