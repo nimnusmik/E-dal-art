@@ -4,6 +4,7 @@ import { getQuota, recordGeneration } from '@/lib/quota';
 import { buildPrompt, buildTipSetPrompt } from '@/lib/prompt';
 import { getTrendKeywords } from '@/config/trends';
 import { generateImage } from '@/lib/provider';
+import { analyzeReferences, moodFromAnalysis } from '@/lib/analyze';
 import type { ImageOutcome, ImagePayload } from '@/lib/types';
 import type { GenerateErrorCode, GenerateRequest, NailLength, NailShape } from '@/lib/types';
 
@@ -72,8 +73,11 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const trends = getTrendKeywords();
 
+  // 0단계(분석): 참조 사진 → 구조화 디자인 브리프. 실패해도 null로 폴백해 생성은 진행.
+  const analysis = await analyzeReferences(body.images);
+
   // 1단계: 팁 세트를 먼저 생성 (디자인의 기준이 됨)
-  const tipPrompt = buildTipSetPrompt(body.shape, body.length, trends, body.images.length);
+  const tipPrompt = buildTipSetPrompt(body.shape, body.length, trends, body.images.length, analysis);
   const tipOutcome = settledOutcome(
     await Promise.allSettled([generateImage(body.images, tipPrompt)]).then((r) => r[0]),
   );
@@ -83,7 +87,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   const heroRefs: ImagePayload[] = tipOutcome?.image
     ? [...body.images, { data: tipOutcome.image.data, mimeType: tipOutcome.image.mimeType }]
     : body.images;
-  const heroPrompt = buildPrompt(body.shape, body.length, trends, body.images.length, !!tipOutcome?.image);
+  const heroPrompt = buildPrompt(body.shape, body.length, trends, body.images.length, !!tipOutcome?.image, analysis);
   const heroOutcome = settledOutcome(
     await Promise.allSettled([generateImage(heroRefs, heroPrompt)]).then((r) => r[0]),
   );
@@ -101,7 +105,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   return NextResponse.json({
     hero: { image: heroOutcome.image.data, mimeType: heroOutcome.image.mimeType },
     tipSet: tipOutcome?.image ? { image: tipOutcome.image.data, mimeType: tipOutcome.image.mimeType } : null,
-    mood: heroOutcome.mood ?? tipOutcome?.mood ?? null,
+    mood: heroOutcome.mood ?? tipOutcome?.mood ?? moodFromAnalysis(analysis),
     remaining: quota.userRemaining - 1,
   });
 }
