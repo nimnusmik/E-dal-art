@@ -7,7 +7,7 @@ const DIFFICULTIES = new Set(['easy', 'medium', 'hard']);
 export async function analyzeReferences(images: ImagePayload[]): Promise<NailAnalysis | null> {
   if (process.env.GEMINI_MOCK === '1') return mockAnalysis();
   try {
-    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.1-flash';
+    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const response = await client.models.generateContent({
       model,
