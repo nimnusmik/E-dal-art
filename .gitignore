@@ -6,3 +6,6 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .gstack/
+
+# AI 생성 결과물 (용량 큼, 로컬 보관용)
+ref/results/
