@@ -104,4 +104,20 @@ describe('프롬프트에 분석 브리프 주입', () => {
       expect(p).toMatch(/physically buildable/i);
     }
   });
+
+  it('식상한 모티프 금지 제약 포함 (도넛·리본 등)', () => {
+    const hero = buildPrompt('almond', 'short', [], 1);
+    const tips = buildTipSetPrompt('almond', 'short', [], 1);
+    for (const p of [hero, tips]) {
+      expect(p).toContain('Banned clichés');
+      expect(p).toContain('donut');
+      expect(p).toContain('ribbon bows');
+    }
+  });
+
+  it('히어로 구도: 손 하나·손가락당 손톱 하나·이탈 손톱 금지', () => {
+    const hero = buildPrompt('almond', 'short', [], 1);
+    expect(hero).toContain('ONE relaxed real hand');
+    expect(hero).toContain('No detached nails');
+  });
 });

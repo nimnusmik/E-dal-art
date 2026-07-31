@@ -3,11 +3,13 @@
  * TREND_KEYWORDS 환경 변수(쉼표 구분)를 갱신한다. (스펙: 트렌드 하드코딩 금지)
  */
 export const DEFAULT_TREND_KEYWORDS = [
-  'glazed donut glossy finish',
+  // "glazed donut"은 이미지 모델이 실제 도넛 파츠로 오해하므로 질감으로만 서술
+  'glass-skin glazed glossy finish (no food motifs)',
   // "cat-eye"는 이미지 모델이 실제 눈알로 오해하므로 효과만 서술
   'chrome magnetic velvet shimmer (single sweeping light streak)',
-  'syrup gradient sheer layers',
-  'subtle 3D charm parts (ribbon, pearl, flower)',
+  'sheer syrup jelly gradient',
+  'blurred aura blush gradient',
+  'thin micro french line in a contrasting tone',
 ];
 
 export function getTrendKeywords(): string[] {
