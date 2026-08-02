@@ -6,6 +6,15 @@
  * 같은 1000×1796으로 저장해 픽셀 정렬을 보존한다.
  * 정렬 검증용 오버레이(ref/hand-after-check.png)를 함께 만든다 — 손 외곽이
  * 이중으로 보이면 재실행.
+ *
+ * 게이트 기준 (4가지, 모두 육안 확인):
+ *   1. 정렬 — ref/hand-after-check.png에서 손 외곽 이중 윤곽 없음.
+ *   2. 손톱 부착 — 손톱이 다섯 손가락에 자연스럽게 붙어 있음(붕 뜨거나 어긋나지 않음).
+ *   3. 금지 모티프 없음 — 도넛/사탕/케이크/과일 참(3D 음식 참), 리본, 매달리는 참,
+ *      과대 3D 파츠, 캐릭터 등 없음.
+ *   4. 피부 실사성 — 원본(hand.webp)과 나란히 놓고 비교했을 때 손등 주름·피부 톤·
+ *      질감이 같은 실사 사진처럼 보여야 함. 매끈하게 재렌더링되거나 플라스틱/마네킹/
+ *      3D 렌더 느낌이 나면(모공·주름 소실, 인위적 광택) 무조건 반려.
  */
 import { readFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -26,16 +35,23 @@ delete process.env.GEMINI_MOCK;
 delete process.env.SEEDREAM_MOCK;
 
 // 트렌드는 질감·효과로만 서술(음식·파츠 명사 금지) — 2026-07-31 품질 규칙
+// 피부 실사성 강화 — 2026-08-02 게이트 반려(마네킹/플라스틱 피부) 수정
 const PROMPT = [
   'Edit this photo of a bare hand on a green screen background.',
   'Keep EVERYTHING pixel-identical: same hand, same pose, same finger positions,',
   'same skin tone, same lighting, same framing, same solid green background.',
+  'Preserve the ORIGINAL photographic skin exactly: same natural matte skin texture,',
+  'the same visible knuckle wrinkles, creases, and pores as in the input photo.',
+  'Do NOT smooth, retouch, plastify, or re-render the skin in any way.',
+  'This must remain a real photograph of a real human hand — not a 3D render,',
+  'not a mannequin, not a doll, not CGI, not an airbrushed beauty-filter skin.',
   "Only change: apply this month's K-nail trend design to the five fingernails —",
   'glazed glossy sheen, soft chrome shimmer, subtle aurora film gradient in muted pastel tones.',
   'Nails keep their natural short length and stay naturally attached to the fingers.',
   'Banned: 3D food charms (donut, candy, cake, fruit), ribbon bows, dangling charms,',
-  'oversized 3D parts, cartoon characters, text, watermark, jewelry.',
-  'Photorealistic, high detail.',
+  'oversized 3D parts, cartoon characters, text, watermark, jewelry,',
+  'plastic skin, mannequin skin, doll skin, 3D render, CGI, airbrushed skin.',
+  'Photorealistic, high detail — same photograph, only the nails changed.',
 ].join(' ');
 
 /** generate-hero-hand.mts와 동일한 크로마 그린 키아웃 (일회성 스크립트라 복사 유지) */
