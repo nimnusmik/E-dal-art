@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { beadLayoutAt, CARD_ENTRANCE_MAX_MS, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from '@/components/story/heroMorph';
+import {
+  beadLayoutAt,
+  CARD_ENTRANCE_MAX_MS,
+  frameAt,
+  HAND_HALF_WIDTH_FRAC,
+  MORPH,
+  MORPH_TOTAL,
+  NAIL_Y,
+} from '@/components/story/heroMorph';
 
 const e1 = MORPH.holdStart;
 const e2 = e1 + MORPH.swirl;
@@ -25,6 +33,16 @@ describe('frameAt — 히어로 변신 타임라인', () => {
     expect(f.beadAlpha).toBe(1);
     expect(f.cardAlpha).toBe(0);
     expect(f.orbitR).toBeGreaterThan(0);
+  });
+
+  it('소용돌이 내내 궤도 반경이 손 실루엣 절반 폭(HAND_HALF_WIDTH_FRAC)을 여유 있게 넘는다', () => {
+    // 구슬 반경(대략 0.06~0.09 무대폭 비율)까지 감안해도 좌우 극단이 손 실루엣 밖으로
+    // 나가야 "손 위에 얹힌 스티커"가 아니라 "손을 두른 링"으로 보인다.
+    const BEAD_HALF_WIDTH_FRAC_MAX = 0.1; // 넉넉히 잡은 상한
+    for (let u = 0; u <= 1; u += 0.1) {
+      const { orbitR } = frameAt(e1 + MORPH.swirl * u);
+      expect(orbitR).toBeGreaterThan(HAND_HALF_WIDTH_FRAC + BEAD_HALF_WIDTH_FRAC_MAX);
+    }
   });
 
   it('흡수 끝: 궤도 반경 0, 중심이 손톱 쪽(NAIL_Y)으로 이동', () => {
@@ -108,5 +126,14 @@ describe('beadLayoutAt — 구슬 3D 원근 레이아웃', () => {
       expect(depth).toBeGreaterThanOrEqual(-1.0001);
       expect(depth).toBeLessThanOrEqual(1.0001);
     }
+  });
+
+  it('좌우 극단의 구슬은 실제 소용돌이 반경에서 손 실루엣 밖을 지난다', () => {
+    // spin=0일 때 i=0 구슬의 angle=0 → xOffset=cos(0)=1 (좌우 극단, wobble 없음).
+    const { xOffset } = beadLayoutAt(0, 0, N);
+    expect(xOffset).toBeCloseTo(1, 5);
+    const { orbitR } = frameAt(MORPH.holdStart); // 소용돌이 진입 시점의 반경
+    const edge = xOffset * orbitR; // 무대폭 대비 구슬 중심의 좌우 위치
+    expect(edge).toBeGreaterThan(HAND_HALF_WIDTH_FRAC);
   });
 });

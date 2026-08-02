@@ -42,6 +42,17 @@ const easeOut = (t: number) => 1 - (1 - t) ** 3;
 export const NAIL_Y = 0.18;
 
 /**
+ * 손 실루엣이 무대(.hand-stage) 너비에서 차지하는 절반 폭(비율).
+ * .hand-stage는 aspect-ratio: 3/4로 고정, .hand-img는 height:100%·width:auto라
+ * 렌더 폭이 hand.webp 원본 비율(1000×1796)로만 정해진다 — 뷰포트 크기와 무관한 상수:
+ *   렌더폭/무대폭 = (무대높이/무대폭) × (1000/1796) = (4/3) × 0.5568 ≈ 0.7424
+ * 구슬 궤도 반경(frameAt이 계산하는 orbitR)이 이 값(절반 0.3712)보다 충분히 커야 손 실루엣을
+ * 벗어나 "손을 감싸는 링"으로 보인다. hand.webp 치수나 이 aspect-ratio를 바꾸면
+ * 이 값도 반드시 재계산할 것.
+ */
+export const HAND_HALF_WIDTH_FRAC = 0.372;
+
+/**
  * 카드 입장(hero-rise) CSS 애니메이션이 끝나는 최악 시각(ms) — app/globals.css의
  * `.inspo-cut.at-bottom-right { animation-delay: 0.45s }` + `hero-rise 0.6s` = 1050ms.
  * MORPH.holdStart(카드를 루프가 건드리기 시작하는 시점)가 이 값보다 커야 입장 애니메이션이
@@ -66,10 +77,19 @@ export interface BeadLayout {
   front: boolean;
 }
 
+/** 세로 궤도 진폭 — 가로(xOffset, 진폭 ~1) 대비 비율. 훌라후프처럼 손을 두르는
+ *  링으로 보이게 하는 값 — 너무 작으면(0.2대) 좌우 왕복처럼, 너무 크면(0.6+)
+ *  다시 평면 원판처럼 읽힌다. */
+const BEAD_VERT_FACTOR = 0.38;
+/** 뒤쪽(depth<0)일수록 더 위로 떠올리는 정도 — 먼 호가 손 위로 넘어가는 느낌 */
+const BEAD_FAR_LIFT_FACTOR = 0.3;
+
 /**
  * 구슬 하나의 궤도상 3D 원근 레이아웃 — 손을 평면적으로 굴러가는 게 아니라
  * 실제로 감싸고 도는 것처럼 보이도록 깊이(depth)에 따라 위치·크기·불투명도·흐림을 바꾼다.
  * depth = sin(angle): 앞(1)에서 손보다 위에, 뒤(-1)에서 손보다 뒤에 (occlusion은 z-index로 처리).
+ * 반환하는 xOffset·yOffset은 orbitR·무대폭을 곱하기 전의 상대값(대략 -1..1) —
+ * 실제 궤도가 손 실루엣을 벗어나는지는 orbitR 크기(HAND_HALF_WIDTH_FRAC 대비)에 달려 있다.
  */
 export function beadLayoutAt(spin: number, i: number, N: number): BeadLayout {
   const angle = (i / N) * Math.PI * 2 + spin;
@@ -78,8 +98,8 @@ export function beadLayoutAt(spin: number, i: number, N: number): BeadLayout {
   const wob = 1 + 0.06 * Math.sin(spin * 2 + i * 1.7);
   const xOffset = Math.cos(angle) * wob;
   // 뒤쪽(depth<0)일수록 더 위로 떠올려 "손 위를 굴러감"이 아닌 "손을 둘러싸고 돎"으로 읽히게 한다.
-  const lift = depth < 0 ? -depth * 0.28 : 0;
-  const yOffset = (depth * 0.34 - lift) * wob;
+  const lift = depth < 0 ? -depth * BEAD_FAR_LIFT_FACTOR : 0;
+  const yOffset = (depth * BEAD_VERT_FACTOR - lift) * wob;
   const near = (depth + 1) / 2; // 0(뒤) .. 1(앞)
   return {
     xOffset,
@@ -106,11 +126,13 @@ export function frameAt(tMs: number): MorphFrame {
 
   if (t < e1) return f; // 정지 — 현재 히어로 그대로
 
-  if (t < e2) { // 소용돌이
+  if (t < e2) { // 소용돌이 — 훌라후프처럼 손 실루엣 바깥을 도는 링
     const u = (t - e1) / MORPH.swirl;
     f.cardAlpha = 1 - clamp01(u * 3); // 초반에 빠르게 카드 → 구슬 교대
     f.beadAlpha = clamp01(u * 3);
-    f.orbitR = lerp(0.42, 0.28, easeOut(clamp01(u * 1.4)));
+    // SWIRL_ORBIT_*는 HAND_HALF_WIDTH_FRAC(0.372) + 구슬 반경 + 여백을 확실히 넘도록 잡은
+    // 값 — 이보다 작으면 좌우 극단의 구슬이 손 실루엣 "안쪽"에 놓여 스티커처럼 보인다.
+    f.orbitR = lerp(0.54, 0.5, easeOut(clamp01(u * 1.4)));
     f.spin = easeInOut(u) * Math.PI * 2.4;
     return f;
   }
@@ -120,7 +142,7 @@ export function frameAt(tMs: number): MorphFrame {
     f.cardAlpha = 0;
     f.beadAlpha = 1 - clamp01((u - 0.7) / 0.3); // 막판에만 사라짐
     f.beadScale = lerp(1, 0.24, u);
-    f.orbitR = lerp(0.28, 0, u);
+    f.orbitR = lerp(0.5, 0, u); // 소용돌이 끝 반경(0.5)에서 손톱 한 점으로 수렴
     f.spin = Math.PI * 2.4 + u * 0.8;
     f.center = { x: 0.5, y: lerp(0.5, NAIL_Y, u) };
     f.flash = u * 0.5;
