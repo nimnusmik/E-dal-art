@@ -325,6 +325,9 @@ a { color: inherit; text-decoration: none; }
   transition: transform 0.35s ease;
 }
 /* 손 위 겹침 위치 (백분율 → 반응형) */
+/* 가장 늦은 delay(0.45s) + hero-rise(0.6s) = 1050ms — 이 값을 바꾸면
+   components/story/heroMorph.ts의 CARD_ENTRANCE_MAX_MS도 반드시 같이 갱신할 것
+   (MORPH.holdStart가 이보다 커야 입장 애니메이션이 루프에 끊기지 않는다). */
 .inspo-cut.at-top-left     { left: 1%;   top: 20%; animation-delay: 0.15s; }
 .inspo-cut.at-top-right    { right: 0%;  top: 33%; animation-delay: 0.25s; }
 .inspo-cut.at-bottom-left  { left: 8%;   top: 58%; animation-delay: 0.35s; }

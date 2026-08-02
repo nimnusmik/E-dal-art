@@ -9,3 +9,4 @@ next-env.d.ts
 
 # AI 생성 결과물 (용량 큼, 로컬 보관용)
 ref/results/
+ref/hand-after-check.png

@@ -138,7 +138,7 @@ function computeAlignment(bboxOrig: ReturnType<typeof alphaBBox>, bboxGen: Retur
  * 보정 후에는 원본 크기(W×H)의 그린 배경 RGB 버퍼(채널 수는 입력과 동일)를 반환한다.
  */
 async function alignGreenBackground(
-  greenRaw: Buffer, W: number, H: number, channels: 1 | 2 | 3 | 4,
+  greenRaw: Buffer, W: number, H: number, channels: 3 | 4,
   align: ReturnType<typeof computeAlignment>,
 ): Promise<Buffer> {
   const { needsScale, genW, genH, dx, dy } = align;
@@ -160,7 +160,7 @@ async function alignGreenBackground(
   // "Image to composite must have same dimensions or smaller" 오류를 내므로,
   // PNG로 한 번 구체화(toBuffer)한 뒤 새 sharp 인스턴스로 extract한다.
   const composited = await sharp({
-    create: { width: W + margin * 2, height: H + margin * 2, channels: channels as 3 | 4, background: { r: 0, g: 177, b: 64 } },
+    create: { width: W + margin * 2, height: H + margin * 2, channels, background: { r: 0, g: 177, b: 64 } },
   })
     .composite([{ input: genBuf, raw: { width: genW, height: genH, channels }, left: margin + dx, top: margin + dy, blend: 'over' }])
     .png().toBuffer();
@@ -200,7 +200,7 @@ async function run() {
   console.log(`정렬 보정: 평행이동 dx=${align.dx} dy=${align.dy}`);
 
   // 2) 키아웃 전 그린 배경 RGB에 보정 적용 → 3) 보정된 지오메트리에 키아웃 최종 1회 적용(신선한 알파 램프)
-  const alignedGreen = await alignGreenBackground(greenRaw, W, H, info.channels as 1 | 2 | 3 | 4, align);
+  const alignedGreen = await alignGreenBackground(greenRaw, W, H, info.channels as 3 | 4, align);
   const rgba = keyOutGreen(alignedGreen, W, H, info.channels);
 
   const softAfter = softEdgeRatio(rgba, W, H);

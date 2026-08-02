@@ -25,6 +25,13 @@ export default function HeroHand() {
   const pausedAt = useRef(0);
   // 카드 입장 애니메이션(CSS, forwards)이 끝날 때까지는 카드에 손대지 않는다 — 첫 사이클 정지 구간 한정
   const cardsOwnedByLoop = useRef(false);
+  // 정지 구간(holdStart·holdEnd)에는 프레임 값이 그대로 반복돼 매 프레임 같은 값을 다시 써봤자
+  // 낭비다 — 직전 프레임과 얕은 비교해 같으면 DOM 쓰기를 건너뛴다. 무대 크기(W·H)는 구슬
+  // 위치 계산에 쓰이므로 반드시 비교에 포함해 리사이즈 시에는 값이 같아도 다시 그리게 한다.
+  const lastFrameRef = useRef<{
+    cardAlpha: number; beadAlpha: number; beadScale: number; orbitR: number;
+    spin: number; flash: number; reveal: number; cx: number; cy: number; W: number; H: number;
+  } | null>(null);
   const [reduced, setReduced] = useState(false);
 
   const applyFrame = useCallback((tMs: number) => {
@@ -32,6 +39,20 @@ export default function HeroHand() {
     if (!stage) return;
     const f = frameAt(tMs);
     const W = stage.clientWidth, H = stage.clientHeight;
+    const cur = {
+      cardAlpha: f.cardAlpha, beadAlpha: f.beadAlpha, beadScale: f.beadScale, orbitR: f.orbitR,
+      spin: f.spin, flash: f.flash, reveal: f.reveal, cx: f.center.x, cy: f.center.y, W, H,
+    };
+    const prev = lastFrameRef.current;
+    if (
+      prev && prev.cardAlpha === cur.cardAlpha && prev.beadAlpha === cur.beadAlpha &&
+      prev.beadScale === cur.beadScale && prev.orbitR === cur.orbitR && prev.spin === cur.spin &&
+      prev.flash === cur.flash && prev.reveal === cur.reveal && prev.cx === cur.cx &&
+      prev.cy === cur.cy && prev.W === cur.W && prev.H === cur.H
+    ) {
+      return;
+    }
+    lastFrameRef.current = cur;
     const cx = W * f.center.x, cy = H * f.center.y;
     const N = HERO_INSPO.length;
 
@@ -55,7 +76,9 @@ export default function HeroHand() {
     if (cardsOwnedByLoop.current) {
       cardRefs.current.forEach((el) => {
         if (!el) return;
-        if (el.style.animation !== 'none') el.style.animation = 'none';
+        // animation 단축 속성은 'none'을 넣어도 읽을 때 'none 0s ease 0s 1 normal none running'처럼
+        // 풀어헤쳐 직렬화되므로 항상 다르게 보인다 — animationName만 비교해야 한 번만 쓴다.
+        if (el.style.animationName !== 'none') el.style.animation = 'none';
         el.style.opacity = String(f.cardAlpha);
       });
     }
@@ -69,7 +92,10 @@ export default function HeroHand() {
     if (flashRef.current) flashRef.current.style.opacity = String(f.flash);
   }, []);
 
+  // rafRef가 0이면 "체인 없음"을 뜻한다 — loop() 재호출 전 항상 이 값으로 기존 체인을
+  // 취소해 두 체인이 동시에 도는 일이 없게 한다.
   const loop = useCallback(() => {
+    cancelAnimationFrame(rafRef.current);
     const tick = (now: number) => {
       applyFrame((now - t0.current) % MORPH_TOTAL);
       rafRef.current = requestAnimationFrame(tick);
@@ -79,15 +105,30 @@ export default function HeroHand() {
 
   useEffect(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setReduced(true); return; }
-    t0.current = performance.now();
-    loop();
+    // 백그라운드 탭에서 로드되면 visibilitychange의 'hidden' 이벤트가 먼저 오지 않을 수 있다.
+    // 그 경우 실제로 일시정지된 적이 없으므로, 보이는 상태가 될 때까지는 아예 체인을
+    // 시작하지 않는다(started로 구분) — "일시정지에서 재개"와 "최초 시작"을 섞지 않는다.
+    let started = false;
+    let paused = false;
+    const start = () => {
+      started = true;
+      t0.current = performance.now();
+      loop();
+    };
+    if (!document.hidden) start();
     // 백그라운드 탭이면 일시정지 (배터리 배려)
     const onVis = () => {
       if (document.hidden) {
-        cancelAnimationFrame(rafRef.current);
-        pausedAt.current = performance.now();
-      } else {
+        if (started && !paused) {
+          cancelAnimationFrame(rafRef.current);
+          pausedAt.current = performance.now();
+          paused = true;
+        }
+      } else if (!started) {
+        start();
+      } else if (paused) {
         t0.current += performance.now() - pausedAt.current;
+        paused = false;
         loop();
       }
     };
@@ -149,7 +190,9 @@ export default function HeroHand() {
             loading="eager"
             decoding="async"
           />
-          {/* 변신 후 손 — 맨손과 같은 크기로 겹쳐 두고 손톱부터 원형 리빌 */}
+          {/* 변신 후 손 — 맨손과 같은 크기로 겹쳐 두고 손톱부터 원형 리빌.
+              t≈5.8s까지는 화면에 보이지 않으므로 LCP 이미지(hand.webp)와 우선순위를
+              다투지 않게 낮춘다 — 단, reduced(모션 축소) 사용자는 바로 보이므로 그대로 높게. */}
           <img
             className={`hand-after${reduced ? ' is-static' : ''}`}
             ref={afterRef}
@@ -159,6 +202,7 @@ export default function HeroHand() {
             height={898}
             loading="eager"
             decoding="async"
+            fetchPriority={reduced ? 'high' : 'low'}
           />
           {!reduced && <div className="hero-flash" ref={flashRef} aria-hidden />}
           {HERO_INSPO.map((cut, i) => (

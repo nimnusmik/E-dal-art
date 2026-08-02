@@ -41,6 +41,14 @@ const easeOut = (t: number) => 1 - (1 - t) ** 3;
 /** 손톱 무리의 무대 내 상대 위치 — hand.webp에서 손톱은 상단에 있다 */
 export const NAIL_Y = 0.18;
 
+/**
+ * 카드 입장(hero-rise) CSS 애니메이션이 끝나는 최악 시각(ms) — app/globals.css의
+ * `.inspo-cut.at-bottom-right { animation-delay: 0.45s }` + `hero-rise 0.6s` = 1050ms.
+ * MORPH.holdStart(카드를 루프가 건드리기 시작하는 시점)가 이 값보다 커야 입장 애니메이션이
+ * 루프에 의해 중간에 끊기지 않는다. CSS 쪽 delay·duration을 바꾸면 이 값도 같이 갱신할 것.
+ */
+export const CARD_ENTRANCE_MAX_MS = 1050;
+
 export function frameAt(tMs: number): MorphFrame {
   const t = ((tMs % MORPH_TOTAL) + MORPH_TOTAL) % MORPH_TOTAL;
   const f: MorphFrame = {

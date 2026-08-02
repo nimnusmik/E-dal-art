@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from '@/components/story/heroMorph';
+import { CARD_ENTRANCE_MAX_MS, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from '@/components/story/heroMorph';
 
 const e1 = MORPH.holdStart;
 const e2 = e1 + MORPH.swirl;
@@ -55,5 +55,11 @@ describe('frameAt — 히어로 변신 타임라인', () => {
 
   it('루프: TOTAL을 넘긴 시각은 나머지 시각과 같은 프레임', () => {
     expect(frameAt(MORPH_TOTAL + 10)).toEqual(frameAt(10));
+  });
+
+  it('holdStart는 카드 입장 CSS 애니메이션 최악 시각보다 길어야 한다', () => {
+    // app/globals.css의 .inspo-cut.at-bottom-right 지연(0.45s) + hero-rise(0.6s) = 1050ms.
+    // 이보다 짧으면 루프가 카드 소유권을 가져가는 시점이 입장 애니메이션 도중이 되어 끊긴다.
+    expect(MORPH.holdStart).toBeGreaterThan(CARD_ENTRANCE_MAX_MS);
   });
 });
