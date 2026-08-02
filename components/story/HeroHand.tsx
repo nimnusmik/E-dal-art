@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Masthead from '@/components/editorial/Masthead';
 import { currentIssue } from '@/lib/issue';
 import { HERO_INSPO } from './heroInspo';
-import { frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
+import { beadLayoutAt, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
 
 const AFTER_SRC = '/hero/hand-after.webp';
 
@@ -58,14 +58,17 @@ export default function HeroHand() {
 
     beadRefs.current.forEach((el, i) => {
       if (!el) return;
-      const ang = (i / N) * Math.PI * 2 + f.spin;
-      // 반경에 구슬별 위상 흔들림 — 기계적 등속 원운동 탈피
-      const wob = 1 + 0.06 * Math.sin(f.spin * 2 + i * 1.7);
-      const x = cx + Math.cos(ang) * W * f.orbitR * wob;
-      const y = cy + Math.sin(ang) * W * f.orbitR * wob * 0.72; // 타원 궤도
+      // 깊이(원근) 레이아웃 — 뒤쪽 구슬은 손보다 뒤에서 작고 흐릿하게, 앞쪽은 손보다 앞에서 크고 또렷하게.
+      const layout = beadLayoutAt(f.spin, i, N);
+      const x = cx + layout.xOffset * W * f.orbitR;
+      const y = cy + layout.yOffset * W * f.orbitR;
       const s = el.offsetWidth || 1;
-      el.style.transform = `translate(${x - s / 2}px, ${y - s / 2}px) scale(${f.beadScale})`;
-      el.style.opacity = String(f.beadAlpha);
+      const scale = f.beadScale * layout.scale;
+      el.style.transform = `translate(${x - s / 2}px, ${y - s / 2}px) scale(${scale})`;
+      el.style.opacity = String(f.beadAlpha * layout.opacityMul);
+      el.style.filter = layout.blurPx > 0.05 ? `blur(${layout.blurPx.toFixed(2)}px)` : '';
+      // 뒤쪽 구슬은 hand-img/hand-after보다 아래로 — 손가락 사이 투명 영역으로 비쳐 보인다.
+      el.style.zIndex = layout.front ? '3' : '0';
     });
 
     // 첫 사이클의 정지 구간에는 카드를 건드리지 않아 CSS 입장 애니메이션(hero-rise)이 그대로 재생되게 둔다.

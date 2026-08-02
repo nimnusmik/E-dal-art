@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CARD_ENTRANCE_MAX_MS, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from '@/components/story/heroMorph';
+import { beadLayoutAt, CARD_ENTRANCE_MAX_MS, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from '@/components/story/heroMorph';
 
 const e1 = MORPH.holdStart;
 const e2 = e1 + MORPH.swirl;
@@ -61,5 +61,52 @@ describe('frameAt — 히어로 변신 타임라인', () => {
     // app/globals.css의 .inspo-cut.at-bottom-right 지연(0.45s) + hero-rise(0.6s) = 1050ms.
     // 이보다 짧으면 루프가 카드 소유권을 가져가는 시점이 입장 애니메이션 도중이 되어 끊긴다.
     expect(MORPH.holdStart).toBeGreaterThan(CARD_ENTRANCE_MAX_MS);
+  });
+});
+
+describe('beadLayoutAt — 구슬 3D 원근 레이아웃', () => {
+  const N = 4;
+
+  it('가장 먼 지점(depth=-1)에서는 뒤(behind)이고 작고 흐리다', () => {
+    const far = beadLayoutAt(-Math.PI / 2, 0, N);
+    expect(far.depth).toBeCloseTo(-1, 5);
+    expect(far.front).toBe(false);
+    expect(far.blurPx).toBeGreaterThan(0);
+  });
+
+  it('가장 가까운 지점(depth=1)에서는 앞(front)이고 크다', () => {
+    const near = beadLayoutAt(Math.PI / 2, 0, N);
+    expect(near.depth).toBeCloseTo(1, 5);
+    expect(near.front).toBe(true);
+    expect(near.blurPx).toBe(0);
+  });
+
+  it('가까운 구슬이 먼 구슬보다 크고 또렷하다 (원근감)', () => {
+    const far = beadLayoutAt(-Math.PI / 2, 0, N);
+    const near = beadLayoutAt(Math.PI / 2, 0, N);
+    expect(near.scale).toBeGreaterThan(far.scale);
+    expect(near.opacityMul).toBeGreaterThan(far.opacityMul);
+  });
+
+  it('뒤쪽 구슬은 앞쪽보다 더 위로 떠 손을 감싸는 궤적을 그린다', () => {
+    const far = beadLayoutAt(-Math.PI / 2, 0, N);
+    const near = beadLayoutAt(Math.PI / 2, 0, N);
+    // 화면 좌표계는 y가 아래로 증가 — 더 위로 떠 있다는 건 yOffset이 더 작다(더 음수)는 뜻.
+    expect(far.yOffset).toBeLessThan(-Math.abs(near.yOffset));
+  });
+
+  it('깊이는 랩어라운드에서도 연속적이다', () => {
+    const a = beadLayoutAt(2 * Math.PI - 0.01, 0, N);
+    const b = beadLayoutAt(2 * Math.PI + 0.01, 0, N);
+    expect(Math.abs(a.depth - b.depth)).toBeLessThan(0.05);
+  });
+
+  it('depth가 -1..1 범위를 벗어나지 않는다', () => {
+    for (let s = 0; s < 20; s += 1) {
+      const spin = s * 0.37;
+      const { depth } = beadLayoutAt(spin, 1, N);
+      expect(depth).toBeGreaterThanOrEqual(-1.0001);
+      expect(depth).toBeLessThanOrEqual(1.0001);
+    }
   });
 });

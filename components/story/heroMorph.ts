@@ -49,6 +49,49 @@ export const NAIL_Y = 0.18;
  */
 export const CARD_ENTRANCE_MAX_MS = 1050;
 
+export interface BeadLayout {
+  /** x 오프셋 — orbitR·무대폭 배율 전의 상대값(대략 -1..1) */
+  xOffset: number;
+  /** y 오프셋 — orbitR·무대폭 배율 전의 상대값. 뒤쪽(depth<0)일수록 더 위로 떠 손을 감싸듯 보인다 */
+  yOffset: number;
+  /** f.beadScale에 곱할 원근 배율 — 앞쪽일수록 크다 */
+  scale: number;
+  /** f.beadAlpha에 곱할 원근 배율 — 뒤쪽일수록 흐릿하다 */
+  opacityMul: number;
+  /** 뒤쪽일수록 커지는 흐림(px) */
+  blurPx: number;
+  /** 깊이: -1(가장 뒤) .. 1(가장 앞), 랩어라운드에서도 연속적 */
+  depth: number;
+  /** 손보다 앞에 그려야 하면 true (depth >= 0) */
+  front: boolean;
+}
+
+/**
+ * 구슬 하나의 궤도상 3D 원근 레이아웃 — 손을 평면적으로 굴러가는 게 아니라
+ * 실제로 감싸고 도는 것처럼 보이도록 깊이(depth)에 따라 위치·크기·불투명도·흐림을 바꾼다.
+ * depth = sin(angle): 앞(1)에서 손보다 위에, 뒤(-1)에서 손보다 뒤에 (occlusion은 z-index로 처리).
+ */
+export function beadLayoutAt(spin: number, i: number, N: number): BeadLayout {
+  const angle = (i / N) * Math.PI * 2 + spin;
+  const depth = Math.sin(angle); // -1(뒤) .. 1(앞), 연속
+  // 반경에 구슬별 위상 흔들림 — 기계적 등속 원운동 탈피
+  const wob = 1 + 0.06 * Math.sin(spin * 2 + i * 1.7);
+  const xOffset = Math.cos(angle) * wob;
+  // 뒤쪽(depth<0)일수록 더 위로 떠올려 "손 위를 굴러감"이 아닌 "손을 둘러싸고 돎"으로 읽히게 한다.
+  const lift = depth < 0 ? -depth * 0.28 : 0;
+  const yOffset = (depth * 0.34 - lift) * wob;
+  const near = (depth + 1) / 2; // 0(뒤) .. 1(앞)
+  return {
+    xOffset,
+    yOffset,
+    scale: lerp(0.6, 1.18, near),
+    opacityMul: lerp(0.5, 1, near),
+    blurPx: depth < 0 ? -depth * 2.4 : 0,
+    depth,
+    front: depth >= 0,
+  };
+}
+
 export function frameAt(tMs: number): MorphFrame {
   const t = ((tMs % MORPH_TOTAL) + MORPH_TOTAL) % MORPH_TOTAL;
   const f: MorphFrame = {
