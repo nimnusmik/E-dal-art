@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Masthead from '@/components/editorial/Masthead';
 import { currentIssue } from '@/lib/issue';
 import { HERO_INSPO } from './heroInspo';
-import { frameAt, MORPH_TOTAL } from './heroMorph';
+import { frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
 
 const AFTER_SRC = '/hero/hand-after.webp';
 
@@ -23,6 +23,8 @@ export default function HeroHand() {
   const rafRef = useRef(0);
   const t0 = useRef(0);
   const pausedAt = useRef(0);
+  // 카드 입장 애니메이션(CSS, forwards)이 끝날 때까지는 카드에 손대지 않는다 — 첫 사이클 정지 구간 한정
+  const cardsOwnedByLoop = useRef(false);
   const [reduced, setReduced] = useState(false);
 
   const applyFrame = useCallback((tMs: number) => {
@@ -45,18 +47,24 @@ export default function HeroHand() {
       el.style.opacity = String(f.beadAlpha);
     });
 
-    cardRefs.current.forEach((el) => {
-      if (!el) return;
-      // 입장 애니메이션(fill: forwards)이 인라인 opacity를 이기므로 루프 시작 후 해제
-      el.style.animation = 'none';
-      el.style.opacity = String(f.cardAlpha);
-    });
+    // 첫 사이클의 정지 구간에는 카드를 건드리지 않아 CSS 입장 애니메이션(hero-rise)이 그대로 재생되게 둔다.
+    // 루프가 실제로 카드를 바꿔야 하는 시점(소용돌이 진입)부터만 소유권을 가져온다.
+    if (!cardsOwnedByLoop.current && tMs >= MORPH.holdStart) {
+      cardsOwnedByLoop.current = true;
+    }
+    if (cardsOwnedByLoop.current) {
+      cardRefs.current.forEach((el) => {
+        if (!el) return;
+        if (el.style.animation !== 'none') el.style.animation = 'none';
+        el.style.opacity = String(f.cardAlpha);
+      });
+    }
 
     const after = afterRef.current;
     if (after) {
       after.style.opacity = f.reveal > 0 ? '1' : '0';
       // 손톱 무리(상단 중앙)에서 원형으로 번짐 — 120%면 손 전체를 덮는다
-      after.style.clipPath = `circle(${(f.reveal * 120).toFixed(2)}% at 50% 18%)`;
+      after.style.clipPath = `circle(${(f.reveal * 120).toFixed(2)}% at 50% ${NAIL_Y * 100}%)`;
     }
     if (flashRef.current) flashRef.current.style.opacity = String(f.flash);
   }, []);

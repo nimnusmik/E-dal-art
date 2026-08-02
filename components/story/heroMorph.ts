@@ -39,7 +39,7 @@ const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 
 const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
 /** 손톱 무리의 무대 내 상대 위치 — hand.webp에서 손톱은 상단에 있다 */
-const NAIL_Y = 0.18;
+export const NAIL_Y = 0.18;
 
 export function frameAt(tMs: number): MorphFrame {
   const t = ((tMs % MORPH_TOTAL) + MORPH_TOTAL) % MORPH_TOTAL;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { frameAt, MORPH, MORPH_TOTAL } from '@/components/story/heroMorph';
+import { frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from '@/components/story/heroMorph';
 
 const e1 = MORPH.holdStart;
 const e2 = e1 + MORPH.swirl;
@@ -27,16 +27,17 @@ describe('frameAt — 히어로 변신 타임라인', () => {
     expect(f.orbitR).toBeGreaterThan(0);
   });
 
-  it('흡수 끝: 궤도 반경 0, 중심이 손톱 쪽(y 0.18)으로 이동', () => {
+  it('흡수 끝: 궤도 반경 0, 중심이 손톱 쪽(NAIL_Y)으로 이동', () => {
     const f = frameAt(e3 - 1);
     expect(f.orbitR).toBeCloseTo(0, 1);
-    expect(f.center.y).toBeCloseTo(0.18, 1);
+    expect(f.center.y).toBeCloseTo(NAIL_Y, 1);
   });
 
-  it('재탄생 구간에서 reveal이 단조 증가', () => {
+  it('재탄생 구간에서 reveal이 단조 증가, 중심은 NAIL_Y에 고정', () => {
     const a = frameAt(e3 + MORPH.reveal * 0.25).reveal;
     const b = frameAt(e3 + MORPH.reveal * 0.75).reveal;
     expect(b).toBeGreaterThan(a);
+    expect(frameAt(e3 + MORPH.reveal * 0.5).center.y).toBe(NAIL_Y);
   });
 
   it('완성 정지: reveal 1, 카드·구슬 없음', () => {
