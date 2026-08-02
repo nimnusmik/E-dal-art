@@ -38,7 +38,7 @@ export default function HeroHand() {
     beadRefs.current.forEach((el, i) => {
       if (!el) return;
       const ang = (i / N) * Math.PI * 2 + f.spin;
-      // 반경에 구슬별 위상 흔들림 — 기계적 등속 원운동 탈피 (BeadMorph에서 이식)
+      // 반경에 구슬별 위상 흔들림 — 기계적 등속 원운동 탈피
       const wob = 1 + 0.06 * Math.sin(f.spin * 2 + i * 1.7);
       const x = cx + Math.cos(ang) * W * f.orbitR * wob;
       const y = cy + Math.sin(ang) * W * f.orbitR * wob * 0.72; // 타원 궤도

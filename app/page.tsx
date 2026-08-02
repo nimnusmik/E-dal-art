@@ -136,7 +136,7 @@ export default function Home() {
           <>
             <div className="section-head tool-head">
               <div className="section-meta">
-                <span className="section-no">No.03</span>
+                <span className="section-no">No.02</span>
                 <span className="overline" suppressHydrationWarning>
                   Make Your Own — Vol.{currentIssue().vol}
                 </span>

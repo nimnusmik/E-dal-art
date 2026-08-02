@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import HeroHand from './HeroHand';
 import HowItWorks from './HowItWorks';
-import BeadMorph from './BeadMorph';
 import StoryFooter from './StoryFooter';
 import { currentIssue } from '@/lib/issue';
 
@@ -29,9 +28,8 @@ export default function StoryLanding({ toolSlot }: { toolSlot: ReactNode }) {
       <HeroHand />
       <Ticker />
       <HowItWorks />
-      <BeadMorph />
       <section className="story-tool" id="tool">
-        <span className="section-ghost" aria-hidden>03</span>
+        <span className="section-ghost" aria-hidden>02</span>
         <div className="tool-column">{toolSlot}</div>
       </section>
       <StoryFooter />
