@@ -16,9 +16,14 @@ const e4 = e3 + MORPH.reveal;
 const e5 = e4 + MORPH.holdEnd;
 
 describe('frameAt — 히어로 변신 타임라인', () => {
-  it('전체 길이는 11.5초', () => {
-    expect(MORPH_TOTAL).toBe(11500);
+  it('전체 길이는 국면 합과 같다', () => {
+    expect(MORPH_TOTAL).toBe(22000);
     expect(e5 + MORPH.back).toBe(MORPH_TOTAL);
+  });
+
+  it('움직이는 구간이 한 주기의 1/4 이하다 — 첫 화면 산만함 억제', () => {
+    const moving = MORPH.swirl + MORPH.absorb + MORPH.reveal + MORPH.back;
+    expect(moving / MORPH_TOTAL).toBeLessThanOrEqual(0.25);
   });
 
   it('정지 구간: 카드만 보이고 구슬·리빌 없음', () => {
