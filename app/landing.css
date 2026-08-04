@@ -205,6 +205,11 @@
   .xp-hero {
     background-size: auto 170%;
     background-position: center bottom;
+    /* 구슬 궤도(heroMorph.ts의 orbitR 0.5~0.54)가 손 실루엣 밖으로 나가므로,
+       overflow:clip 경계에 잘리지 않도록 좌우 여백을 넉넉히 확보한다.
+       globals.css에 두면 landing.css의 padding shorthand에 밀려 무효가 된다 */
+    padding-left: 40px;
+    padding-right: 40px;
   }
 
   /* 사진이 섹션을 완전히 덮으므로 데스크톱용 이음매 그라데이션은 더 이상
@@ -305,8 +310,8 @@
   overflow: hidden;
 }
 
-/* 모서리 파스텔 블롭 */
-.xp-card::after {
+/* 모서리 파스텔 블롭 — 블롭 색이 지정된 카드(.blob-*)에만 렌더 */
+.xp-card[class*="blob-"]::after {
   content: '';
   position: absolute;
   right: -26px;
@@ -449,7 +454,7 @@
 .xp-service-no {
   font-family: var(--font-display);
   font-size: 13px;
-  color: rgba(22, 24, 29, 0.4);
+  color: rgba(22, 24, 29, 0.55);
 }
 
 .xp-service-label {
