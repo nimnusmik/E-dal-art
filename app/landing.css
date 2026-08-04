@@ -210,7 +210,9 @@
 }
 .xp-cta:active { transform: scale(0.98); }
 
-/* 손 무대는 히어로 카피 아래 — .hand-stage 자체 규칙은 globals.css가 소유 */
+/* 손 무대는 히어로 카피 아래 — .hand-stage 자체 규칙은 globals.css가 소유.
+   z-index:1은 .xp-meadow::before(배경 오버레이, z-index:-1) 위로 올리기 위한 것일 뿐,
+   구슬의 앞뒤(0/3) 순서는 이 무대 안에서만 비교되므로 영향받지 않는다. */
 .xp-hero .hand-stage { position: relative; z-index: 1; margin-top: clamp(16px, 3vh, 40px); }
 
 /* 필 배지 부유 모션 */

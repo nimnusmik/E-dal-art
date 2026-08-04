@@ -916,7 +916,7 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   /* 구슬 궤도가 손 실루엣 밖으로 넓어진 만큼(heroMorph.ts의 orbitR 0.5~0.54),
      좁은 화면에서 .story-hero(overflow:clip) 경계에 잘리지 않도록 좌우 여백을
      넉넉히 확보하고 구슬 자체도 조금 줄인다. */
-  .xp-hero-copy { padding-left: 40px; padding-right: 40px; }
+  .xp-hero { padding-left: 40px; padding-right: 40px; }
   .hero-bead { width: clamp(44px, 13%, 72px); }
 }
 
