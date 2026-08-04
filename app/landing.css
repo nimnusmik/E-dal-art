@@ -525,6 +525,19 @@
   padding: var(--space-section) clamp(20px, 5vw, 64px) 0;
 }
 
+/* 공용 .xp-meadow::before는 섹션 상단만 어둡게 해 46%에서 투명해진다.
+   풋터 바는 그 아래(밝은 잔디 위)에 놓이므로, 이 섹션에만 하단 그라데이션을
+   덧대 흰 글씨 대비를 확보한다 */
+.xp-footer-cta::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 44%;
+  z-index: -1;
+  background: linear-gradient(0deg, rgba(16, 26, 44, 0.46) 0%, rgba(16, 26, 44, 0) 100%);
+  pointer-events: none;
+}
+
 .xp-footer-inner {
   display: flex;
   flex-direction: column;
