@@ -169,10 +169,31 @@
   align-items: center;
   padding: clamp(96px, 14vh, 148px) 24px 64px;
   overflow: clip;
-  /* 히어로는 손 무대 때문에 섹션이 뷰포트보다 훨씬 길어진다. 공용 .xp-meadow의
-     center 62% 정렬을 그대로 두면 초록 언덕이 섹션 아래로 밀려나 하늘만 보이므로,
-     사진 하단(언덕)을 섹션 하단에 붙여 손이 언덕 위에 놓이게 한다 */
-  background-position: center bottom;
+  /* 히어로는 손 무대 때문에 섹션이 뷰포트보다 훨씬 길다. cover로 깔면 사진이
+     세로에 맞춰 확대돼 지평선이 첫 화면 밖으로 밀려나므로, 폭 기준으로 깔아
+     지평선을 첫 화면 안에 두고 사진이 끝나는 아래쪽은 잔디색으로 이어 붙인다 */
+  background-size: 100% auto;
+  background-position: center top;
+  background-repeat: no-repeat;
+  /* #498b06은 meadow.jpg 최하단 픽셀 행의 실측 평균 RGB(sharp로 추출) — 추정치가 아니라
+     이음매가 안 보이도록 사진과 정확히 이어지는 값이다 */
+  background-color: #498b06;
+}
+
+/* 색은 맞췄지만 사진의 잔디 질감이 평면 색으로 뚝 끊기는 경계선은 남는다.
+   meadow.jpg 원본 비율(2000×1269)과 정확히 같은 높이의 박스를 사진 위에 겹쳐
+   사진이 끝나는 마지막 구간에서만 배경색으로 서서히 흡수시켜 이음매를 지운다.
+   z-index 0은 .xp-meadow::before(-1)보다 위, 카피·손 무대(1)보다 아래에 둔다 */
+.xp-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 0;
+  aspect-ratio: 2000 / 1269;
+  background: linear-gradient(to bottom, transparent 85%, #498b06 100%);
+  pointer-events: none;
 }
 
 .xp-hero-copy {
