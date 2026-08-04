@@ -196,6 +196,15 @@
   pointer-events: none;
 }
 
+@media (max-width: 767px) {
+  /* 좁은 폭에서는 폭 기준(100% auto)으로 깔면 사진이 납작해져 하늘도 언덕도
+     첫 화면에서 사라진다. 뷰포트 높이 기준으로 깔아 지평선을 화면 안에 두고,
+     넘치는 폭은 가운데 정렬로 좌우를 잘라낸다 */
+  .xp-hero {
+    background-size: auto 78vh;
+  }
+}
+
 .xp-hero-copy {
   position: relative;
   z-index: 1;
