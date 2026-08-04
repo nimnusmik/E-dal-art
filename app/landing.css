@@ -449,3 +449,67 @@
 .xp-tool-card .sub { font-size: 14px; }
 
 .xp-tool-card .cta { margin-top: 4px; }
+
+/* ─── 사용 장면 카드 ─────────────────────────────────────────── */
+.xp-scene-stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: clamp(16px, 2.4vw, 26px);
+  max-width: 940px;
+  margin: 0 auto;
+}
+
+.xp-scene { display: flex; flex-direction: column; gap: 12px; }
+
+.xp-scene-head { display: flex; align-items: center; gap: 10px; }
+
+.xp-scene-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--pastel-blue);
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.xp-scene-head strong { display: block; font-size: 13.5px; color: var(--ink); }
+.xp-scene-head em { font-style: normal; font-size: 11.5px; color: var(--muted); }
+
+.xp-scene blockquote {
+  font-family: var(--font-display);
+  font-size: clamp(17px, 2vw, 20px);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  word-break: keep-all;
+}
+
+.xp-scene > p {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--muted);
+  word-break: keep-all;
+}
+
+/* ─── FAQ ────────────────────────────────────────────────────── */
+.xp-faq-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  max-width: 760px;
+  margin: 0 auto;
+  list-style: none;
+}
+
+.xp-faq-item.i0 { transform: translateY(-6px); }
+.xp-faq-item.i2 { transform: translateY(8px); }
+
+.xp-faq-item .xp-pill { font-size: 13.5px; padding: 12px 20px; }
+
+@media (max-width: 640px) {
+  .xp-faq-item.i0, .xp-faq-item.i2 { transform: none; }
+}
