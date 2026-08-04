@@ -120,3 +120,42 @@
 @media (prefers-reduced-motion: reduce) {
   .xp-reveal { transition-duration: 0.01ms; }
 }
+
+/* ─── 상단 바 ────────────────────────────────────────────────── */
+.xp-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px clamp(16px, 4vw, 44px);
+  pointer-events: none;
+}
+
+.xp-topbar > * { pointer-events: auto; }
+
+.xp-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  border-radius: var(--radius-btn);
+  background: var(--paper-card);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.xp-logo span { color: var(--sky); font-size: 11px; }
+
+.xp-topnav { display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 520px) {
+  .xp-topnav .xp-pill:first-child { display: none; }
+}
