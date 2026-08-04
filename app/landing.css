@@ -321,6 +321,10 @@
   margin: 0 auto;
 }
 
+/* 리빌(translateY)과 기울기(rotate)가 같은 transform 속성을 다투지 않도록 요소를 나눈다 —
+   래퍼가 리빌을, 안쪽 .xp-polaroid가 기울기를 담당한다 */
+.xp-polaroid-slot { display: block; }
+
 .xp-polaroid {
   margin: 0;
   padding: 10px 10px 0;
