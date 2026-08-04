@@ -5,8 +5,7 @@ import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
 import ResultScreen from '@/components/ResultScreen';
-import Masthead from '@/components/editorial/Masthead';
-import StoryLanding from '@/components/story/StoryLanding';
+import Landing from '@/components/landing/Landing';
 import { currentIssue } from '@/lib/issue';
 import { fileToResizedPayload } from '@/lib/resize';
 import type { NailBrief } from '@/lib/brief';
@@ -296,21 +295,18 @@ export default function Home() {
 
   if (phase === 'start') {
     return (
-      <StoryLanding
+      <Landing
         toolSlot={
           <>
-            <div className="section-head tool-head">
-              <div className="section-meta">
-                <span className="section-no">No.02</span>
-                <span className="overline" suppressHydrationWarning>
-                  Make Your Own — Vol.{currentIssue().vol}
-                </span>
-              </div>
-              {/* h1은 스토리 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
-              <h2 className="section-title">
+            <div className="xp-tool-head">
+              <span className="xp-pill t-yellow" suppressHydrationWarning>
+                Vol.{currentIssue().vol}
+              </span>
+              {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
+              <h2>
                 영감 사진을 올리면,
                 <br />
-                이달의 네일 아트 시안이 나와요
+                이달의 시안이 나와요
               </h2>
             </div>
             <p className="sub">사진을 더할수록 디자인이 진화해요 (최대 3장)</p>
@@ -342,7 +338,6 @@ export default function Home() {
   if (phase === 'analyzing' || phase === 'generating') {
     return (
       <main className="screen">
-        <Masthead />
         <GeneratingScreen
           stage={phase === 'analyzing' ? 'analyzing' : 'variants'}
           slots={slots}
@@ -357,7 +352,6 @@ export default function Home() {
   if (phase === 'result') {
     return (
       <main className="screen">
-        <Masthead />
         <ResultScreen
           slots={slots}
           selectedId={selectedId}
@@ -391,7 +385,6 @@ export default function Home() {
   if (phase === 'blocked-user') {
     return (
       <main className="screen">
-        <Masthead />
         <div className="blocked">
           <div className="blocked-card">
             <p className="overline">Sold Out</p>
@@ -405,7 +398,6 @@ export default function Home() {
 
   return (
     <main className="screen">
-      <Masthead />
       <div className="blocked">
         <div className="blocked-card">
           <p className="overline">Sold Out</p>

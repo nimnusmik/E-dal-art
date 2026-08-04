@@ -80,29 +80,6 @@ a { color: inherit; text-decoration: none; }
   word-break: keep-all;
 }
 
-/* ─── 매스트헤드 (전 화면 공용) ──────────────────────────────── */
-.masthead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 22px clamp(22px, 5vw, 56px) 18px;
-  border-bottom: 1px solid var(--line);
-}
-
-.masthead-wordmark {
-  font-family: var(--font-serif);
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-}
-
-.masthead-issue { font-size: 11px; }
-
-/* 좁은 컬럼(.screen) 안에서는 컬럼 패딩을 그대로 쓰고 매스트헤드 자체 패딩 해제 */
-.screen .masthead { padding-left: 0; padding-right: 0; padding-top: 0; }
-
 /* ─── 버튼 체계 ──────────────────────────────────────────────── */
 .btn-fill {
   display: inline-block;
@@ -149,9 +126,6 @@ a { color: inherit; text-decoration: none; }
   .pill:not(.active):hover { border-color: var(--ink); }
   .slot-add:hover { border-color: var(--ink); color: var(--ink); }
 }
-
-/* ─── 스토리 랜딩 ────────────────────────────────────────────── */
-.story { position: relative; overflow-x: clip; }
 
 /* 손 무대 — 누끼 딴 큰 손 위에 영감 사진 4장이 번호·라벨과 함께 얹힘(레퍼런스 인덱스) */
 .hand-stage {
@@ -301,137 +275,6 @@ a { color: inherit; text-decoration: none; }
 @keyframes hand-fade {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-
-/* 섹션 공통 헤더 */
-/* 편집 섹션 헤더 시스템 — 잉크 규칙선 + No.넘버 러닝라인 + 대형 타이틀 */
-.section-head {
-  position: relative;
-  z-index: 1;
-  border-top: 1.5px solid var(--ink);
-  padding-top: 16px;
-  margin-bottom: clamp(40px, 6vh, 72px);
-}
-.section-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  margin-bottom: clamp(22px, 4vh, 44px);
-}
-.section-no {
-  font-family: var(--font-latin);
-  font-weight: 900;
-  font-style: italic;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  color: var(--accent);
-}
-.section-meta .overline::after { content: none; } /* 러닝라인에선 별표 생략 */
-
-.section-title {
-  font-family: var(--font-serif);
-  font-size: clamp(26px, 3.8vw, 46px);
-  font-weight: 700;
-  line-height: 1.14;
-  letter-spacing: -0.02em;
-  word-break: keep-all;
-}
-
-/* 거대 고스트 섹션 넘버 — 편집 워터마크 */
-.section-ghost {
-  position: absolute;
-  z-index: 0;
-  right: -1%;
-  top: 2%;
-  font-family: var(--font-latin);
-  font-weight: 900;
-  font-size: clamp(130px, 22vw, 300px);
-  line-height: 0.72;
-  color: var(--ink);
-  opacity: 0.04;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* S2. 작동 방식 — 매거진 목차식 3컬럼 */
-.story-hiw {
-  position: relative;
-  overflow: clip;
-  padding: var(--space-section) clamp(22px, 5vw, 56px);
-  max-width: 1120px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.hiw-grid {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(28px, 4vw, 56px);
-}
-
-.hiw-col {
-  border-top: 1px solid var(--ink);
-  padding-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.hiw-num {
-  font-family: var(--font-latin);
-  font-size: clamp(56px, 6vw, 88px);
-  font-weight: 900;
-  line-height: 0.9;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-
-.hiw-col h3 {
-  font-family: var(--font-serif);
-  font-size: clamp(20px, 2vw, 26px);
-  font-weight: 700;
-  word-break: keep-all;
-}
-
-.hiw-col p { font-size: 14px; color: var(--muted); line-height: 1.75; word-break: keep-all; }
-
-/* 스크롤 진입 reveal */
-.reveal {
-  opacity: 0;
-  transform: translateY(22px);
-  transition:
-    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: var(--d, 0ms);
-}
-
-.is-revealed .reveal, .is-revealed.reveal { opacity: 1; transform: none; }
-
-/* S3. 툴 섹션 */
-.story-tool { position: relative; overflow: clip; border-top: 1.5px solid var(--ink); }
-
-.tool-column {
-  position: relative;
-  z-index: 1;
-  max-width: 480px;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: var(--space-section) 22px 64px;
-  display: flex;
-  flex-direction: column;
-  gap: 26px;
-}
-
-/* 툴 헤더 — 좁은 컬럼에 맞춰 자체 규칙선/과대 타이틀 억제 */
-.tool-head { border-top: none; padding-top: 0; margin-bottom: 6px; }
-.tool-head .section-title { font-size: clamp(28px, 4.4vw, 44px); line-height: 1.12; }
-
-/* 데스크톱: 콘텐츠가 짧아 min-height+margin-auto가 트레이~CTA 사이 큰 공백을 만들던 문제 */
-@media (min-width: 768px) {
-  .tool-column { min-height: 0; }
 }
 
 /* 툴 전체 화면(.screen) — generating/result/blocked 도 동일 체계 */
@@ -882,19 +725,6 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   z-index: 10;
 }
 
-/* ─── 푸터 ───────────────────────────────────────────────────── */
-.story-footer {
-  border-top: 1px solid var(--line);
-  padding: 44px clamp(22px, 5vw, 56px);
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.footer-credit { font-size: 13px; color: var(--muted); }
-
 /* ─── 시각적으로만 숨김 ──────────────────────────────────────── */
 .visually-hidden {
   position: absolute;
@@ -911,8 +741,6 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   .hand-stage { max-width: 420px; }
   .inspo-cut { width: clamp(78px, 27%, 104px); }
   .inspo-cap { font-size: 11px; }
-  .hiw-grid { grid-template-columns: 1fr; gap: 32px; }
-  .masthead { padding: 18px 22px 14px; }
   /* 구슬 궤도가 손 실루엣 밖으로 넓어진 만큼(heroMorph.ts의 orbitR 0.5~0.54),
      좁은 화면에서 .story-hero(overflow:clip) 경계에 잘리지 않도록 좌우 여백을
      넉넉히 확보하고 구슬 자체도 조금 줄인다. */
