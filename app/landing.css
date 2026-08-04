@@ -159,3 +159,83 @@
 @media (max-width: 520px) {
   .xp-topnav .xp-pill:first-child { display: none; }
 }
+
+/* ─── 히어로 ─────────────────────────────────────────────────── */
+.xp-hero {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(96px, 14vh, 148px) 24px 64px;
+  overflow: clip;
+}
+
+.xp-hero-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  max-width: 900px;
+}
+
+.xp-hero-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+.xp-hero-title { font-size: clamp(38px, 7.4vw, 92px); }
+
+.xp-hero-sub {
+  max-width: 44ch;
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.7;
+  font-weight: 600;
+  color: #fff;
+  word-break: keep-all;
+  text-shadow: 0 2px 14px rgba(16, 26, 44, 0.5);
+}
+
+.xp-cta {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 16px 34px;
+  border-radius: var(--radius-btn);
+  background: var(--ink);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: var(--shadow-lift);
+  transition: transform 0.15s ease;
+}
+.xp-cta:active { transform: scale(0.98); }
+
+/* 손 무대는 히어로 카피 아래 — .hand-stage 자체 규칙은 globals.css가 소유 */
+.xp-hero .hand-stage { position: relative; z-index: 1; margin-top: clamp(16px, 3vh, 40px); }
+
+/* 필 배지 부유 모션 */
+.xp-float { animation: xp-bob 4.5s ease-in-out infinite; }
+.xp-float.f2 { animation-delay: 0.6s; }
+.xp-float.f3 { animation-delay: 1.2s; }
+
+@keyframes xp-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+
+.xp-hero-cue {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(16, 26, 44, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-float { animation: none; }
+}

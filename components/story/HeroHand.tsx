@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Masthead from '@/components/editorial/Masthead';
 import { currentIssue } from '@/lib/issue';
 import { HERO_INSPO } from './heroInspo';
 import { beadLayoutAt, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
@@ -143,97 +142,82 @@ export default function HeroHand() {
   }, [loop]);
 
   return (
-    <section className="story-hero" aria-label="이달아 — 이달의 네일 아트">
-      {/* 아트프린트 등록(크롭) 마크 — 네 모서리 */}
-      <div className="hero-marks" aria-hidden><i /><i /><i /><i /></div>
-      {/* 거대한 고스트 발행호 숫자 — 편집 워터마크 */}
-      <span className="hero-volnum" aria-hidden suppressHydrationWarning>
-        {String(issue.vol).padStart(2, '0')}
-      </span>
-      {/* 표지 커버라인 — 잡지 표지 문구 */}
-      <span className="coverline cl-left" aria-hidden>
-        K-Nail Trend Report — <em>Glazed · Chrome · 3D</em>
-      </span>
-      <span className="coverline cl-right" aria-hidden>
-        Your Photo,
-        <br />
-        <em>This Month&apos;s Nails</em>
-      </span>
-      {/* 바코드 + 가격 — 진짜 발행물 장치 */}
-      <div className="hero-issue-tag" aria-hidden>
-        <span className="barcode" />
-        <span className="issue-price" suppressHydrationWarning>
-          FREE ISSUE · <em>₩0</em>
-        </span>
-      </div>
-      <Masthead />
-      <div className="hero-body">
-        <p className="overline" suppressHydrationWarning>{issue.label}</p>
-        <h1 className="hero-title">
-          이달의 네일을,
+    <section className="xp-hero xp-meadow" id="top" aria-label="이달아 — 이달의 네일 아트">
+      <div className="xp-hero-copy">
+        <div className="xp-hero-pills" aria-hidden>
+          <span className="xp-pill t-pink xp-float f1">✨ K-네일 트렌드</span>
+          <span className="xp-pill t-yellow xp-float f2" suppressHydrationWarning>
+            {issue.monthLabel}
+          </span>
+          <span className="xp-pill t-green xp-float f3">● 지금 무료</span>
+        </div>
+        <h1 className="xp-display xp-hero-title">
+          사진 한 장이
           <br />
-          먼저 만나요
+          이달의 네일이 돼요
         </h1>
-        <p className="hero-sub">영감 사진 한 장이면, 당신의 다음 시안이 나와요</p>
-        <a className="btn-fill hero-cta" href="#tool">
+        <p className="xp-hero-sub">
+          영감 사진을 올리면 AI가 다섯 갈래 시안을 만들어요. 마음에 든 시안은 내 손에 올려볼 수 있어요.
+        </p>
+        <a className="xp-cta" href="#tool">
           이번 호 시안 만들기
         </a>
-        <div
-          className="hand-stage"
-          ref={stageRef}
-          role="img"
-          aria-label="영감 사진이 구슬이 되어 손을 감싸면 맨손톱이 이달의 네일로 재탄생하는 장면"
-        >
-          <img
-            className="hand-img"
-            src="/hero/hand.webp"
-            alt=""
-            width={500}
-            height={898}
-            loading="eager"
-            decoding="async"
-          />
-          {/* 변신 후 손 — 맨손과 같은 크기로 겹쳐 두고 손톱부터 원형 리빌.
-              t≈5.8s까지는 화면에 보이지 않으므로 LCP 이미지(hand.webp)와 우선순위를
-              다투지 않게 낮춘다 — 단, reduced(모션 축소) 사용자는 바로 보이므로 그대로 높게. */}
-          <img
-            className={`hand-after${reduced ? ' is-static' : ''}`}
-            ref={afterRef}
-            src={AFTER_SRC}
-            alt=""
-            width={500}
-            height={898}
-            loading="eager"
-            decoding="async"
-            fetchPriority={reduced ? 'high' : 'low'}
-          />
-          {!reduced && <div className="hero-flash" ref={flashRef} aria-hidden />}
-          {HERO_INSPO.map((cut, i) => (
-            <figure
-              className={`inspo-cut at-${cut.at}`}
-              key={cut.src}
-              ref={(el) => { cardRefs.current[i] = el; }}
-            >
-              <span className="inspo-no">{cut.no}</span>
-              <img className="inspo-img" src={cut.src} alt={`영감 예시 — ${cut.label}`} width={132} height={132} loading="eager" decoding="async" />
-              <figcaption className="inspo-cap">{cut.label}</figcaption>
-            </figure>
-          ))}
-          {!reduced && HERO_INSPO.map((cut, i) => (
-            <div
-              className="hero-bead"
-              key={cut.src}
-              aria-hidden
-              ref={(el) => { beadRefs.current[i] = el; }}
-            >
-              <img src={cut.src} alt="" draggable={false} />
-            </div>
-          ))}
-        </div>
       </div>
-      <div className="hero-cue" aria-hidden>
-        Scroll
+      {/* ↓↓↓ 이 무대는 heroMorph 타임라인과 1:1로 묶여 있다 — 구조 변경 금지 ↓↓↓ */}
+      <div
+        className="hand-stage"
+        ref={stageRef}
+        role="img"
+        aria-label="영감 사진이 구슬이 되어 손을 감싸면 맨손톱이 이달의 네일로 재탄생하는 장면"
+      >
+        <img
+          className="hand-img"
+          src="/hero/hand.webp"
+          alt=""
+          width={500}
+          height={898}
+          loading="eager"
+          decoding="async"
+        />
+        {/* 변신 후 손 — 맨손과 같은 크기로 겹쳐 두고 손톱부터 원형 리빌.
+            t≈5.8s까지는 화면에 보이지 않으므로 LCP 이미지(hand.webp)와 우선순위를
+            다투지 않게 낮춘다 — 단, reduced(모션 축소) 사용자는 바로 보이므로 그대로 높게. */}
+        <img
+          className={`hand-after${reduced ? ' is-static' : ''}`}
+          ref={afterRef}
+          src={AFTER_SRC}
+          alt=""
+          width={500}
+          height={898}
+          loading="eager"
+          decoding="async"
+          fetchPriority={reduced ? 'high' : 'low'}
+        />
+        {!reduced && <div className="hero-flash" ref={flashRef} aria-hidden />}
+        {HERO_INSPO.map((cut, i) => (
+          <figure
+            className={`inspo-cut at-${cut.at}`}
+            key={cut.src}
+            ref={(el) => { cardRefs.current[i] = el; }}
+          >
+            <span className="inspo-no">{cut.no}</span>
+            <img className="inspo-img" src={cut.src} alt={`영감 예시 — ${cut.label}`} width={132} height={132} loading="eager" decoding="async" />
+            <figcaption className="inspo-cap">{cut.label}</figcaption>
+          </figure>
+        ))}
+        {!reduced && HERO_INSPO.map((cut, i) => (
+          <div
+            className="hero-bead"
+            key={cut.src}
+            aria-hidden
+            ref={(el) => { beadRefs.current[i] = el; }}
+          >
+            <img src={cut.src} alt="" draggable={false} />
+          </div>
+        ))}
       </div>
+      {/* ↑↑↑ 무대 끝 ↑↑↑ */}
+      <div className="xp-hero-cue" aria-hidden>Scroll</div>
     </section>
   );
 }
