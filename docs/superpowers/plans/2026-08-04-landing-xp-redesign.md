@@ -242,7 +242,7 @@ export const viewport: Viewport = {
 /* 초원 배경 공용 — 히어로·갤러리·풋터 CTA가 함께 쓴다 */
 .xp-meadow {
   position: relative;
-  background-image: url('/landing/meadow.webp');
+  background-image: url('/landing/meadow.jpg');
   background-size: cover;
   background-position: center 62%;
   isolation: isolate;
