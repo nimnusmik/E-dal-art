@@ -1,26 +1,39 @@
-/* ─── 에디토리얼 디자인 토큰 ─────────────────────────────────── */
+/* ─── XP 초원 디자인 토큰 ────────────────────────────────────── */
 :root {
-  --bg: #fcfaf7;            /* 크림 지면 */
-  --bg-deep: #f5f1ea;       /* 한 단계 깊은 크림 (인풋/캡션) */
-  --ink: #1a1815;           /* 잉크 블랙 */
-  --muted: #8a837a;         /* 회갈색 보조 텍스트 */
-  --line: rgba(26, 24, 21, 0.14);      /* 헤어라인 */
-  --line-soft: rgba(26, 24, 21, 0.08);
-  --shadow-card: 0 1px 2px rgba(26, 24, 21, 0.05), 0 12px 32px rgba(26, 24, 21, 0.07);
+  --paper: #f4f3ef;         /* 종이 지면 */
+  --paper-card: #ffffff;    /* 카드 흰색 */
+  --bg: var(--paper);       /* 내부 화면 호환 별칭 */
+  --bg-deep: #eceae4;       /* 인풋/캡션 바닥 */
+  --ink: #16181d;           /* 잉크 블랙 */
+  --muted: #6f7480;         /* 보조 텍스트 */
+  --line: rgba(22, 24, 29, 0.12);
+  --line-soft: rgba(22, 24, 29, 0.06);
 
-  --radius-img: 14px;
+  --shadow-card: 0 1px 2px rgba(22, 24, 29, 0.05), 0 14px 34px rgba(22, 24, 29, 0.09);
+  --shadow-lift: 0 8px 18px rgba(22, 24, 29, 0.10), 0 28px 60px rgba(22, 24, 29, 0.16);
+
+  --radius-card: 22px;
+  --radius-img: 16px;
   --radius-btn: 999px;
-  --radius-card: 4px;
 
-  --space-section: clamp(96px, 14vh, 168px);
+  --space-section: clamp(88px, 12vh, 148px);
 
-  /* 헤드라인 = Y2K 두꺼운 한글 디스플레이(Black Han Sans), 라틴 액센트 = Playfair */
-  --font-serif: 'Black Han Sans', 'Noto Serif KR', sans-serif;
-  --font-latin: 'Playfair Display', 'Black Han Sans', serif;
+  /* 파스텔 5색 — 필 배지·카드 블롭·FAQ에 순환 사용 */
+  --pastel-pink: #ffd8e2;
+  --pastel-blue: #cfe3ff;
+  --pastel-yellow: #ffe9a6;
+  --pastel-green: #cdf0d6;
+  --pastel-purple: #e3d9ff;
+
+  --sky: #5aa9e6;           /* 하늘 파랑 — 링크·포커스 */
+  --accent: #1f6fd0;        /* 시그니처 포인트 */
+
+  /* 디스플레이 = 초대형 헤비 타이포 (라틴 Archivo Black + 한글 Black Han Sans) */
+  --font-display: 'Archivo Black', 'Black Han Sans', 'Pretendard Variable', sans-serif;
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
-
-  /* 시그니처 포인트 — 클랭 블루 (단 하나의 컬러, 시크한 에디토리얼) */
-  --accent: #2337e0;
+  /* 내부 화면 호환 — 기존 .headline/.overline이 참조 */
+  --font-serif: var(--font-display);
+  --font-latin: 'Archivo Black', 'Pretendard Variable', sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -48,10 +61,6 @@ a { color: inherit; text-decoration: none; }
   text-transform: uppercase;
   color: var(--muted);
 }
-/* 오버라인 뒤 작은 별표 오너먼트 — 시그니처 포인트 */
-.overline::after { content: ' ✦'; color: var(--accent); font-size: 0.85em; }
-.masthead-issue.overline::after { content: none; }
-
 .serif { font-family: var(--font-serif); }
 
 .headline {

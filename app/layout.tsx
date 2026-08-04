@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import './landing.css';
 
 export const metadata: Metadata = {
   title: '이달아 — 이달의 네일 아트',
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#FCFAF7',
+  themeColor: '#5aa9e6',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -21,12 +22,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
-        {/* Y2K 편집형 디스플레이 — 헤드라인(Black Han Sans, 한글) + 라틴 액센트(Playfair Display) */}
+        {/* 초대형 디스플레이 — 라틴(Archivo Black) + 한글(Black Han Sans) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Black+Han+Sans&display=swap"
         />
       </head>
       <body>{children}</body>

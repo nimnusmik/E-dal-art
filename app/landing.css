@@ -1,0 +1,122 @@
+/* ─── 랜딩 전용 스타일 (XP 초원 스킨) ────────────────────────── */
+/* 섹션 순서: TopBar → Hero → Stats → Gallery → Services → Tool
+   → Testimonials → FAQ → FooterCta */
+
+/* 초원 배경 공용 — 히어로·갤러리·풋터 CTA가 함께 쓴다 */
+.xp-meadow {
+  position: relative;
+  background-image: url('/landing/meadow.jpg');
+  background-size: cover;
+  background-position: center 62%;
+  isolation: isolate;
+}
+
+/* 배경 위 텍스트 대비 확보 — 상단만 살짝 어둡게 */
+.xp-meadow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(18, 34, 58, 0.22) 0%, rgba(18, 34, 58, 0) 46%);
+  pointer-events: none;
+}
+
+/* 초대형 흰 디스플레이 타이포 — 참조의 헤드라인 처리 */
+.xp-display {
+  font-family: var(--font-display);
+  color: #fff;
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  word-break: keep-all;
+  text-shadow:
+    0 2px 0 rgba(16, 26, 44, 0.22),
+    0 14px 38px rgba(16, 26, 44, 0.34);
+}
+
+/* 파스텔 필 배지 */
+.xp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-btn);
+  background: var(--paper-card);
+  box-shadow: var(--shadow-card);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.xp-pill.t-pink   { background: var(--pastel-pink); }
+.xp-pill.t-blue   { background: var(--pastel-blue); }
+.xp-pill.t-yellow { background: var(--pastel-yellow); }
+.xp-pill.t-green  { background: var(--pastel-green); }
+.xp-pill.t-purple { background: var(--pastel-purple); }
+
+/* 흰 지면 섹션 — 도트 그리드 + 왼쪽 스프링 코일 */
+.xp-paper {
+  position: relative;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--line-soft) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  padding: var(--space-section) clamp(20px, 5vw, 64px);
+}
+
+/* 스프링노트 코일 — 왼쪽 가장자리 점선 */
+.xp-paper::before {
+  content: '';
+  position: absolute;
+  left: clamp(10px, 2.2vw, 26px);
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-image: linear-gradient(var(--pastel-green) 0 14px, transparent 14px 30px);
+  background-size: 3px 30px;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .xp-paper::before { display: none; }
+}
+
+/* 섹션 공통 헤더 */
+.xp-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 0 auto clamp(40px, 6vh, 68px);
+  text-align: center;
+}
+
+.xp-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4.4vw, 46px);
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  word-break: keep-all;
+}
+
+.xp-head p {
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--muted);
+  word-break: keep-all;
+}
+
+/* 스크롤 진입 reveal */
+.xp-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease var(--d, 0ms), transform 0.6s ease var(--d, 0ms);
+}
+.is-revealed .xp-reveal,
+.is-revealed.xp-reveal { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-reveal { transition-duration: 0.01ms; }
+}
