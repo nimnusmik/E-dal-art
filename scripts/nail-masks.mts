@@ -266,6 +266,34 @@ function lerpPt(p: [number, number], q: [number, number], tp: number, tq: number
   return [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f];
 }
 
+/**
+ * 2026-08-04 6r2 라운드 게이트 재기각 결함 1("다각형 모서리는 사라졌지만
+ * 윤곽이 울퉁불퉁한 구름처럼 흔들림")에 대한 보정 — 손으로 찍은 원본 점(RAW_POINTS,
+ * 7~8점)은 완벽한 매끄러운 곡선 위에 있지 않고 트레이싱 특유의 미세한 좌표
+ * 노이즈를 갖는다. Catmull-Rom 스플라인은 통제점을 "정확히" 통과하므로, 이
+ * 노이즈가 그대로 파형(undulation)으로 증폭돼 버린다. 그래서 스플라인 조밀화
+ * *이전에* 닫힌 다각형에 순환(원형) 라플라시안 이동평균을 적용해 통제점 자체를
+ * 먼저 매끈한 볼록 아치에 가깝게 다듬는다 — 이후 Catmull-Rom은 이미 매끈한
+ * 점들을 보간하므로 결과 곡선도 매끈하다.
+ */
+function smoothControlPoints(points: [number, number][], iterations = 2, factor = 0.35): [number, number][] {
+  let pts = points;
+  const n = pts.length;
+  for (let iter = 0; iter < iterations; iter++) {
+    const next: [number, number][] = new Array(n);
+    for (let i = 0; i < n; i++) {
+      const prev = pts[(i - 1 + n) % n];
+      const cur = pts[i];
+      const nxt = pts[(i + 1) % n];
+      const avgX = (prev[0] + nxt[0]) / 2;
+      const avgY = (prev[1] + nxt[1]) / 2;
+      next[i] = [cur[0] * (1 - factor) + avgX * factor, cur[1] * (1 - factor) + avgY * factor];
+    }
+    pts = next;
+  }
+  return pts;
+}
+
 // 확장 배율: 첨단(free edge) 쪽은 넉넉히(흰 팁까지 커버), 큐티클 쪽은
 // 최소한만(자연스러운 스마일 라인 아치를 유지, 피부 스필 방지).
 const EXPAND_TIP = 1.08;
@@ -273,7 +301,63 @@ const EXPAND_CUTICLE = 1.02;
 
 export const NAIL_MASKS: NailMask[] = RAW_POINTS.map(({ name, points }) => {
   const expanded = expandTowardFreeEdge(points, EXPAND_TIP, EXPAND_CUTICLE);
-  const smoothed = smoothClosedPolygon(expanded, 8);
+  const smoothedControl = smoothControlPoints(expanded, 2, 0.35);
+  const smoothed = smoothClosedPolygon(smoothedControl, 8);
   const box = orientedBoxFromPoints(smoothed);
   return { name, points: smoothed, ...box };
 });
+
+/**
+ * 6r2 게이트 재기각 결함 2("약지 큐티클 쪽 페더가 에어브러시처럼 넓게 번짐")에
+ * 대한 보정 — 기존에는 손톱 전체에 균일한 시그마(2.0px)로 가우시안 블러를
+ * 적용했다. 하지만 첨단(free edge, 흰 팁) 쪽은 2.0px 정도의 부드러운 페더가
+ * 자연스러운 반면, 큐티클(스마일 라인) 쪽은 더 좁아야 진짜 매니큐어 경계처럼
+ * 보인다. 이 함수는 손톱 하나에 대해 첨단 쪽 블러(tipSigma)와 큐티클 쪽
+ * 블러(cuticleSigma)를 각각 렌더링한 뒤, 다각형의 첨단→큐티클 y축 진행률(t,
+ * expandTowardFreeEdge와 동일한 정의: y 최소=첨단(t=0), y 최대=큐티클(t=1))로
+ * 두 결과를 행(row) 단위로 선형 블렌드해 "첨단은 그대로, 큐티클만 좁게"
+ * 페더링한다.
+ */
+export async function renderNailFeatherAlpha(
+  m: NailMask,
+  W: number,
+  H: number,
+  tipSigma = 2.0,
+  cuticleSigma = 1.5,
+): Promise<Buffer> {
+  const sharp = (await import('sharp')).default;
+  const SS = 2;
+  const pts = m.points.map(([x, y]) => `${x * SS},${y * SS}`).join(' ');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W * SS}" height="${H * SS}"><rect width="${W * SS}" height="${H * SS}" fill="black"/><polygon points="${pts}" fill="white"/></svg>`;
+  const svgBuf = Buffer.from(svg);
+
+  const render = async (sigma: number): Promise<Buffer> => {
+    const { data } = await sharp(svgBuf)
+      .blur(sigma * SS)
+      .resize(W, H, { kernel: 'lanczos3' })
+      .greyscale()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    return data;
+  };
+  const [tipAlpha, cuticleAlpha] = await Promise.all([render(tipSigma), render(cuticleSigma)]);
+
+  const ys = m.points.map((p) => p[1]);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const span = Math.max(1, maxY - minY);
+  const rowT = new Float64Array(H);
+  for (let y = 0; y < H; y++) {
+    rowT[y] = Math.min(1, Math.max(0, (y - minY) / span));
+  }
+
+  const out = Buffer.alloc(W * H);
+  for (let y = 0; y < H; y++) {
+    const t = rowT[y];
+    const base = y * W;
+    for (let x = 0; x < W; x++) {
+      const i = base + x;
+      out[i] = Math.round(tipAlpha[i] * (1 - t) + cuticleAlpha[i] * t);
+    }
+  }
+  return out;
+}
