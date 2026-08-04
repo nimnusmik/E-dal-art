@@ -2,10 +2,12 @@
 
 ## public/landing/meadow.jpg
 
-- 원본: https://unsplash.com/photos/mountain-covered-with-green-grass-KMn4VEeEPR8
-- 촬영: Sean O. (Unsplash)
+- 원본 페이지: https://unsplash.com/photos/oOBMoCOgGrY
+- 촬영: Chris Barbalis (Unsplash)
+- 설명: 이탈리아 몬테스쿠다이오에서 촬영한 초록 언덕과 파란 하늘
 - 라이선스: Unsplash License — 상업적 사용 가능, 출처 표기 불필요, 재판매 금지
-- 가공: 폭 2000px 리사이즈 + jpeg 변환 (sips, formatOptions 70)
+- 가공: 폭 2000px 리사이즈 + jpeg 변환 (sips, formatOptions 60)
+- 형식 처리: macOS `sips`는 webp 출력을 지원하지 않아 jpeg로 저장
 - 용도: 랜딩 히어로 · 갤러리 · 풋터 CTA 배경
 
 ## 주의
