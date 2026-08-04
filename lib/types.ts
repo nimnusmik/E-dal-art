@@ -1,6 +1,20 @@
 export type NailShape = 'almond' | 'round' | 'square' | 'stiletto';
 export type NailLength = 'short' | 'medium' | 'long';
 
+/** 파츠 강도 옵션 (docs/api-variants-contract.md 공통 타입).
+ *  auto: 사진의 파츠 밀도 그대로 / none: 파츠 0 / point: 포인트 1~2개 / rich: 화려하게 */
+export type PartsIntensity = 'auto' | 'none' | 'point' | 'rich';
+
+/** 5종 변주 플랜 — 베이스 브리프의 일부 라인을 대체하는 델타 (docs/api-variants-contract.md) */
+export interface VariantPlan {
+  id: string;            // "v1"~"v5"
+  title: string;         // 한국어 짧은 이름 (예: "도트 반전", "레이스 포인트") — UI 카드 라벨
+  patternLines: string[]; // 베이스 브리프의 patternLines를 대체
+  partsLine: string;      // 베이스 브리프의 partsLine을 대체
+  letteringWord: string | null;
+  paletteLine?: string;   // 없으면 베이스 브리프 것 사용
+}
+
 export interface Mood {
   keywords: string[];
   colors: string[];

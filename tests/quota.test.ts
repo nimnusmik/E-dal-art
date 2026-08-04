@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getQuota, recordGeneration, recordMetric, type CounterStore } from '@/lib/quota';
+import { getQuota, recordGeneration, recordMetric, getScopedUsage, recordScoped, type CounterStore } from '@/lib/quota';
 
 function fakeStore() {
   const map = new Map<string, number>();
@@ -55,6 +55,31 @@ describe('recordGeneration', () => {
     // KST 14:00 → 자정까지 36000초, 버퍼 60초
     expect(f.ttls.get('quota:user:1.2.3.4:20260707')).toBe(36060);
     expect(f.ttls.get('quota:total:20260707')).toBe(36060);
+  });
+});
+
+describe('범위별 카운터 (variant·hero)', () => {
+  it('기록 없으면 사용량 0', async () => {
+    const f = fakeStore();
+    expect(await getScopedUsage(f.store, 'variant', '1.2.3.4', NOW)).toBe(0);
+  });
+
+  it('recordScoped: 범위·IP별 증가 + KST 자정 TTL, 범위끼리 독립', async () => {
+    const f = fakeStore();
+    await recordScoped(f.store, 'variant', '1.2.3.4', NOW);
+    await recordScoped(f.store, 'variant', '1.2.3.4', NOW);
+    await recordScoped(f.store, 'hero', '1.2.3.4', NOW);
+    expect(await getScopedUsage(f.store, 'variant', '1.2.3.4', NOW)).toBe(2);
+    expect(await getScopedUsage(f.store, 'hero', '1.2.3.4', NOW)).toBe(1);
+    expect(f.ttls.get('quota:variant:1.2.3.4:20260707')).toBe(36060);
+  });
+
+  it('기존 user/total 키 공간을 침범하지 않는다', async () => {
+    const f = fakeStore();
+    await recordScoped(f.store, 'variant', '1.2.3.4', NOW);
+    const q = await getQuota(f.store, '1.2.3.4', NOW, 3, 200);
+    expect(q.userUsed).toBe(0);
+    expect(q.totalUsed).toBe(0);
   });
 });
 

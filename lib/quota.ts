@@ -54,6 +54,37 @@ export async function recordGeneration(store: CounterStore, ip: string, now: Dat
   await store.expire(tKey, ttl);
 }
 
+/** 범위별 일일 카운터 — variant·hero 등 엔드포인트 전용 쿼터 (기존 user/total 카운터와 키 공간 분리) */
+export type QuotaScope = 'variant' | 'hero';
+
+function scopedKey(scope: QuotaScope, ip: string, date: string): string {
+  return `quota:${scope}:${ip}:${date}`;
+}
+
+/** 오늘(KST) 해당 범위의 사용량 조회 */
+export async function getScopedUsage(
+  store: CounterStore,
+  scope: QuotaScope,
+  ip: string,
+  now: Date,
+): Promise<number> {
+  const v = await store.get(scopedKey(scope, ip, kstDateKey(now)));
+  return Number(v ?? 0);
+}
+
+/** 범위별 카운터 증가 — 생성 성공 후에만 호출 (실패 시 차감 없음 규칙 동일 적용) */
+export async function recordScoped(
+  store: CounterStore,
+  scope: QuotaScope,
+  ip: string,
+  now: Date,
+): Promise<void> {
+  const key = scopedKey(scope, ip, kstDateKey(now));
+  const ttl = secondsUntilKstMidnight(now) + TTL_BUFFER_SECONDS;
+  await store.incr(key);
+  await store.expire(key, ttl);
+}
+
 export async function recordMetric(
   store: CounterStore,
   event: 'save' | 'evolve',
