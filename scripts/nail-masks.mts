@@ -270,16 +270,31 @@ function lerpPt(p: [number, number], q: [number, number], tp: number, tq: number
  * 2026-08-04 6r2 라운드 게이트 재기각 결함 1("다각형 모서리는 사라졌지만
  * 윤곽이 울퉁불퉁한 구름처럼 흔들림")에 대한 보정 — 손으로 찍은 원본 점(RAW_POINTS,
  * 7~8점)은 완벽한 매끄러운 곡선 위에 있지 않고 트레이싱 특유의 미세한 좌표
- * 노이즈를 갖는다. Catmull-Rom 스플라인은 통제점을 "정확히" 통과하므로, 이
- * 노이즈가 그대로 파형(undulation)으로 증폭돼 버린다. 그래서 스플라인 조밀화
- * *이전에* 닫힌 다각형에 순환(원형) 라플라시안 이동평균을 적용해 통제점 자체를
- * 먼저 매끈한 볼록 아치에 가깝게 다듬는다 — 이후 Catmull-Rom은 이미 매끈한
- * 점들을 보간하므로 결과 곡선도 매끈하다.
+ * 노이즈를 갖는다. 이 노이즈를 스플라인 조밀화 *이전에* 통제점 자체에서
+ * 지워야 한다.
+ *
+ * 2026-08-04 6r3 라운드 재기각(컨트롤러 진단) — 6r2에서 쓴 단순 라플라시안
+ * 이동평균(순방향 factor=0.35, 2회 반복)은 "이웃 두 점의 중점으로 끌어당김"을
+ * 반복하는 방식이라 볼록 다각형을 반드시 **중심 쪽으로 수축**시킨다(라플라시안
+ * 스무딩의 잘 알려진 성질). 액센트 손톱(중지·약지)처럼 통제점이 적고(8점)
+ * 원래도 둥근 편인 다각형에서는 이 수축이 누적돼 타원이 아니라 원(blob)에
+ * 가까워졌고, 그만큼 확보했던 커버리지(첨단·측벽)도 다시 줄어 맨손톱 밴드가
+ * 재발했다. 그래서 라플라시안 대신 **Taubin 스무딩**(λ/μ 2단계)으로 교체한다:
+ * 1단계(λ=+0.5)로 라플라시안과 동일하게 이웃 평균 쪽으로 이동해 노이즈를
+ * 지우고, 2단계(μ=-0.53, |μ|>λ)로 *반대 방향*(바깥쪽)으로 더 크게 이동시켜
+ * 저주파(전체 크기/둘레)는 원래대로 복원하면서 고주파 노이즈만 제거한다 —
+ * "shrinkage-free" 스무딩으로 알려진 표준 기법(Taubin, 1995). 결과적으로
+ * 둘레·면적이 원래 다각형과 거의 같게 유지되면서도 트레이싱 노이즈로 인한
+ * 파형은 사라진다.
  */
-function smoothControlPoints(points: [number, number][], iterations = 2, factor = 0.35): [number, number][] {
-  let pts = points;
-  const n = pts.length;
-  for (let iter = 0; iter < iterations; iter++) {
+function taubinSmoothControlPoints(
+  points: [number, number][],
+  iterations = 6,
+  lambda = 0.5,
+  mu = -0.53,
+): [number, number][] {
+  const n = points.length;
+  const step = (pts: [number, number][], factor: number): [number, number][] => {
     const next: [number, number][] = new Array(n);
     for (let i = 0; i < n; i++) {
       const prev = pts[(i - 1 + n) % n];
@@ -287,9 +302,14 @@ function smoothControlPoints(points: [number, number][], iterations = 2, factor 
       const nxt = pts[(i + 1) % n];
       const avgX = (prev[0] + nxt[0]) / 2;
       const avgY = (prev[1] + nxt[1]) / 2;
-      next[i] = [cur[0] * (1 - factor) + avgX * factor, cur[1] * (1 - factor) + avgY * factor];
+      next[i] = [cur[0] + factor * (avgX - cur[0]), cur[1] + factor * (avgY - cur[1])];
     }
-    pts = next;
+    return next;
+  };
+  let pts = points;
+  for (let iter = 0; iter < iterations; iter++) {
+    pts = step(pts, lambda);
+    pts = step(pts, mu);
   }
   return pts;
 }
@@ -301,7 +321,7 @@ const EXPAND_CUTICLE = 1.02;
 
 export const NAIL_MASKS: NailMask[] = RAW_POINTS.map(({ name, points }) => {
   const expanded = expandTowardFreeEdge(points, EXPAND_TIP, EXPAND_CUTICLE);
-  const smoothedControl = smoothControlPoints(expanded, 2, 0.35);
+  const smoothedControl = taubinSmoothControlPoints(expanded, 6, 0.5, -0.53);
   const smoothed = smoothClosedPolygon(smoothedControl, 8);
   const box = orientedBoxFromPoints(smoothed);
   return { name, points: smoothed, ...box };
