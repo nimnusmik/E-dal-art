@@ -515,3 +515,39 @@
 @media (max-width: 640px) {
   .xp-faq-item.i0, .xp-faq-item.i2 { margin-top: 0; }
 }
+
+/* ─── 풋터 CTA ───────────────────────────────────────────────── */
+.xp-footer-cta {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 76vh;
+  padding: var(--space-section) clamp(20px, 5vw, 64px) 0;
+}
+
+.xp-footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.xp-footer-title { font-size: clamp(38px, 8vw, 104px); }
+
+.xp-cta-light { background: var(--paper-card); color: var(--ink); }
+
+.xp-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: clamp(48px, 8vh, 96px);
+  padding: 16px clamp(4px, 1vw, 12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(16, 26, 44, 0.5);
+}
