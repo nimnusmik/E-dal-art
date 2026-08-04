@@ -505,11 +505,13 @@
   list-style: none;
 }
 
-.xp-faq-item.i0 { transform: translateY(-6px); }
-.xp-faq-item.i2 { transform: translateY(8px); }
+/* 산개 오프셋은 margin으로 준다 — transform으로 주면 공용 .xp-reveal의
+   슬라이드-인 transform과 같은 속성을 다퉈 리빌 모션이 생략된다 */
+.xp-faq-item.i0 { margin-top: -6px; }
+.xp-faq-item.i2 { margin-top: 8px; }
 
 .xp-faq-item .xp-pill { font-size: 13.5px; padding: 12px 20px; }
 
 @media (max-width: 640px) {
-  .xp-faq-item.i0, .xp-faq-item.i2 { transform: none; }
+  .xp-faq-item.i0, .xp-faq-item.i2 { margin-top: 0; }
 }

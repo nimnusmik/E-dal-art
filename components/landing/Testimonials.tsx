@@ -33,7 +33,7 @@ export default function Testimonials() {
                 <em>{s.role}</em>
               </span>
             </header>
-            <blockquote>"{s.quote}"</blockquote>
+            <blockquote>“{s.quote}”</blockquote>
             <p>{s.body}</p>
           </article>
         ))}
