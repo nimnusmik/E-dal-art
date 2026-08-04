@@ -169,6 +169,10 @@
   align-items: center;
   padding: clamp(96px, 14vh, 148px) 24px 64px;
   overflow: clip;
+  /* 히어로는 손 무대 때문에 섹션이 뷰포트보다 훨씬 길어진다. 공용 .xp-meadow의
+     center 62% 정렬을 그대로 두면 초록 언덕이 섹션 아래로 밀려나 하늘만 보이므로,
+     사진 하단(언덕)을 섹션 하단에 붙여 손이 언덕 위에 놓이게 한다 */
+  background-position: center bottom;
 }
 
 .xp-hero-copy {
