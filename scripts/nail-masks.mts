@@ -86,15 +86,20 @@ function polygonToSvgPoints(points: [number, number][]): string {
  * 손톱 다섯 개(다각형)를 흰색으로, 배경은 검정으로 그린 뒤 가우시안 블러로
  * 가장자리를 1.5~3px 페더링한다(하드 컷아웃 방지 — 브리프 지시사항).
  */
-export async function renderNailMaskAlpha(W: number, H: number, featherSigma = 1.0): Promise<Buffer> {
+export async function renderNailMaskAlpha(W: number, H: number, featherSigma = 2.0): Promise<Buffer> {
   const sharp = (await import('sharp')).default;
-  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="black"/>`;
+  // 2배 초해상도로 그린 뒤 다운샘플 — 다각형이 이미 스플라인으로 조밀화돼
+  // 있지만, 래스터라이즈 단계의 계단현상까지 한 번 더 지워 곡선을 매끈하게
+  // 만든다(브리프: "고해상도로 래스터라이즈 후 다운샘플").
+  const SS = 2;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W * SS}" height="${H * SS}"><rect width="${W * SS}" height="${H * SS}" fill="black"/>`;
   for (const m of NAIL_MASKS) {
-    svg += `<polygon points="${polygonToSvgPoints(m.points)}" fill="white"/>`;
+    svg += `<polygon points="${polygonToSvgPoints(m.points.map(([x, y]) => [x * SS, y * SS]))}" fill="white"/>`;
   }
   svg += `</svg>`;
   const { data } = await sharp(Buffer.from(svg))
-    .blur(featherSigma)
+    .blur(featherSigma * SS)
+    .resize(W, H, { kernel: 'lanczos3' })
     .greyscale()
     .raw()
     .toBuffer({ resolveWithObject: true });
@@ -185,7 +190,90 @@ const RAW_POINTS: { name: string; points: [number, number][] }[] = [
   },
 ];
 
+/**
+ * 2026-08-04 6차 라운드 게이트 검수(컨트롤러)에서 재기각된 결함 2건에 대한
+ * 지오메트리 보정(라운드 "6r"):
+ *
+ * 1. **다각형 모서리가 그대로 보임.** 8점(엄지는 7점) 다각형을 그대로
+ *    렌더링하면 특히 어두운 액센트 색(중지·약지)에서 팔각형 각진 윤곽이
+ *    선명하게 드러난다. 실제 손톱판 경계는 어디에도 직선이 없다.
+ * 2. **커버리지 부족.** 원본 다각형이 실제 손톱판 경계보다 안쪽에 있어
+ *    특히 첨단(free edge, 흰 라인 부분)과 측벽 쪽에 맨손톱 밴드가
+ *    남는다 — "매니큐어"가 아니라 "반쯤 칠하다 만 것"으로 보인다.
+ *
+ * 아래 두 함수(`expandTowardFreeEdge`, `smoothClosedPolygon`)가 RAW_POINTS를
+ * 다듬어 NAIL_MASKS.points를 만든다. 순서: (a) 각 정점을 중심에서 바깥으로
+ * 밀어내되, 첨단(라운드 트레이싱 당시 y가 가장 작은 정점 = 손끝 방향) 쪽은
+ * 크게, 큐티클(y가 가장 큰 정점) 쪽은 거의 밀지 않는다 — "큐티클 쪽 자연스러운
+ * 아치는 그대로 두고, 첨단·측벽만 실제 경계까지 채운다"는 브리프 지시를 그대로
+ * 구현한 것. (b) 그 확장된 다각형을 닫힌 centripetal Catmull-Rom 스플라인으로
+ * 조밀하게 재샘플링해(정점당 8구간 보간 → 손톱당 56~64점) 직선 변을 남기지
+ * 않는 매끄러운 곡선으로 만든다.
+ */
+
+/** 중심에서 바깥으로: 첨단(y 최소) 쪽은 EXPAND_TIP, 큐티클(y 최대) 쪽은
+ * EXPAND_CUTICLE로 선형 보간한 배율만큼 각 정점을 밀어낸다. */
+function expandTowardFreeEdge(points: [number, number][], expandTip: number, expandCuticle: number): [number, number][] {
+  const n = points.length;
+  const cx = points.reduce((s, p) => s + p[0], 0) / n;
+  const cy = points.reduce((s, p) => s + p[1], 0) / n;
+  const ys = points.map((p) => p[1]);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const span = Math.max(1, maxY - minY);
+  return points.map(([x, y]) => {
+    const t = (y - minY) / span; // 0=첨단, 1=큐티클
+    const scale = expandTip + (expandCuticle - expandTip) * t;
+    return [cx + (x - cx) * scale, cy + (y - cy) * scale];
+  });
+}
+
+/** 닫힌 centripetal Catmull-Rom 스플라인으로 다각형을 조밀화한다(20점 이상
+ * 보장, 직선 변을 매끄러운 곡선으로 대체 — 게이트 (a) "각진 모서리 없음"을
+ * 만족시키기 위함). `samplesPerSeg`개씩 각 변 사이를 보간한다. */
+function smoothClosedPolygon(points: [number, number][], samplesPerSeg = 8): [number, number][] {
+  const n = points.length;
+  const out: [number, number][] = [];
+  const P = (i: number) => points[((i % n) + n) % n];
+  const alpha = 0.5; // centripetal
+  const tj = (ti: number, pi: [number, number], pj: [number, number]): number => {
+    const dx = pj[0] - pi[0], dy = pj[1] - pi[1];
+    const d = Math.sqrt(dx * dx + dy * dy) || 1e-6;
+    return ti + Math.pow(d, alpha);
+  };
+  for (let i = 0; i < n; i++) {
+    const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2);
+    const t0 = 0;
+    const t1 = tj(t0, p0, p1);
+    const t2 = tj(t1, p1, p2);
+    const t3 = tj(t2, p2, p3);
+    for (let s = 0; s < samplesPerSeg; s++) {
+      const t = t1 + ((t2 - t1) * s) / samplesPerSeg;
+      const A1 = lerpPt(p0, p1, t0, t1, t);
+      const A2 = lerpPt(p1, p2, t1, t2, t);
+      const A3 = lerpPt(p2, p3, t2, t3, t);
+      const B1 = lerpPt(A1, A2, t0, t2, t);
+      const B2 = lerpPt(A2, A3, t1, t3, t);
+      const C = lerpPt(B1, B2, t1, t2, t);
+      out.push(C);
+    }
+  }
+  return out;
+}
+
+function lerpPt(p: [number, number], q: [number, number], tp: number, tq: number, t: number): [number, number] {
+  if (tq === tp) return p;
+  const f = (t - tp) / (tq - tp);
+  return [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f];
+}
+
+// 확장 배율: 첨단(free edge) 쪽은 넉넉히(흰 팁까지 커버), 큐티클 쪽은
+// 최소한만(자연스러운 스마일 라인 아치를 유지, 피부 스필 방지).
+const EXPAND_TIP = 1.08;
+const EXPAND_CUTICLE = 1.02;
+
 export const NAIL_MASKS: NailMask[] = RAW_POINTS.map(({ name, points }) => {
-  const box = orientedBoxFromPoints(points);
-  return { name, points, ...box };
+  const expanded = expandTowardFreeEdge(points, EXPAND_TIP, EXPAND_CUTICLE);
+  const smoothed = smoothClosedPolygon(expanded, 8);
+  const box = orientedBoxFromPoints(smoothed);
+  return { name, points: smoothed, ...box };
 });
