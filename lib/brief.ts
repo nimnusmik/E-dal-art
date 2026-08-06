@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import type { ImagePayload, NailLength, NailShape, PartsIntensity, VariantPlan } from './types';
+import type { NailCore } from './core';
 
 /**
  * 1단계 분석 v2 — 영감 사진 → "구조 문법 브리프".
@@ -496,3 +497,115 @@ const PLANS_SCHEMA = {
   },
   required: ['plans'],
 };
+
+/* ------------------------------------------------------------------ */
+/* 코어별 변주 플랜 — 연산자가 코어 정체성을 깨지 않도록 분리            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 변주 연산자 → 생성 지시 문장. 코어의 variantOps에 나열된 것만 사용된다.
+ * 예: zero-parts는 코케트에는 좋은 변주지만 데코덴에서는 정체성 파괴이므로
+ * 데코덴의 variantOps에 들어 있지 않다.
+ */
+const VARIANT_OP_LINES: Record<string, { titleKo: string; line: string; zeroParts?: boolean }> = {
+  invert: {
+    titleKo: '컬러 반전',
+    line: 'Invert figure and ground on every tip: paint each motif in the former background colour and each background in the former motif colour, keeping the same shapes and placement.',
+  },
+  rescale: {
+    titleKo: '마이크로 스케일',
+    line: 'Shrink every motif to micro scale: dots at 0.5-1mm diameter, lines at 0.5mm thickness, keeping the same layout and rhythm.',
+  },
+  density: {
+    titleKo: '밀도 변주',
+    line: 'Change the density across the set: one tip packed edge to edge, one tip sparse with wide breathing room, and a shrinking trail between them.',
+  },
+  'zero-parts': {
+    titleKo: '핸드페인트 온리',
+    line: 'Every motif on every tip is hand-painted with a brush, so the whole set reads as paint and gel alone.',
+    zeroParts: true,
+  },
+  'boundary-swap': {
+    titleKo: '사선 프렌치',
+    line: 'Redraw every tip boundary as one clean straight diagonal running from the lower left to the upper right, with the design fully contained inside the diagonal tip zone.',
+  },
+  'material-swap': {
+    titleKo: '재질 교체',
+    line: 'Repeat the same motif in a different material on each tip: painted on one, raised tone-on-tone gel on another, cast metal on a third, domed pearl on a fourth.',
+  },
+  'volume-up': {
+    titleKo: '볼륨 업',
+    line: 'Build every raised form one step taller and rounder, so each sculpted element carries a broader highlight and casts a longer shadow.',
+  },
+  'cluster-density': {
+    titleKo: '클러스터 밀집',
+    line: 'Gather the small parts into tight clusters instead of spreading them: one tip holds a dense packed group, its neighbour holds a single graded line of the same parts.',
+  },
+  'palette-rotate': {
+    titleKo: '팔레트 회전',
+    line: 'Keep every shape and placement identical and rotate which colour goes where, so each tip wears a different member of the same palette.',
+  },
+  'motif-swap': {
+    titleKo: '모티프 교체',
+    line: 'Swap the sculpted centrepiece for a different botanical form of the same size and build: a rose becomes a lily, a lily becomes a peony.',
+  },
+  'layer-depth': {
+    titleKo: '레이어 심도',
+    line: 'Vary how many sheer layers each tip carries, from two on the shallowest to five on the deepest, so the depth reads differently tip to tip.',
+  },
+  'swirl-direction': {
+    titleKo: '스월 방향',
+    line: 'Turn the direction each swirl travels: one tip drifts lengthwise, the next diagonally, the next in a slow spiral, all with edges bleeding softly.',
+  },
+  'chrome-accent': {
+    titleKo: '크롬 베인',
+    line: 'Move the fine chrome vein to a different boundary on each tip, and leave two tips with no chrome at all.',
+  },
+  'relief-pattern-swap': {
+    titleKo: '릴리프 교체',
+    line: 'Give each tip a different raised relief pattern at the same height: cable-knit ribs, quilted diamonds, rolling waves, and a plain smooth tip for contrast.',
+  },
+  'finish-remix': {
+    titleKo: '마감 리믹스',
+    line: 'Reassign the finishes across the set so a different tip carries the matte, the cat-eye velvet, and the mirror chrome than before.',
+  },
+  'bloom-density': {
+    titleKo: '블룸 밀도',
+    line: 'Vary how far the blooming colour spreads inside the clear layer: tight compact blooms on one tip, wide diffuse blooms on another.',
+  },
+};
+
+/** 코어의 파츠 예산을 명시 문장으로 — judge가 숫자를 셀 수 있는 형태 */
+function corePartsLine(core: NailCore): string {
+  const [lo, hi] = core.partsBudget.studs;
+  if (core.partsBudget.big === 0 && hi === 0) return ZERO_PARTS_LINE;
+  const bigPart =
+    core.partsBudget.big > 0
+      ? `Exactly ${numberWord(core.partsBudget.big)} tip${core.partsBudget.big === 1 ? '' : 's'} carr${core.partsBudget.big === 1 ? 'ies' : 'y'} a statement part as its centrepiece. `
+      : '';
+  return `${bigPart}Across the rest of the set ${lo}-${hi} small studs, beads, or pearls are placed in total, and every remaining tip is painted gel only.`;
+}
+
+function numberWord(n: number): string {
+  return ['zero', 'one', 'two', 'three', 'four', 'five'][n] ?? String(n);
+}
+
+/**
+ * 코어별 결정적 폴백 플랜 5종 — LLM 없이 코드로 생성.
+ * 코어의 variantOps 순서대로 5개를 뽑고, 부족하면 팔레트 회전으로 채운다.
+ */
+export function fallbackPlansForCore(core: NailCore): VariantPlan[] {
+  const ops = [...core.variantOps];
+  while (ops.length < 5) ops.push('palette-rotate');
+
+  return ops.slice(0, 5).map((op, i) => {
+    const spec = VARIANT_OP_LINES[op] ?? VARIANT_OP_LINES['palette-rotate'];
+    return {
+      id: `v${i + 1}`,
+      title: spec.titleKo,
+      patternLines: [spec.line],
+      partsLine: spec.zeroParts ? ZERO_PARTS_LINE : corePartsLine(core),
+      letteringWord: null,
+    };
+  });
+}
