@@ -12,7 +12,17 @@
  * 그 컷이 UI 카드용 샘플 이미지가 된다.
  */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+// tsx는 Next.js와 달리 .env.local을 자동으로 읽지 않으므로 직접 로드한다.
+for (const line of readFileSync(path.resolve(ROOT, '.env.local'), 'utf8').split('\n')) {
+  const m = line.match(/^([A-Z_]+)=(.*)$/);
+  if (m && !(m[1] in process.env)) process.env[m[1]] = m[2];
+}
 
 const OUT_ROOT = 'ref/results/core-candidates';
 
