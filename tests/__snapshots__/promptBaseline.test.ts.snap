@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`기존 코케트 프롬프트 (회귀 가드) > 프롬프트 문자열이 스냅샷과 일치한다 1`] = `
+"You are a top Korean nail artist presenting a design set inspired by the attached reference photo.
+Create ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.
+
+DESIGN BRIEF — follow every line exactly:
+- Base of every tip: sheer milky nude with a glass-like high-gloss gel finish.
+- Deep French tips — the design lives only inside the tip area, nude zone above stays empty and glossy.
+- Palette: baby pink + baby blue on milky white
+- Length rule (medium tips): the design zone covers 30-45% of each nail — standard deep-french depth.
+- Small polka dots inside the tip area, varied in scale and density per tip.
+
+- PARTS RULE: Exactly one tip carries a single small pearl on its french boundary line. Every other tip is painted gel only — no metal, no gems, no pearls.
+- Exactly one tip carries a single short cursive black script word "Sugar" — written once, on one tip only.
+- METAL PART PHYSICS: every metal part is a FLAT embossed metal stud lying flush ON the nail surface, sealed under a layer of clear gel — glued down like a sticker with slight thickness. Each stud is a SOLID CAST shape with a clean closed outline, exactly the motif silhouette and nothing more. The stud stays fully inside the nail's outline.
+- Mood: kawaii coquette Y2K — sweet, airy, wearable.
+- Every element is hand-paintable by a human artist with gel: slight hand-made micro-variations, natural gel edge highlights, clean crisp edges.
+- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+`;
