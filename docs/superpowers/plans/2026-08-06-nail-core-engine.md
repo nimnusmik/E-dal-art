@@ -78,12 +78,14 @@ import { describe, it, expect } from 'vitest';
 import { allCores, getCore, UNIVERSAL_RULES } from '@/lib/core';
 
 describe('코어 레지스트리', () => {
-  it('등록된 코어를 id로 찾는다', () => {
-    expect(getCore('coquette')?.nameKo).toBe('코케트');
-  });
-
   it('없는 id는 null', () => {
     expect(getCore('nope')).toBeNull();
+  });
+
+  it('등록된 모든 코어를 id로 찾을 수 있다', () => {
+    for (const core of allCores()) {
+      expect(getCore(core.id), core.id).toBe(core);
+    }
   });
 
   it('id는 중복되지 않는다', () => {
@@ -251,12 +253,12 @@ import type { NailCore } from '@/lib/core';
 export const CORES: NailCore[] = [];
 ```
 
-- [ ] **Step 5: 테스트가 실패하는 지점이 바뀐 걸 확인한다**
+- [ ] **Step 5: 테스트가 통과하는지 확인한다**
 
 Run: `npm test -- tests/coreRegistry.test.ts`
-Expected: FAIL — `getCore('coquette')?.nameKo` 가 `undefined` (레지스트리가 비어 있음). 나머지 순회 테스트는 빈 배열이므로 통과.
+Expected: PASS (9 tests)
 
-이 상태로 Task 3에서 코케트를 등록한 뒤 통과시킨다.
+레지스트리가 비어 있어도 통과한다 — 순회 테스트는 등록된 코어에 대한 불변식이고, `getCore('nope')` 는 빈 레지스트리에서도 `null`이다. 코어가 등록되는 Task 3·9에서 같은 불변식이 자동으로 적용된다. **의도적으로 실패를 남기지 않는다.**
 
 - [ ] **Step 6: 타입 검사**
 
@@ -450,10 +452,18 @@ import { coquette } from './coquette';
 export const CORES: NailCore[] = [coquette];
 ```
 
-- [ ] **Step 3: Task 1의 테스트가 이제 전부 통과하는지 확인한다**
+- [ ] **Step 3: 코케트 등록을 확인하는 테스트를 추가한다**
+
+`tests/coreRegistry.test.ts`의 `describe('코어 레지스트리')` 안에 추가한다:
+
+```ts
+  it('코케트가 등록되어 있다', () => {
+    expect(getCore('coquette')?.nameKo).toBe('코케트');
+  });
+```
 
 Run: `npm test -- tests/coreRegistry.test.ts`
-Expected: PASS (9 tests)
+Expected: PASS (10 tests) — Task 1의 순회 불변식(금지 어휘·한글 혼입·범위)이 코케트에도 자동 적용된다
 
 - [ ] **Step 4: 타입 검사**
 
@@ -463,7 +473,7 @@ Expected: 에러 없음
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add config/cores/coquette.ts config/cores/index.ts
+git add config/cores/coquette.ts config/cores/index.ts tests/coreRegistry.test.ts
 git commit -m "feat(core): 코케트 코어 이식 — 검증된 헌법을 레코드로
 
 lib/brief.ts의 PARTS_PHYSICS·LENGTH_RULES 문장을 그대로 옮겨 기준선 확보."
