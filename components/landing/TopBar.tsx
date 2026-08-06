@@ -1,8 +1,8 @@
-import { currentIssue } from '@/lib/issue';
+import { useIssue } from '@/lib/useIssue';
 
 /** 상단 미니 바 — 로고 + 발행호 배지. 스크롤과 무관하게 항상 고정. */
 export default function TopBar() {
-  const issue = currentIssue();
+  const issue = useIssue();
   return (
     <header className="xp-topbar">
       <a className="xp-logo" href="#top">

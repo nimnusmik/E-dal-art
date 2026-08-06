@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { currentIssue } from '@/lib/issue';
+import { useIssue } from '@/lib/useIssue';
 import { HERO_INSPO } from './heroInspo';
 import { beadLayoutAt, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
 
@@ -13,7 +13,7 @@ const AFTER_SRC = '/hero/hand-after.webp';
  * 맨손톱이 이달의 디자인 손톱으로 재탄생한다(heroMorph 타임라인, 무한 루프).
  */
 export default function HeroHand() {
-  const issue = currentIssue();
+  const issue = useIssue();
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const beadRefs = useRef<(HTMLDivElement | null)[]>([]);

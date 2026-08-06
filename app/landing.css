@@ -5,6 +5,7 @@
 /* 초원 배경 공용 — 히어로·갤러리·풋터 CTA가 함께 쓴다 */
 .xp-meadow {
   position: relative;
+  background-color: #498b06; /* 사진 로드 실패·지연 시 흰 글씨가 사라지지 않도록 */
   background-image: url('/landing/meadow.jpg');
   background-size: cover;
   background-position: center 62%;
@@ -91,7 +92,9 @@
   text-align: center;
 }
 
-.xp-head h2 {
+/* .xp-display를 쓴 헤딩은 그쪽 타이포(행간·색)를 그대로 살린다 —
+   여기서 재정의하면 특이도로 이겨버려 .xp-display가 무력화된다 */
+.xp-head h2:not(.xp-display) {
   font-family: var(--font-display);
   font-size: clamp(28px, 4.4vw, 46px);
   line-height: 1.14;
@@ -118,7 +121,14 @@
 .is-revealed.xp-reveal { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .xp-reveal { transition-duration: 0.01ms; }
+  /* 지연까지 없애야 카드가 순차적으로 툭툭 나타나지 않는다 */
+  .xp-reveal { transition-duration: 0.01ms; transition-delay: 0s; }
+  .xp-cta { transition: none; }
+}
+
+/* JS가 없으면 IntersectionObserver가 못 돌아 본문이 영영 안 보인다 */
+@media (scripting: none) {
+  .xp-reveal { opacity: 1; transform: none; }
 }
 
 /* ─── 상단 바 ────────────────────────────────────────────────── */
@@ -275,7 +285,13 @@
 
 .xp-hero-cue {
   position: absolute;
-  bottom: 18px;
+  /* 기준이 뷰포트가 아니라 .xp-hero(높이 1300px대)라, bottom으로 두면 첫 화면
+     한참 아래에 찍혀 스크롤 유도 기능을 못 한다. 첫 화면 하단에 맞춘다 */
+  top: calc(100dvh - 40px);
+  bottom: auto;
+  /* 이 지점은 손 무대(.hand-stage, z-index:1)와 겹친다 — 명시적으로 위에 둬야
+     손 이미지에 가려지지 않는다 */
+  z-index: 2;
   left: 50%;
   transform: translateX(-50%);
   font-size: 11px;
@@ -536,6 +552,8 @@
 }
 
 .xp-scene > p {
+  /* .xp-card p의 margin-top이 flex gap과 더해져 이 문단만 벌어진다 */
+  margin-top: 0;
   font-size: 13.5px;
   line-height: 1.75;
   color: var(--muted);

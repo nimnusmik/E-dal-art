@@ -54,14 +54,13 @@ a { color: inherit; text-decoration: none; }
 
 /* ─── 타이포 유틸 ────────────────────────────────────────────── */
 .overline {
-  font-family: var(--font-latin); /* Playfair — 라틴 편집형 액센트 */
+  font-family: var(--font-latin); /* 라틴 편집형 액센트 (--font-latin) */
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
-.serif { font-family: var(--font-serif); }
 
 .headline {
   font-family: var(--font-serif);
@@ -661,14 +660,6 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 
 .tipset-block { display: flex; flex-direction: column; gap: 12px; }
 
-.tipset-img {
-  width: 100%;
-  display: block;
-  border-radius: var(--radius-img);
-  border: 1px solid var(--line-soft);
-  animation: fadeIn 0.6s;
-}
-
 .actions { display: flex; flex-direction: column; gap: 12px; }
 
 .actions-row {
@@ -751,12 +742,15 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   html { scroll-behavior: auto; }
   .hand-img, .inspo-cut { animation: none; opacity: 1; }
   .hero-bead, .hero-flash { display: none; }
+  /* JS 없이도 완성컷이 보이도록 — reduced는 useState(false)로 시작하므로
+     is-static 클래스는 하이드레이션 후에야 붙는다 */
+  .hand-after { opacity: 1; }
   /* hover 모션도 함께 생략 */
   .inspo-cut, .inspo-cut:hover { transition: none; transform: none; }
   .progress-fill { animation: progress-pulse 2s ease-in-out infinite; width: 60%; }
   /* 셔머 대신 잔잔한 펄스 */
   .variant-skeleton { animation: progress-pulse 2s ease-in-out infinite; background: var(--bg-deep); }
-  .generating-msg, .result-img, .tipset-img, .error-toast, .variant-card img { animation-duration: 0.01ms; }
+  .generating-msg, .result-img, .error-toast, .variant-card img { animation-duration: 0.01ms; }
 }
 
 @keyframes progress-pulse {

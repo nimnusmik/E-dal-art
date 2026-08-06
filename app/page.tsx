@@ -6,7 +6,7 @@ import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
 import ResultScreen from '@/components/ResultScreen';
 import Landing from '@/components/landing/Landing';
-import { currentIssue } from '@/lib/issue';
+import { useIssue } from '@/lib/useIssue';
 import { fileToResizedPayload } from '@/lib/resize';
 import type { NailBrief } from '@/lib/brief';
 import type { Mood, NailLength, NailShape, PartsIntensity, VariantPlan } from '@/lib/types';
@@ -54,6 +54,7 @@ type Phase = 'start' | 'analyzing' | 'generating' | 'result' | 'blocked-user' | 
 const MAX_PHOTOS = 3;
 
 export default function Home() {
+  const issue = useIssue();
   const [phase, setPhase] = useState<Phase>('start');
   const [photos, setPhotos] = useState<TrayPhoto[]>([]);
   const [shape, setShape] = useState<NailShape>('almond');
@@ -300,7 +301,7 @@ export default function Home() {
           <>
             <div className="xp-tool-head">
               <span className="xp-pill t-yellow" suppressHydrationWarning>
-                Vol.{currentIssue().vol}
+                Vol.{issue.vol}
               </span>
               {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
               <h2>

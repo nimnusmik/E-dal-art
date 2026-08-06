@@ -1,8 +1,8 @@
-import { currentIssue } from '@/lib/issue';
+import { useIssue } from '@/lib/useIssue';
 
 /** 초원 배경 초대형 타이포 CTA + 미니 풋터 바 */
 export default function FooterCta() {
-  const issue = currentIssue();
+  const issue = useIssue();
   return (
     <section className="xp-meadow xp-footer-cta" aria-label="시안 만들러 가기">
       <div className="xp-footer-inner">

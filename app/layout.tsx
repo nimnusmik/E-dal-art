@@ -29,6 +29,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Black+Han+Sans&display=swap"
         />
+        {/* 모션 저감 사용자에게는 완성컷이 첫 화면 이미지가 되므로 미리 받는다 */}
+        <link
+          rel="preload"
+          as="image"
+          href="/hero/hand-after.webp"
+          media="(prefers-reduced-motion: reduce)"
+        />
       </head>
       <body>{children}</body>
     </html>
