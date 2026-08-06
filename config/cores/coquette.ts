@@ -27,10 +27,10 @@ export const coquette: NailCore = {
   textureGrammar: [],
   finishMix: 'One single finish across the whole set: glass-like high gloss on every tip.',
 
-  // lib/brief.ts:192 PARTS_PHYSICS 그대로
+  // lib/brief.ts:192 PARTS_PHYSICS 이식, 선행 "- " 제거 (프롬프트 조립기가 불릿 공급)
   partsPhysics:
     'METAL PART PHYSICS: every metal part is a FLAT embossed metal stud lying flush ON the nail surface, sealed under a layer of clear gel — glued down like a sticker with slight thickness. Each stud is a SOLID CAST shape with a clean closed outline, exactly the motif silhouette and nothing more. The stud stays fully inside the nail\'s outline.',
-  // STYLE_ANALYSIS.md E절: 빅파츠 1개 + 미니 스터드 3~6개
+  // STYLE_ANALYSIS.md E절: 빅참 1개 + 미니 스터드 3~6개
   partsBudget: { big: 1, studs: [3, 6] },
   allowedMaterials: ['painted', 'metal', 'pearl'],
   motifBudget: 3,
