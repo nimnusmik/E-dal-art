@@ -57,5 +57,12 @@ export const decoden: NailCore = {
   variantOps: ['material-swap', 'volume-up', 'cluster-density', 'palette-rotate', 'motif-swap'],
   attachPhoto: false,
 
-  judge: { minPartsTips: 4, maxPartsTips: 10, allowGelVolume: true, minNegativeSpace: 0 },
+  judge: {
+    minPartsTips: 4,
+    maxPartsTips: 10,
+    allowGelVolume: true,
+    minNegativeSpace: 0,
+    requiresGelVolume: true,
+    expectsFinishVariety: true,
+  },
 };

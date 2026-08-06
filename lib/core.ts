@@ -58,8 +58,14 @@ export interface NailCore {
   judge: {
     minPartsTips: number;
     maxPartsTips: number;
+    /** 이 코어가 조소·융기 젤 볼륨을 "허용"하는가 (필수는 아님) — 프롬프트·표시용 의미만 갖는다.
+     *  채점에서 볼륨 관찰을 반영할지는 judge.requiresGelVolume이 따로 결정한다. */
     allowGelVolume: boolean;
     minNegativeSpace: number;
+    /** 이 코어의 정체성이 볼륨을 "요구"하는가 — true면 raisedVolumeObserved 부재를 감점한다 */
+    requiresGelVolume: boolean;
+    /** 이 코어가 세트 전체에서 마감을 의도적으로 섞는가 — true면 finishVarietyObserved를 채점한다 */
+    expectsFinishVariety: boolean;
   };
 }
 

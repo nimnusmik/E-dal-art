@@ -4,6 +4,7 @@ import type { NailBrief } from './brief';
 import { buildBriefPrompt } from './brief';
 import { generateImage } from './provider';
 import type { NailCore } from './core';
+import type { PhotoTake } from './photoTake';
 
 /**
  * 3단계: vision 검수기 — 생성 결과를 브리프 대비 채점한다.
@@ -41,7 +42,10 @@ export interface JudgedImage {
   image: ImagePayload;
   judgement: NailJudgement | null; // null = 검수 호출 실패 (판정 불가 → 보수적으로 탈락 취급)
   pass: boolean;
-  score: number; // 0~6, 탈락작 중 최선 선택용
+  // 0~6, 탈락작 중 최선 선택용. 이 스케일은 옛 verdict()에만 적용된다 — 체크 개수가 고정
+  // 6개이기 때문. 코어 기준 점수(verdictForCore)는 코어마다 체크 개수가 달라 스케일이
+  // 다르므로 score와 함께 maxScore를 반환한다. 두 스케일을 섞어 비교하지 말 것.
+  score: number;
 }
 
 /** 브리프에서 기대 파츠 팁 수 범위를 추정 — partsLine의 명시 숫자 기반, 허용 오차 ±1 */
@@ -224,7 +228,13 @@ async function mockJudgement(): Promise<NailJudgement> {
 /* 코어 기반 판정 (스펙 6절) — 기존 verdict은 옛 경로용으로 남겨둔다      */
 /* ------------------------------------------------------------------ */
 
-/** 원본 대비 충실도 3항목을 더한 검수 결과 */
+/**
+ * 원본 대비 충실도 3항목 + 코어 정체성 관찰 3항목을 더한 검수 결과.
+ * 관찰 3항목(raisedVolumeObserved·finishVarietyObserved·bareSurfaceShare)은 모델이 항상
+ * 답해야 하는 필수 필드다 (Fix 7) — optional로 두면 "관찰 안 함"과 "관찰했는데 false/0"이
+ * Boolean(undefined) === false로 뒤섞여 결측이 실제 결함과 동일하게 감점된다.
+ * 채점에서 실제로 반영할지 말지는 verdictForCore가 코어별 judge 플래그로 따로 결정한다.
+ */
 export interface CoreJudgement extends NailJudgement {
   /** 추출 팔레트의 역할·비율이 지켜졌나 */
   paletteFidelity: boolean;
@@ -232,22 +242,16 @@ export interface CoreJudgement extends NailJudgement {
   motifFidelity: number;
   /** 선택한 코어의 정체성(여백률·질감·파츠 밀도)이 드러나나 */
   coreFidelity: boolean;
-  /**
-   * 융기·조소된 젤 볼륨이 눈에 보이게 존재하는가.
-   * allowGelVolume이 true인 코어에서만 채점에 반영된다 — 볼륨을 안 쓰는 코어는
-   * 이 값이 false여도 감점되지 않는다.
-   */
-  raisedVolumeObserved?: boolean;
-  /**
-   * 세트 전체에서 마감(광택/매트/크롬 등)이 2종 이상 섞여 보이는가.
-   * finishMix가 "여러 마감을 섞으라"고 요구하는 코어에서만 채점에 반영된다.
-   */
-  finishVarietyObserved?: boolean;
-  /**
-   * 관찰된 미장식·맨 표면 비율(0~1). 조밀한 커버리지를 요구하는 코어(minNegativeSpace가
-   * 낮은 코어)에서만 채점에 반영된다 — 파츠 개수만으론 "60% 맨손톱" 같은 결과를 못 잡는다.
-   */
-  bareSurfaceShare?: number;
+  /** 융기·조소된 젤 볼륨이 눈에 보이게 존재하는가. core.judge.requiresGelVolume이 true인
+   *  코어에서만 채점에 반영된다 — 볼륨을 요구하지 않는 코어는 부재로 감점되지 않는다. */
+  raisedVolumeObserved: boolean;
+  /** 세트 전체에서 마감(광택/매트/크롬 등)이 2종 이상 섞여 보이는가.
+   *  core.judge.expectsFinishVariety가 true인 코어에서만 채점에 반영된다. */
+  finishVarietyObserved: boolean;
+  /** 관찰된 미장식·맨 표면 비율(0~1). "bare"의 정의는 coreJudgeInstruction에 명시된다
+   *  (베이스 색만 있고 모티프·텍스처·파츠가 전혀 없는 면적). 모든 코어에서 코어 자신의
+   *  negativeSpace 상한 대비로 채점된다 — 파츠 개수만으론 "60% 맨손톱" 같은 결과를 못 잡는다. */
+  bareSurfaceShare: number;
 }
 
 /**
@@ -260,14 +264,19 @@ export function coreExpectedParts(core: NailCore): { min: number; max: number } 
 }
 
 /**
- * 코어 기준 판정. 즉시 탈락은 3종만 — 물리 위반·AI 티·파츠 개수 위반.
- * 충실도 3항목(palette/motif/core)은 D8에 따라 점수만 기록하고 탈락시키지 않는다.
+ * 코어 기준 판정. 즉시 탈락은 3종만 — 물리 위반·AI 티·파츠 개수 위반(재생성 루프가 없으므로
+ * 이 세 가지 외에는 절대 pass를 false로 만들지 않는다). 충실도·관찰 항목들은 D8에 따라
+ * 점수만 기록하고 탈락시키지 않는다.
+ *
+ * 점수 스케일은 코어마다 다르다 — 코어가 실제로 요구하는 정체성 항목만 채점에 들어가므로
+ * (볼륨 요구 코어는 +1, 마감 혼합 요구 코어는 +1) 체크 총량이 코어별로 8~11 사이로 갈린다.
+ * 그래서 score 단독으로는 코어 간 비교가 불가능하다 — 항상 maxScore와 함께 비율로 비교할 것.
  */
 export function verdictForCore(
   j: CoreJudgement,
   core: NailCore,
   anchorCount: number,
-): { pass: boolean; score: number } {
+): { pass: boolean; score: number; maxScore: number } {
   const { min, max } = coreExpectedParts(core);
   const countOk = j.metalTipCount >= min && j.metalTipCount <= max;
   const partsOk = j.partsMatch && countOk;
@@ -284,43 +293,56 @@ export function verdictForCore(
     j.coreFidelity,
   ];
 
-  // 코어가 실제로 요구하는 정체성만 관찰해 점수에 반영한다 (탈락 게이트가 아니다 — D8).
-  // 볼륨을 허용하지 않는 코어는 볼륨 부재로 감점하지 않고, 마감 혼합·조밀 커버리지를
-  // 요구하지 않는 코어는 그 관찰 자체를 채점에서 뺀다.
-  if (core.judge.allowGelVolume) {
-    checks.push(Boolean(j.raisedVolumeObserved));
+  // 코어가 실제로 요구하는 정체성만 점수에 반영한다 (탈락 게이트가 아니다 — D8).
+  // 볼륨을 요구하지 않는 코어는 볼륨 부재로 감점하지 않고, 마감 혼합을 요구하지 않는
+  // 코어는 그 관찰 자체를 채점에서 뺀다. allowGelVolume은 "허용" 의미만 가지므로 여기서는
+  // 쓰지 않는다 — 채점 여부는 requiresGelVolume(="요구")로만 결정한다.
+  if (core.judge.requiresGelVolume) {
+    checks.push(j.raisedVolumeObserved);
   }
-  if (expectsFinishVariety(core)) {
-    checks.push(Boolean(j.finishVarietyObserved));
+  if (core.judge.expectsFinishVariety) {
+    checks.push(j.finishVarietyObserved);
   }
-  if (expectsDenseCoverage(core)) {
-    const maxBare = core.negativeSpace[1] + BARE_SURFACE_TOLERANCE;
-    checks.push(j.bareSurfaceShare != null && j.bareSurfaceShare <= maxBare);
-  }
+  // 맨 표면 비율은 모든 코어에서 채점한다 — 코어 자신의 negativeSpace 상한 대비로 항상
+  // 의미 있는 비교이기 때문. 예전에는 minNegativeSpace<0.5인 코어만 채점해서, 상한이
+  // 0.7인 코케트 같은 코어의 "95% 맨손톱" 세트가 이 체크 없이 만점을 받는 사각지대가 있었다.
+  const maxBare = core.negativeSpace[1] + BARE_SURFACE_TOLERANCE;
+  checks.push(j.bareSurfaceShare <= maxBare);
 
   const score = checks.filter(Boolean).length;
 
   const pass = j.physicsOk && j.cleanRender && partsOk;
-  return { pass, score };
+  return { pass, score, maxScore: checks.length };
 }
 
-/** finishMix가 "여러 마감을 섞으라"고 명시하는 코어인가 (데코덴·텍스처구미 등) */
-function expectsFinishVariety(core: NailCore): boolean {
-  return /mix finishes/i.test(core.finishMix);
-}
-
-/** 여백이 거의 없는(조밀한 커버리지를 쓰는) 코어인가 — 이 경우에만 맨 표면 비율을 채점한다 */
-function expectsDenseCoverage(core: NailCore): boolean {
-  return core.judge.minNegativeSpace < 0.5;
-}
-
-/** 관찰치의 자연스러운 흔들림을 흡수하는 여유치 */
+/**
+ * 관찰치의 자연스러운 흔들림을 흡수하는 여유치.
+ * 임시값 — 실측 파일럿 데이터가 없어 임의로 잡았다. 실제 파일럿 결과가 쌓이면
+ * (bareSurfaceShare 관찰의 모델 재현성 데이터로) 재보정해야 한다.
+ */
 const BARE_SURFACE_TOLERANCE = 0.15;
 
-/** 코어 기반 검수 지시문 — 코어가 실제로 요구하는 것만 관찰하게 한다 (게이트 판정은 코드가 함) */
-export function coreJudgeInstruction(core: NailCore): string {
+/**
+ * 코어 기반 검수 지시문 — 코어가 실제로 요구하는 것만 관찰하게 한다 (게이트 판정은 코드가 함).
+ * source photo(s) + generated image를 모두 첨부하므로, 어느 첨부가 무엇인지 반드시 못박고
+ * 원본 팔레트·anchor 목록을 텍스트로 함께 준다 — 그렇지 않으면 paletteFidelity·motifFidelity가
+ * 비교 대상 없이 답해야 하는 확인 불가능한 질문이 된다 (Fix 1).
+ */
+export function coreJudgeInstruction(core: NailCore, photoTake: PhotoTake): string {
+  const paletteLines = photoTake.palette
+    .map((p) => `- ${p.nameEn} — role: ${p.role}, surface share: ~${Math.round(p.ratio * 100)}%`)
+    .join('\n');
+  const anchorLines =
+    photoTake.fidelityAnchors.length > 0
+      ? photoTake.fidelityAnchors.map((a, i) => `${i + 1}. ${a}`).join('\n')
+      : '(none listed — treat motifFidelity as not applicable and report 0)';
+
   return `You are a strict quality inspector at a Korean press-on nail factory.
-The attached image was generated for the "${core.id}" nail-art core below. Inspect the image and report ONLY what you observe — verdicts are computed elsewhere.
+
+You are given two kinds of attached images, always in this order:
+1. SOURCE INSPIRATION PHOTO(S) — the original photo(s) the client brought in. There may be one or more of these.
+2. GENERATED TIP BOARD — the LAST attached image only. This is the finished flat-lay tip set that was generated for the "${core.id}" nail-art core, and it is the ONLY image you are grading.
+Do not confuse the two: judge the GENERATED TIP BOARD against the CORE RULES and against the SOURCE PALETTE / SOURCE FIDELITY ANCHORS below, which describe the source inspiration photo(s). Report ONLY what you observe — verdicts are computed elsewhere.
 
 CORE RULES:
 - Base/structure: ${core.baseLine} / ${core.structure}
@@ -329,20 +351,26 @@ CORE RULES:
 - Allowed materials: ${core.allowedMaterials.join(', ')}
 - Forbidden: ${core.forbidden.join(' | ')}
 
+SOURCE PALETTE (extracted from the source inspiration photo(s) — this is what paletteFidelity checks against):
+${paletteLines}
+
+SOURCE FIDELITY ANCHORS (must-survive elements from the source inspiration photo(s) — this is what motifFidelity counts):
+${anchorLines}
+
 Report:
 - baseMatch: base color/sheerness and structure follow the core rules (design contained where specified, negative space preserved as intended).
-- paletteMatch: all colors belong to the intended palette; true only if there is no clearly foreign color (small neutral accents are fine).
+- paletteMatch: all colors in the GENERATED TIP BOARD belong to the intended palette; true only if there is no clearly foreign color (small neutral accents are fine).
 - partsMatch: judge ONLY whether the KIND of parts and their PLACEMENT match the core rules. partsMatch MUST stay true even when there are more or fewer decorated tips than the budget — quantity is reported separately in metalTipCount and judged elsewhere.
 - metalTipCount: how many tips carry any metal stud, gem, pearl, or built-up part. Count carefully, tip by tip.
 - letteringCount: how many tips show script lettering.
 - physicsOk: every part lies flat or is built up from the nail surface and everything is buildable by a human artist with gel — no hanging/dangling pieces, no floating elements, no impossible shapes.
 - cleanRender: crisp edges, no melted or warped tips, no extra objects, no text overlays.
-- paletteFidelity: the palette's roles and proportions from the source photo are preserved.
-- motifFidelity: how many of the source photo's motifs are still recognizable in the result.
-- coreFidelity: the core's own identity (negative space ratio, texture, part density) reads clearly in the result.
+- paletteFidelity: true only if the GENERATED TIP BOARD's colors match the SOURCE PALETTE above in both which colors are used AND roughly how much surface each one covers — matching hues with very different proportions is NOT a fidelity match.
+- motifFidelity: count how many of the SOURCE FIDELITY ANCHORS listed above are still recognizable in the GENERATED TIP BOARD. Report the count (an integer), not a boolean.
+- coreFidelity: the core's own identity (negative space ratio, texture, part density) reads clearly in the GENERATED TIP BOARD.
 - raisedVolumeObserved: true only if sculpted or raised gel volume is clearly visible standing up off the nail surface (not just flat paint).
 - finishVarietyObserved: true only if more than one distinct surface finish (glossy / matte / chrome / velvet / textured) is visible across the set, not the same finish repeated on every tip.
-- bareSurfaceShare: your best estimate, as a number between 0 and 1, of the fraction of total nail surface across the set that is left undecorated/bare.
+- bareSurfaceShare: your best estimate, as a number between 0 and 1, of the fraction of total nail surface across the set that is "bare". Bare means: base color only, with no motif, no texture, and no part on that area — a tip that is fully covered in a single flat color but has no motif/texture/part on it still counts as bare.
 - notes: one short Korean sentence — the single most important observation.`;
 }
 
@@ -372,15 +400,30 @@ const CORE_JUDGE_SCHEMA = {
   ],
 };
 
-/** 생성 이미지 1장을 코어 기준으로 채점. 일시 오류 대비 1회 재시도, 최종 실패 시 null */
-export async function judgeImageForCore(image: ImagePayload, core: NailCore): Promise<CoreJudgement | null> {
-  const first = await judgeOnceForCore(image, core);
+/**
+ * 생성 이미지 1장을 코어 기준으로 채점. source photo(s)도 함께 첨부해야 paletteFidelity·
+ * motifFidelity가 답변 가능한 질문이 된다 (Fix 1) — 생성 이미지 1장만 보내면 모델이 비교할
+ * "원본"이 없어 두 필드가 사실상 임의값이 된다.
+ * 일시 오류 대비 1회 재시도, 최종 실패 시 null.
+ */
+export async function judgeImageForCore(
+  generatedImage: ImagePayload,
+  sourcePhotos: ImagePayload[],
+  core: NailCore,
+  photoTake: PhotoTake,
+): Promise<CoreJudgement | null> {
+  const first = await judgeOnceForCore(generatedImage, sourcePhotos, core, photoTake);
   if (first) return first;
   await new Promise((r) => setTimeout(r, 1500));
-  return judgeOnceForCore(image, core);
+  return judgeOnceForCore(generatedImage, sourcePhotos, core, photoTake);
 }
 
-async function judgeOnceForCore(image: ImagePayload, core: NailCore): Promise<CoreJudgement | null> {
+async function judgeOnceForCore(
+  generatedImage: ImagePayload,
+  sourcePhotos: ImagePayload[],
+  core: NailCore,
+  photoTake: PhotoTake,
+): Promise<CoreJudgement | null> {
   if (process.env.GEMINI_MOCK === '1') return mockCoreJudgement();
   try {
     const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
@@ -388,8 +431,10 @@ async function judgeOnceForCore(image: ImagePayload, core: NailCore): Promise<Co
     const response = await client.models.generateContent({
       model,
       contents: [
-        { inlineData: { data: image.data, mimeType: image.mimeType } },
-        { text: coreJudgeInstruction(core) },
+        // 순서가 지시문의 "첫 N장 = 원본, 마지막 1장 = 생성 이미지" 서술과 일치해야 한다.
+        ...sourcePhotos.map((img) => ({ inlineData: { data: img.data, mimeType: img.mimeType } })),
+        { inlineData: { data: generatedImage.data, mimeType: generatedImage.mimeType } },
+        { text: coreJudgeInstruction(core, photoTake) },
       ],
       config: { responseMimeType: 'application/json', responseSchema: CORE_JUDGE_SCHEMA },
     });
@@ -399,7 +444,12 @@ async function judgeOnceForCore(image: ImagePayload, core: NailCore): Promise<Co
   }
 }
 
-/** 코어 기반 검수 응답 파싱 — 기존 parseJudgement와 별도 경로 (신규 관찰 3필드 포함) */
+/**
+ * 코어 기반 검수 응답 파싱 — 기존 parseJudgement와 별도 경로.
+ * 신규 관찰 3필드(raisedVolumeObserved·finishVarietyObserved·bareSurfaceShare)는 CoreJudgement에서
+ * required이므로(Fix 7), 여기서도 타입이 안 맞거나 없으면 전체를 null로 거부한다 — optional
+ * 취급하면 "관찰 안 함"과 "false/0으로 관찰함"이 구분 안 되어 결측이 실제 결함처럼 감점된다.
+ */
 export function parseCoreJudgement(text: string): CoreJudgement | null {
   const base = parseJudgement(text);
   if (!base) return null;
@@ -414,16 +464,18 @@ export function parseCoreJudgement(text: string): CoreJudgement | null {
   if (typeof j.paletteFidelity !== 'boolean') return null;
   if (typeof j.motifFidelity !== 'number') return null;
   if (typeof j.coreFidelity !== 'boolean') return null;
-  const result: CoreJudgement = {
+  if (typeof j.raisedVolumeObserved !== 'boolean') return null;
+  if (typeof j.finishVarietyObserved !== 'boolean') return null;
+  if (typeof j.bareSurfaceShare !== 'number') return null;
+  return {
     ...base,
     paletteFidelity: j.paletteFidelity,
     motifFidelity: j.motifFidelity,
     coreFidelity: j.coreFidelity,
+    raisedVolumeObserved: j.raisedVolumeObserved,
+    finishVarietyObserved: j.finishVarietyObserved,
+    bareSurfaceShare: j.bareSurfaceShare,
   };
-  if (typeof j.raisedVolumeObserved === 'boolean') result.raisedVolumeObserved = j.raisedVolumeObserved;
-  if (typeof j.finishVarietyObserved === 'boolean') result.finishVarietyObserved = j.finishVarietyObserved;
-  if (typeof j.bareSurfaceShare === 'number') result.bareSurfaceShare = j.bareSurfaceShare;
-  return result;
 }
 
 async function mockCoreJudgement(): Promise<CoreJudgement> {

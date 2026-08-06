@@ -56,5 +56,12 @@ export const textureGummy: NailCore = {
   variantOps: ['relief-pattern-swap', 'finish-remix', 'bloom-density', 'palette-rotate', 'rescale'],
   attachPhoto: false,
 
-  judge: { minPartsTips: 0, maxPartsTips: 2, allowGelVolume: true, minNegativeSpace: 0.1 },
+  judge: {
+    minPartsTips: 0,
+    maxPartsTips: 2,
+    allowGelVolume: true,
+    minNegativeSpace: 0.1,
+    requiresGelVolume: true,
+    expectsFinishVariety: true,
+  },
 };

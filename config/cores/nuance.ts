@@ -56,5 +56,12 @@ export const nuance: NailCore = {
   variantOps: ['palette-rotate', 'layer-depth', 'swirl-direction', 'density', 'chrome-accent'],
   attachPhoto: false,
 
-  judge: { minPartsTips: 0, maxPartsTips: 2, allowGelVolume: false, minNegativeSpace: 0.2 },
+  judge: {
+    minPartsTips: 0,
+    maxPartsTips: 2,
+    allowGelVolume: false,
+    minNegativeSpace: 0.2,
+    requiresGelVolume: false,
+    expectsFinishVariety: false,
+  },
 };

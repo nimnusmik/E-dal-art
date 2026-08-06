@@ -58,5 +58,12 @@ export const coquette: NailCore = {
   variantOps: ['invert', 'rescale', 'density', 'zero-parts', 'boundary-swap'],
   attachPhoto: false,
 
-  judge: { minPartsTips: 1, maxPartsTips: 2, allowGelVolume: false, minNegativeSpace: 0.55 },
+  judge: {
+    minPartsTips: 1,
+    maxPartsTips: 2,
+    allowGelVolume: false,
+    minNegativeSpace: 0.55,
+    requiresGelVolume: false,
+    expectsFinishVariety: false,
+  },
 };
