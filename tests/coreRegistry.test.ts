@@ -67,4 +67,8 @@ describe('코어 레지스트리', () => {
       expect(core.judge.minPartsTips, core.id).toBeLessThanOrEqual(core.judge.maxPartsTips);
     }
   });
+
+  it('코케트가 등록되어 있다', () => {
+    expect(getCore('coquette')?.nameKo).toBe('코케트');
+  });
 });
