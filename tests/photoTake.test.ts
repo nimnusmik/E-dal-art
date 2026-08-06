@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parsePhotoTake } from '@/lib/photoTake';
+import { parsePhotoTake, extractPhotoTake } from '@/lib/photoTake';
 
 const VALID = {
   palette: [
@@ -73,5 +73,23 @@ describe('parsePhotoTake', () => {
     const take = parsePhotoTake(JSON.stringify(bad));
     const sum = take!.palette.reduce((s, p) => s + p.ratio, 0);
     expect(sum).toBeCloseTo(1, 5);
+  });
+});
+
+describe('extractPhotoTake (mock)', () => {
+  it('GEMINI_MOCK=1이면 목 결과를 반환한다', async () => {
+    process.env.GEMINI_MOCK = '1';
+    const take = await extractPhotoTake([]);
+    expect(take?.palette.length).toBeGreaterThan(0);
+    expect(take?.palette.some((p) => p.role === 'base')).toBe(true);
+    delete process.env.GEMINI_MOCK;
+  });
+
+  it('목 결과의 ratio 합계는 1', async () => {
+    process.env.GEMINI_MOCK = '1';
+    const take = await extractPhotoTake([]);
+    const sum = take!.palette.reduce((s, p) => s + p.ratio, 0);
+    expect(sum).toBeCloseTo(1, 5);
+    delete process.env.GEMINI_MOCK;
   });
 });

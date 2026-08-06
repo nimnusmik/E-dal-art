@@ -1,4 +1,6 @@
+import { GoogleGenAI, Type } from '@google/genai';
 import type { Material } from './core';
+import type { ImagePayload } from './types';
 
 /**
  * 📷 사진에서만 뽑는 것 — 팔레트·모티프·무드 (스펙 4절 소유권 분리).
@@ -139,4 +141,124 @@ function parseMotifs(value: unknown): PhotoMotif[] | null {
   }
   // 상한 초과는 지배력 높은 순으로 자른다 (사진 정보를 버리는 유일한 지점)
   return [...motifs].sort((a, b) => b.prominence - a.prominence).slice(0, MOTIF_LIMIT);
+}
+
+/** 사진 → PhotoTake. 일시 오류 대비 1회 재시도, 최종 실패 시 null */
+export async function extractPhotoTake(images: ImagePayload[]): Promise<PhotoTake | null> {
+  const first = await extractOnce(images);
+  if (first) return first;
+  await new Promise((r) => setTimeout(r, 2000));
+  return extractOnce(images);
+}
+
+async function extractOnce(images: ImagePayload[]): Promise<PhotoTake | null> {
+  if (process.env.GEMINI_MOCK === '1') return mockPhotoTake();
+  try {
+    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
+    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await client.models.generateContent({
+      model,
+      contents: [
+        ...images.map((img) => ({ inlineData: { data: img.data, mimeType: img.mimeType } })),
+        { text: EXTRACT_INSTRUCTION },
+      ],
+      config: { responseMimeType: 'application/json', responseSchema: PHOTO_TAKE_SCHEMA },
+    });
+    return parsePhotoTake(response.text ?? '');
+  } catch {
+    return null;
+  }
+}
+
+const EXTRACT_INSTRUCTION = `You are a veteran Korean nail artist reading inspiration photos a client brought in.
+Extract ONLY three things: the colour palette, the motif vocabulary, and the mood.
+Do NOT describe layout, structure, french depth, negative space, or where things sit on the nail — a separate style system owns all of that. Describing placement will corrupt the pipeline.
+
+## palette
+List 3-5 colours. For each: hex, a plain English colour name, its role, and how much of the surface it covers.
+- role "base" = the ground colour the nail starts from
+- role "main" = the colours the design is drawn in
+- role "accent" = small-quantity colours used for lines, dots, or metal
+- ratio: your estimate of surface share, all ratios summing to about 1.0
+
+## motifs
+List every distinct motif you can see, up to 8. For each:
+- name: the motif itself as a noun phrase ("polka dot", "leopard print", "baroque relief", "cable knit", "hand-painted rose"). No placement words.
+- material: how it is physically made — "painted" (brush on gel), "gel-volume" (raised clear or tinted gel), "metal" (cast stud or bead), "pearl" (domed pearl), "chrome" (mirror powder), "sculpted" (hand-shaped 3D gel or acrylic form)
+- scale: micro (under 1mm) / standard / big (3mm+)
+- prominence: 3 = dominates the photo, 2 = clearly present, 1 = minor detail
+If the photo is a plain one-tone manicure with no motifs, return an empty array.
+
+## mood
+- moodKo: 2-3 short Korean mood words
+- moodEn: one short English mood sentence
+- tone: overall saturation, brightness, and colour temperature
+- fidelityAnchors: 2-3 short English phrases naming what MUST survive for the client to recognise their photo`;
+
+const PHOTO_TAKE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    palette: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          hex: { type: Type.STRING },
+          nameEn: { type: Type.STRING },
+          role: { type: Type.STRING, enum: ['base', 'main', 'accent'] },
+          ratio: { type: Type.NUMBER },
+        },
+        required: ['hex', 'nameEn', 'role', 'ratio'],
+      },
+    },
+    motifs: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          name: { type: Type.STRING },
+          material: {
+            type: Type.STRING,
+            enum: ['painted', 'gel-volume', 'metal', 'pearl', 'chrome', 'sculpted'],
+          },
+          scale: { type: Type.STRING, enum: ['micro', 'standard', 'big'] },
+          prominence: { type: Type.INTEGER },
+        },
+        required: ['name', 'material', 'scale', 'prominence'],
+      },
+    },
+    moodKo: { type: Type.ARRAY, items: { type: Type.STRING } },
+    moodEn: { type: Type.STRING },
+    tone: {
+      type: Type.OBJECT,
+      properties: {
+        saturation: { type: Type.STRING, enum: ['muted', 'medium', 'vivid'] },
+        brightness: { type: Type.STRING, enum: ['dark', 'mid', 'light'] },
+        temperature: { type: Type.STRING, enum: ['cool', 'neutral', 'warm'] },
+      },
+      required: ['saturation', 'brightness', 'temperature'],
+    },
+    fidelityAnchors: { type: Type.ARRAY, items: { type: Type.STRING } },
+  },
+  required: ['palette', 'motifs', 'moodKo', 'moodEn', 'tone', 'fidelityAnchors'],
+};
+
+/** 로컬 개발용 목 (GEMINI_MOCK=1) — 실제 호출·과금 없이 전체 흐름 확인 */
+async function mockPhotoTake(): Promise<PhotoTake> {
+  await new Promise((r) => setTimeout(r, 300));
+  return {
+    palette: [
+      { hex: '#efe0dc', role: 'base', ratio: 0.6, nameEn: 'milky nude' },
+      { hex: '#f5c8d7', role: 'main', ratio: 0.3, nameEn: 'baby pink' },
+      { hex: '#221c1c', role: 'accent', ratio: 0.1, nameEn: 'warm black' },
+    ],
+    motifs: [
+      { name: 'polka dot', material: 'painted', scale: 'standard', prominence: 3 },
+      { name: 'small pearl', material: 'pearl', scale: 'micro', prominence: 1 },
+    ],
+    moodKo: ['코케트', '파스텔'],
+    moodEn: 'kawaii coquette Y2K — sweet, airy, wearable.',
+    tone: { saturation: 'muted', brightness: 'light', temperature: 'warm' },
+    fidelityAnchors: ['pastel polka dots', 'milky nude ground'],
+  };
 }
