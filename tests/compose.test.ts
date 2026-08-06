@@ -10,7 +10,9 @@ const chromeSwirl: PhotoMotif = { name: 'chrome swirl', material: 'chrome', scal
 
 import { composeBrief, buildCorePrompt } from '@/lib/compose';
 import { UNIVERSAL_RULES } from '@/lib/core';
+import { textureGummy } from '@/config/cores/texture-gummy';
 import type { PhotoTake } from '@/lib/photoTake';
+import type { PartsIntensity } from '@/lib/types';
 
 const PHOTO: PhotoTake = {
   palette: [
@@ -26,6 +28,9 @@ const PHOTO: PhotoTake = {
 };
 
 const OPTS = { shape: 'almond' as const, length: 'medium' as const, partsIntensity: 'auto' as const };
+
+const buildTextureGummyBrief = (partsIntensity: PartsIntensity) =>
+  composeBrief(textureGummy, PHOTO, { ...OPTS, partsIntensity });
 
 describe('composeBrief', () => {
   it('사용자 주문 쉐입·길이를 담는다', () => {
@@ -139,6 +144,17 @@ describe('buildCorePrompt — partsIntensity가 파츠 예산 줄에 반영된�
   it('rich면 스터드 범위 상단을 상하한 모두로 낸다', () => {
     const prompt = buildCorePrompt(composeBrief(coquette, PHOTO, { ...OPTS, partsIntensity: 'rich' }));
     expect(prompt).toContain('Parts budget for the whole set: 1 statement part plus 6-6 small studs or beads in total.');
+  });
+
+  it('rich에서도 코케트(big:1)는 스테이트먼트 파츠 문구를 유지한다', () => {
+    const prompt = buildCorePrompt(composeBrief(coquette, PHOTO, { ...OPTS, partsIntensity: 'rich' }));
+    expect(prompt).toMatch(/\d+ statement parts?/);
+  });
+
+  it('rich에서 big:0 코어(텍스처·구미)는 스테이트먼트 파츠를 지어내지 않는다', () => {
+    const prompt = buildCorePrompt(buildTextureGummyBrief('rich'));
+    expect(prompt).not.toMatch(/statement part/);
+    expect(prompt).toContain('Parts budget for the whole set: 2-2 small studs or beads in total.');
   });
 
   it('금지 어휘 charm·anchor를 어떤 강도에서도 쓰지 않는다', () => {

@@ -17,11 +17,11 @@ export const textureGummy: NailCore = {
   negativeSpace: [0.1, 0.3],
   designZone: {
     short:
-      'Length rule (short tips): the raised texture covers the whole tip; keep each raised element small and closely spaced so the relief reads at this size.',
+      'Length rule (short tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip; keep each raised element small and closely spaced so the relief reads at this size.',
     medium:
-      'Length rule (medium tips): the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.',
+      'Length rule (medium tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.',
     long:
-      'Length rule (long tips): the raised texture covers the whole tip and the relief pattern can run the full length, with larger single forms welcome.',
+      'Length rule (long tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip and the relief pattern can run the full length, with larger single forms welcome.',
   },
 
   textureGrammar: [
@@ -49,7 +49,7 @@ export const textureGummy: NailCore = {
   forbidden: [
     'a single uniform finish across the set',
     'attached metal parts as the main event',
-    'flat painted-only tips',
+    'a set with no raised relief anywhere',
     'opaque chalky colour',
   ],
 

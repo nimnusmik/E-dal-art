@@ -188,8 +188,14 @@ function partsBudgetSentence(core: NailCore, intensity: PartsIntensity): string 
     case 'point':
       return 'Exactly one tip carries a single small part as its only accent, and every other tip is painted gel only.';
     case 'rich': {
-      const big = Math.max(core.partsBudget.big, 1);
       const top = core.partsBudget.studs[1];
+      // big:0인 코어(뉘앙스·텍스처구미)는 partsPhysics가 애초에 스테이트먼트 파츠를
+      // 물리적으로 배제한다 — rich도 그 코어의 파츠 예산에는 없는 파츠를 지어내면 안 된다.
+      // rich는 이 코어들에서 "스터드/비드 개수를 상단으로"만 의미한다.
+      if (core.partsBudget.big === 0) {
+        return `Parts budget for the whole set: ${top}-${top} small studs or beads in total.`;
+      }
+      const big = Math.max(core.partsBudget.big, 1);
       return `Parts budget for the whole set: ${big} statement part${big === 1 ? '' : 's'} plus ${top}-${top} small studs or beads in total.`;
     }
     case 'auto':

@@ -69,7 +69,7 @@ export interface NailCore {
  */
 export const UNIVERSAL_RULES: string[] = [
   'Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.',
-  'The render reads as a photograph of real finished nail tips: crisp edges, honest material behaviour, no melted or smeared boundaries, no warped silhouettes.',
+  "The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.",
   'Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.',
   'Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.',
 ];
