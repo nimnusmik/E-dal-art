@@ -152,7 +152,11 @@ export function buildCorePrompt(brief: CoreBrief): string {
   );
 
   // 8. 코어 파츠 물리 + 손님 주문 파츠 강도
-  lines.push(`- ${core.partsPhysics}`);
+  // partsIntensity=none일 때는 partsPhysics를 생략한다: 명사는 자동 그려진다는 규칙(lib/brief.ts BRIEF_INSTRUCTION)
+  // 때문에 파츠 영(zero) 주문에 물리 문장을 함께 보내면 모델이 metal stud 등을 그린다
+  if (brief.partsIntensity !== 'none') {
+    lines.push(`- ${core.partsPhysics}`);
+  }
   lines.push(`- ${partsBudgetSentence(core, brief.partsIntensity)}`);
 
   // 9. 코어 금지 + 공통분모

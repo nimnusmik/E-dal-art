@@ -147,6 +147,16 @@ describe('buildCorePrompt — partsIntensity가 파츠 예산 줄에 반영된�
       expect(prompt).not.toMatch(/\bcharms?\b|\banchors?\b/i);
     }
   });
+
+  it('none이면 코어의 partsPhysics 줄을 생략한다 (명사는 자동 그려진다는 규칙)', () => {
+    const prompt = buildCorePrompt(composeBrief(coquette, PHOTO, { ...OPTS, partsIntensity: 'none' }));
+    expect(prompt).not.toContain('METAL PART PHYSICS');
+  });
+
+  it('auto면 코어의 partsPhysics 줄을 포함한다', () => {
+    const prompt = buildCorePrompt(composeBrief(coquette, PHOTO, { ...OPTS, partsIntensity: 'auto' }));
+    expect(prompt).toContain('METAL PART PHYSICS');
+  });
 });
 
 describe('buildCorePrompt — 9단 전체 순서 (TEXTURE 포함)', () => {
