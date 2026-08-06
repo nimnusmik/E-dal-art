@@ -342,7 +342,7 @@ export function coreJudgeInstruction(core: NailCore, photoTake: PhotoTake): stri
 You are given two kinds of attached images, always in this order:
 1. SOURCE INSPIRATION PHOTO(S) — the original photo(s) the client brought in. There may be one or more of these.
 2. GENERATED TIP BOARD — the LAST attached image only. This is the finished flat-lay tip set that was generated for the "${core.id}" nail-art core, and it is the ONLY image you are grading.
-Do not confuse the two: judge the GENERATED TIP BOARD against the CORE RULES and against the SOURCE PALETTE / SOURCE FIDELITY ANCHORS below, which describe the source inspiration photo(s). Report ONLY what you observe — verdicts are computed elsewhere.
+Do not confuse the two: judge the GENERATED TIP BOARD against the CORE RULES and against the SOURCE PALETTE / SOURCE MUST-SURVIVE ELEMENTS below, which describe the source inspiration photo(s). Report ONLY what you observe — verdicts are computed elsewhere.
 
 CORE RULES:
 - Base/structure: ${core.baseLine} / ${core.structure}
@@ -354,7 +354,7 @@ CORE RULES:
 SOURCE PALETTE (extracted from the source inspiration photo(s) — this is what paletteFidelity checks against):
 ${paletteLines}
 
-SOURCE FIDELITY ANCHORS (must-survive elements from the source inspiration photo(s) — this is what motifFidelity counts):
+SOURCE MUST-SURVIVE ELEMENTS (must-survive elements from the source inspiration photo(s) — this is what motifFidelity counts):
 ${anchorLines}
 
 Report:
@@ -366,7 +366,7 @@ Report:
 - physicsOk: every part lies flat or is built up from the nail surface and everything is buildable by a human artist with gel — no hanging/dangling pieces, no floating elements, no impossible shapes.
 - cleanRender: crisp edges, no melted or warped tips, no extra objects, no text overlays.
 - paletteFidelity: true only if the GENERATED TIP BOARD's colors match the SOURCE PALETTE above in both which colors are used AND roughly how much surface each one covers — matching hues with very different proportions is NOT a fidelity match.
-- motifFidelity: count how many of the SOURCE FIDELITY ANCHORS listed above are still recognizable in the GENERATED TIP BOARD. Report the count (an integer), not a boolean.
+- motifFidelity: count how many of the SOURCE MUST-SURVIVE ELEMENTS listed above are still recognizable in the GENERATED TIP BOARD. Report the count (an integer), not a boolean.
 - coreFidelity: the core's own identity (negative space ratio, texture, part density) reads clearly in the GENERATED TIP BOARD.
 - raisedVolumeObserved: true only if sculpted or raised gel volume is clearly visible standing up off the nail surface (not just flat paint).
 - finishVarietyObserved: true only if more than one distinct surface finish (glossy / matte / chrome / velvet / textured) is visible across the set, not the same finish repeated on every tip.

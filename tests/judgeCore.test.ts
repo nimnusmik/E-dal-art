@@ -167,6 +167,22 @@ describe('verdictForCore', () => {
   });
 });
 
+describe('core judge configuration pinning', () => {
+  const coreConfigs = [
+    { core: coquette, expectedRequiresGelVolume: false, expectedExpectsFinishVariety: false },
+    { core: nuance, expectedRequiresGelVolume: false, expectedExpectsFinishVariety: false },
+    { core: textureGummy, expectedRequiresGelVolume: true, expectedExpectsFinishVariety: true },
+    { core: decoden, expectedRequiresGelVolume: true, expectedExpectsFinishVariety: true },
+  ];
+
+  coreConfigs.forEach(({ core, expectedRequiresGelVolume, expectedExpectsFinishVariety }) => {
+    it(`${core.id}: requiresGelVolume=${expectedRequiresGelVolume}, expectsFinishVariety=${expectedExpectsFinishVariety}`, () => {
+      expect(core.judge.requiresGelVolume).toBe(expectedRequiresGelVolume);
+      expect(core.judge.expectsFinishVariety).toBe(expectedExpectsFinishVariety);
+    });
+  });
+});
+
 describe('parseCoreJudgement', () => {
   it('신규 관찰 필드 3개를 포함해 파싱한다', () => {
     const json = JSON.stringify({
