@@ -1,0 +1,113 @@
+{
+  "coreId": "nuance",
+  "attach": false,
+  "photoPath": "ref/trendy/IMG_6259.jpg",
+  "photoTake": {
+    "palette": [
+      {
+        "hex": "#f3c3cd",
+        "role": "main",
+        "ratio": 0.35000000000000003,
+        "nameEn": "soft bubblegum pink"
+      },
+      {
+        "hex": "#fafafa",
+        "role": "base",
+        "ratio": 0.30000000000000004,
+        "nameEn": "milky white"
+      },
+      {
+        "hex": "#a8adb4",
+        "role": "accent",
+        "ratio": 0.20000000000000004,
+        "nameEn": "mirror chrome silver"
+      },
+      {
+        "hex": "#121212",
+        "role": "main",
+        "ratio": 0.15000000000000002,
+        "nameEn": "inky black"
+      }
+    ],
+    "motifs": [
+      {
+        "name": "3D sculpted rose",
+        "material": "sculpted",
+        "scale": "big",
+        "prominence": 3
+      },
+      {
+        "name": "half-pearl cluster",
+        "material": "pearl",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "metal piercing ring",
+        "material": "metal",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "zebra print",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "molten liquid silver ribbon",
+        "material": "chrome",
+        "scale": "big",
+        "prominence": 2
+      },
+      {
+        "name": "hand-painted vintage rose",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "metal stud cross",
+        "material": "metal",
+        "scale": "standard",
+        "prominence": 2
+      }
+    ],
+    "moodKo": [
+      "화려한",
+      "맥시멀리즘",
+      "키치한"
+    ],
+    "moodEn": "An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.",
+    "tone": {
+      "saturation": "medium",
+      "brightness": "light",
+      "temperature": "cool"
+    },
+    "fidelityAnchors": [
+      "Chunky 3D sculpted florals",
+      "Heavy silver metal piercings and studs",
+      "High-contrast Y2K animal print accents"
+    ]
+  },
+  "records": [
+    {
+      "file": "nuance-noattach-01.png",
+      "planId": "v1",
+      "planTitle": "팔레트 회전",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: sheer translucent colour built up in several layers, so looking at the tip feels like looking into a cross-section of polished mineral.\n- Structure: translucent colour is built up in layers across the whole tip, so depth comes from the stack rather than from any boundary line\n- Negative space: 20-40% of each tip stays free of motifs.\n- Length rule (medium tips): the layered colour spreads across the whole tip with no boundary line; three or four layers of sheer colour build the depth.\n- TEXTURE: Sheer jelly and milky colours are layered over a magnetic cat-eye base, so one soft light streak moves underneath the translucent layers.\n- TEXTURE: Soft swirls are dragged through the wet sheer layers, their edges blurring into one another with no hard line anywhere.\n- TEXTURE: Fine chrome lines trace a few of the swirl boundaries, catching light like a mineral vein.\n- Finish: One high-gloss finish over the whole set; the depth comes from the layers underneath rather than from the top coat.\n- Every tip is a different draw from the same mineral: the same colours layered in a different order, so no two tips repeat.\n- Colour boundaries are always soft — where two colours meet they bleed into each other over a millimetre or more.\n- One or two tips carry a fine chrome vein tracing the edge of a swirl, and nothing else.\n- Earth-and-water colours dominate: forest green, warm brown, deep-sea blue, smoky amethyst.\n- Palette: soft bubblegum pink (#f3c3cd, 35% of the surface — a colour the design is drawn in); milky white (#fafafa, 30% of the surface — the ground colour every tip starts from); mirror chrome silver (#a8adb4, 20% of the surface — a small-quantity accent for lines, dots, and metal); inky black (#121212, 15% of the surface — a colour the design is drawn in).\n- Motifs to use, each keeping exactly the material named here: metal piercing ring rendered as metal at standard scale; zebra print rendered as painted at standard scale.\n- Keep every shape and placement identical and rotate which colour goes where, so each tip wears a different member of the same palette.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: any part is a tiny flat metal bead lying flush ON the surface, sealed under clear gel so it reads as one of the layers rather than an object added on top.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: hard-edged geometric motifs, opaque flat colour blocking, a french boundary line, crisp outlines around shapes, glitter particles.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "nuance-noattach-02.png",
+      "planId": "v2",
+      "planTitle": "레이어 심도",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: sheer translucent colour built up in several layers, so looking at the tip feels like looking into a cross-section of polished mineral.\n- Structure: translucent colour is built up in layers across the whole tip, so depth comes from the stack rather than from any boundary line\n- Negative space: 20-40% of each tip stays free of motifs.\n- Length rule (medium tips): the layered colour spreads across the whole tip with no boundary line; three or four layers of sheer colour build the depth.\n- TEXTURE: Sheer jelly and milky colours are layered over a magnetic cat-eye base, so one soft light streak moves underneath the translucent layers.\n- TEXTURE: Soft swirls are dragged through the wet sheer layers, their edges blurring into one another with no hard line anywhere.\n- TEXTURE: Fine chrome lines trace a few of the swirl boundaries, catching light like a mineral vein.\n- Finish: One high-gloss finish over the whole set; the depth comes from the layers underneath rather than from the top coat.\n- Every tip is a different draw from the same mineral: the same colours layered in a different order, so no two tips repeat.\n- Colour boundaries are always soft — where two colours meet they bleed into each other over a millimetre or more.\n- One or two tips carry a fine chrome vein tracing the edge of a swirl, and nothing else.\n- Earth-and-water colours dominate: forest green, warm brown, deep-sea blue, smoky amethyst.\n- Palette: soft bubblegum pink (#f3c3cd, 35% of the surface — a colour the design is drawn in); milky white (#fafafa, 30% of the surface — the ground colour every tip starts from); mirror chrome silver (#a8adb4, 20% of the surface — a small-quantity accent for lines, dots, and metal); inky black (#121212, 15% of the surface — a colour the design is drawn in).\n- Motifs to use, each keeping exactly the material named here: metal piercing ring rendered as metal at standard scale; zebra print rendered as painted at standard scale.\n- Vary how many sheer layers each tip carries, from two on the shallowest to five on the deepest, so the depth reads differently tip to tip.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: any part is a tiny flat metal bead lying flush ON the surface, sealed under clear gel so it reads as one of the layers rather than an object added on top.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: hard-edged geometric motifs, opaque flat colour blocking, a french boundary line, crisp outlines around shapes, glitter particles.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "nuance-noattach-03.png",
+      "planId": "v3",
+      "planTitle": "스월 방향",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: sheer translucent colour built up in several layers, so looking at the tip feels like looking into a cross-section of polished mineral.\n- Structure: translucent colour is built up in layers across the whole tip, so depth comes from the stack rather than from any boundary line\n- Negative space: 20-40% of each tip stays free of motifs.\n- Length rule (medium tips): the layered colour spreads across the whole tip with no boundary line; three or four layers of sheer colour build the depth.\n- TEXTURE: Sheer jelly and milky colours are layered over a magnetic cat-eye base, so one soft light streak moves underneath the translucent layers.\n- TEXTURE: Soft swirls are dragged through the wet sheer layers, their edges blurring into one another with no hard line anywhere.\n- TEXTURE: Fine chrome lines trace a few of the swirl boundaries, catching light like a mineral vein.\n- Finish: One high-gloss finish over the whole set; the depth comes from the layers underneath rather than from the top coat.\n- Every tip is a different draw from the same mineral: the same colours layered in a different order, so no two tips repeat.\n- Colour boundaries are always soft — where two colours meet they bleed into each other over a millimetre or more.\n- One or two tips carry a fine chrome vein tracing the edge of a swirl, and nothing else.\n- Earth-and-water colours dominate: forest green, warm brown, deep-sea blue, smoky amethyst.\n- Palette: soft bubblegum pink (#f3c3cd, 35% of the surface — a colour the design is drawn in); milky white (#fafafa, 30% of the surface — the ground colour every tip starts from); mirror chrome silver (#a8adb4, 20% of the surface — a small-quantity accent for lines, dots, and metal); inky black (#121212, 15% of the surface — a colour the design is drawn in).\n- Motifs to use, each keeping exactly the material named here: metal piercing ring rendered as metal at standard scale; zebra print rendered as painted at standard scale.\n- Turn the direction each swirl travels: one tip drifts lengthwise, the next diagonally, the next in a slow spiral, all with edges bleeding softly.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: any part is a tiny flat metal bead lying flush ON the surface, sealed under clear gel so it reads as one of the layers rather than an object added on top.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: hard-edged geometric motifs, opaque flat colour blocking, a french boundary line, crisp outlines around shapes, glitter particles.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    }
+  ]
+}

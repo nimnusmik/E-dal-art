@@ -1,0 +1,119 @@
+{
+  "coreId": "decoden",
+  "attach": true,
+  "photoPath": "ref/trendy/IMG_6259.jpg",
+  "photoTake": {
+    "palette": [
+      {
+        "hex": "#ffffff",
+        "role": "base",
+        "ratio": 0.4,
+        "nameEn": "Stark White"
+      },
+      {
+        "hex": "#ecaec0",
+        "role": "main",
+        "ratio": 0.3,
+        "nameEn": "Baby Pink"
+      },
+      {
+        "hex": "#111111",
+        "role": "main",
+        "ratio": 0.15,
+        "nameEn": "Obsidian Black"
+      },
+      {
+        "hex": "#b1b3b6",
+        "role": "accent",
+        "ratio": 0.15,
+        "nameEn": "Silver Chrome"
+      }
+    ],
+    "motifs": [
+      {
+        "name": "3D sculpted orchid",
+        "material": "sculpted",
+        "scale": "big",
+        "prominence": 3
+      },
+      {
+        "name": "chunky pearls",
+        "material": "pearl",
+        "scale": "standard",
+        "prominence": 3
+      },
+      {
+        "name": "metal piercing rings",
+        "material": "metal",
+        "scale": "big",
+        "prominence": 2
+      },
+      {
+        "name": "gothic script lettering",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "leopard print",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "molten liquid silver",
+        "material": "chrome",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "metal cross studs",
+        "material": "metal",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "hand-painted roses",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      }
+    ],
+    "moodKo": [
+      "화려한",
+      "맥시멀",
+      "힙한"
+    ],
+    "moodEn": "A bold and maximalist blend of girly romance and edgy Y2K street style.",
+    "tone": {
+      "saturation": "medium",
+      "brightness": "mid",
+      "temperature": "cool"
+    },
+    "fidelityAnchors": [
+      "Chunky 3D sculpted flowers",
+      "Heavy pearl and metal embellishments",
+      "Edgy Y2K gothic script"
+    ]
+  },
+  "records": [
+    {
+      "file": "decoden-attach-01.png",
+      "planId": "v1",
+      "planTitle": "재질 교체",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: opaque milky white or sheer pink covered edge to edge — the base is a canvas to build on, not empty space to protect.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 0-15% of each tip stays free of motifs.\n- Length rule (medium tips): the build covers 85-100% of each tip, with one sculpted form rising as the centrepiece.\n- TEXTURE: Sculpted gel relief rises one to three millimetres above the tip, hand-shaped before curing so each curve holds a highlight.\n- TEXTURE: Tone-on-tone embossed baroque scrollwork covers a tip in the same colour as its base, readable only by the shadows it casts.\n- TEXTURE: Domed clear gel droplets sit over finished art like beads of water caught on a surface.\n- Finish: Mix finishes across the set: several tips in high gloss, one tip in mirror chrome polished like liquid metal, one tip matte with glossy raised relief standing on it.\n- One focal tip carries a sculpted lily or rose whose petals are shaped one at a time and rise clear of the surface.\n- One or two tips are covered in sculpted white baroque scrollwork, raised in tone-on-tone white so shadow alone draws the pattern.\n- One tip is packed with a cluster of three to six domed pearls in graded sizes, sitting shoulder to shoulder, each sealed under clear gel.\n- One tip is finished in mirror chrome, polished until it reads as liquid metal.\n- Density is the point: a tip that looks unfinished breaks the set.\n- Palette: Stark White (#ffffff, 40% of the surface — the ground colour every tip starts from); Baby Pink (#ecaec0, 30% of the surface — a colour the design is drawn in); Obsidian Black (#111111, 15% of the surface — a colour the design is drawn in); Silver Chrome (#b1b3b6, 15% of the surface — a small-quantity accent for lines, dots, and metal).\n- Motifs to use, each keeping exactly the material named here: 3D sculpted orchid rendered as sculpted at big scale, 3mm or more; chunky pearls rendered as pearl at standard scale; metal piercing rings rendered as metal at big scale, 3mm or more; gothic script lettering rendered as painted at standard scale.\n- Repeat the same motif in a different material on each tip: painted on one, raised tone-on-tone gel on another, cast metal on a third, domed pearl on a fourth.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: parts are built UP in volume — sculpted gel flowers with individually shaped petals, domed pearls in graded sizes, cast metal ornaments with clean closed outlines. Each part is held by a visible gel fillet where it meets the tip and sealed with a thin clear layer over its base. The volume rises off the surface while the silhouette stays inside the tip outline.\n- Parts budget for the whole set: 3 statement parts plus 6-12 small studs or beads in total.\n- This set stays clear of: bare negative space left as a design choice, flat decoration only, a single uniform finish across the set, timid single-bead accents as the main event.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: A bold and maximalist blend of girly romance and edgy Y2K street style.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "decoden-attach-02.png",
+      "planId": "v2",
+      "planTitle": "볼륨 업",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: opaque milky white or sheer pink covered edge to edge — the base is a canvas to build on, not empty space to protect.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 0-15% of each tip stays free of motifs.\n- Length rule (medium tips): the build covers 85-100% of each tip, with one sculpted form rising as the centrepiece.\n- TEXTURE: Sculpted gel relief rises one to three millimetres above the tip, hand-shaped before curing so each curve holds a highlight.\n- TEXTURE: Tone-on-tone embossed baroque scrollwork covers a tip in the same colour as its base, readable only by the shadows it casts.\n- TEXTURE: Domed clear gel droplets sit over finished art like beads of water caught on a surface.\n- Finish: Mix finishes across the set: several tips in high gloss, one tip in mirror chrome polished like liquid metal, one tip matte with glossy raised relief standing on it.\n- One focal tip carries a sculpted lily or rose whose petals are shaped one at a time and rise clear of the surface.\n- One or two tips are covered in sculpted white baroque scrollwork, raised in tone-on-tone white so shadow alone draws the pattern.\n- One tip is packed with a cluster of three to six domed pearls in graded sizes, sitting shoulder to shoulder, each sealed under clear gel.\n- One tip is finished in mirror chrome, polished until it reads as liquid metal.\n- Density is the point: a tip that looks unfinished breaks the set.\n- Palette: Stark White (#ffffff, 40% of the surface — the ground colour every tip starts from); Baby Pink (#ecaec0, 30% of the surface — a colour the design is drawn in); Obsidian Black (#111111, 15% of the surface — a colour the design is drawn in); Silver Chrome (#b1b3b6, 15% of the surface — a small-quantity accent for lines, dots, and metal).\n- Motifs to use, each keeping exactly the material named here: 3D sculpted orchid rendered as sculpted at big scale, 3mm or more; chunky pearls rendered as pearl at standard scale; metal piercing rings rendered as metal at big scale, 3mm or more; gothic script lettering rendered as painted at standard scale.\n- Build every raised form one step taller and rounder, so each sculpted element carries a broader highlight and casts a longer shadow.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: parts are built UP in volume — sculpted gel flowers with individually shaped petals, domed pearls in graded sizes, cast metal ornaments with clean closed outlines. Each part is held by a visible gel fillet where it meets the tip and sealed with a thin clear layer over its base. The volume rises off the surface while the silhouette stays inside the tip outline.\n- Parts budget for the whole set: 3 statement parts plus 6-12 small studs or beads in total.\n- This set stays clear of: bare negative space left as a design choice, flat decoration only, a single uniform finish across the set, timid single-bead accents as the main event.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: A bold and maximalist blend of girly romance and edgy Y2K street style.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "decoden-attach-03.png",
+      "planId": "v3",
+      "planTitle": "클러스터 밀집",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: opaque milky white or sheer pink covered edge to edge — the base is a canvas to build on, not empty space to protect.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 0-15% of each tip stays free of motifs.\n- Length rule (medium tips): the build covers 85-100% of each tip, with one sculpted form rising as the centrepiece.\n- TEXTURE: Sculpted gel relief rises one to three millimetres above the tip, hand-shaped before curing so each curve holds a highlight.\n- TEXTURE: Tone-on-tone embossed baroque scrollwork covers a tip in the same colour as its base, readable only by the shadows it casts.\n- TEXTURE: Domed clear gel droplets sit over finished art like beads of water caught on a surface.\n- Finish: Mix finishes across the set: several tips in high gloss, one tip in mirror chrome polished like liquid metal, one tip matte with glossy raised relief standing on it.\n- One focal tip carries a sculpted lily or rose whose petals are shaped one at a time and rise clear of the surface.\n- One or two tips are covered in sculpted white baroque scrollwork, raised in tone-on-tone white so shadow alone draws the pattern.\n- One tip is packed with a cluster of three to six domed pearls in graded sizes, sitting shoulder to shoulder, each sealed under clear gel.\n- One tip is finished in mirror chrome, polished until it reads as liquid metal.\n- Density is the point: a tip that looks unfinished breaks the set.\n- Palette: Stark White (#ffffff, 40% of the surface — the ground colour every tip starts from); Baby Pink (#ecaec0, 30% of the surface — a colour the design is drawn in); Obsidian Black (#111111, 15% of the surface — a colour the design is drawn in); Silver Chrome (#b1b3b6, 15% of the surface — a small-quantity accent for lines, dots, and metal).\n- Motifs to use, each keeping exactly the material named here: 3D sculpted orchid rendered as sculpted at big scale, 3mm or more; chunky pearls rendered as pearl at standard scale; metal piercing rings rendered as metal at big scale, 3mm or more; gothic script lettering rendered as painted at standard scale.\n- Gather the small parts into tight clusters instead of spreading them: one tip holds a dense packed group, its neighbour holds a single graded line of the same parts.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: parts are built UP in volume — sculpted gel flowers with individually shaped petals, domed pearls in graded sizes, cast metal ornaments with clean closed outlines. Each part is held by a visible gel fillet where it meets the tip and sealed with a thin clear layer over its base. The volume rises off the surface while the silhouette stays inside the tip outline.\n- Parts budget for the whole set: 3 statement parts plus 6-12 small studs or beads in total.\n- This set stays clear of: bare negative space left as a design choice, flat decoration only, a single uniform finish across the set, timid single-bead accents as the main event.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: A bold and maximalist blend of girly romance and edgy Y2K street style.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    }
+  ]
+}

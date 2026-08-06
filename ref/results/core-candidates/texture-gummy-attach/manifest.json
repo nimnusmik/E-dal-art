@@ -1,0 +1,119 @@
+{
+  "coreId": "texture-gummy",
+  "attach": true,
+  "photoPath": "ref/trendy/IMG_6259.jpg",
+  "photoTake": {
+    "palette": [
+      {
+        "hex": "#f4f3f0",
+        "role": "base",
+        "ratio": 0.35,
+        "nameEn": "milky white"
+      },
+      {
+        "hex": "#ecaec0",
+        "role": "main",
+        "ratio": 0.25,
+        "nameEn": "baby pink"
+      },
+      {
+        "hex": "#111111",
+        "role": "main",
+        "ratio": 0.2,
+        "nameEn": "gothic black"
+      },
+      {
+        "hex": "#c2c4c6",
+        "role": "accent",
+        "ratio": 0.2,
+        "nameEn": "silver chrome"
+      }
+    ],
+    "motifs": [
+      {
+        "name": "sculpted 3D flowers",
+        "material": "sculpted",
+        "scale": "big",
+        "prominence": 3
+      },
+      {
+        "name": "metal piercing rings",
+        "material": "metal",
+        "scale": "standard",
+        "prominence": 3
+      },
+      {
+        "name": "half-pearl beads",
+        "material": "pearl",
+        "scale": "big",
+        "prominence": 2
+      },
+      {
+        "name": "gothic cross charms",
+        "material": "metal",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "animal print pattern",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "script lettering",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "hand-painted roses",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "liquid metal textures",
+        "material": "chrome",
+        "scale": "standard",
+        "prominence": 2
+      }
+    ],
+    "moodKo": [
+      "맥시멀리스트",
+      "갸루",
+      "키치한"
+    ],
+    "moodEn": "An ultra-maximalist fusion of coquette sweetness and punk-rock edge.",
+    "tone": {
+      "saturation": "medium",
+      "brightness": "light",
+      "temperature": "cool"
+    },
+    "fidelityAnchors": [
+      "Chunky 3D sculpted floral accents",
+      "Cool-toned silver metal piercings and gothic charms",
+      "High-contrast pink, white, and black color palette"
+    ]
+  },
+  "records": [
+    {
+      "file": "texture-gummy-attach-01.png",
+      "planId": "v1",
+      "planTitle": "릴리프 교체",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: semi-sheer jelly colour with a thick chewy depth, like a gummy sweet lit from behind.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 10-30% of each tip stays free of motifs.\n- Length rule (medium tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.\n- TEXTURE: Raised gel relief is drawn as a repeating pattern — cable-knit ribs, quilted diamonds, or rolling waves — standing one to two millimetres proud of the base and reading by its own shadow.\n- TEXTURE: Blooming gel lets colour spread outward inside a clear layer, so the bloom on each tip comes out slightly different from the last.\n- TEXTURE: Domed clear gel droplets sit on top of the finished colour like water beads, each one holding a small highlight.\n- Finish: Mix finishes deliberately across the set: a matte base carrying glossy raised relief on top, one tip in cat-eye velvet, one tip in mirror chrome. Never the same finish on every tip.\n- The set is a study in touch: you should be able to guess how each tip would feel under a fingertip.\n- One tip is smooth and glossy, sitting next to a tip in deep relief — the contrast is what makes both read.\n- Colour stays semi-sheer so light travels into the gel and comes back out, keeping the jelly depth alive.\n- Every raised form is tone-on-tone or a half-step off the base colour, so shape carries the design rather than colour contrast.\n- Palette: milky white (#f4f3f0, 35% of the surface — the ground colour every tip starts from); baby pink (#ecaec0, 25% of the surface — a colour the design is drawn in); gothic black (#111111, 20% of the surface — a colour the design is drawn in); silver chrome (#c2c4c6, 20% of the surface — a small-quantity accent for lines, dots, and metal).\n- Motifs to use, each keeping exactly the material named here: animal print pattern rendered as painted at standard scale; script lettering rendered as painted at standard scale.\n- Give each tip a different raised relief pattern at the same height: cable-knit ribs, quilted diamonds, rolling waves, and a plain smooth tip for contrast.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: volume here is made of gel, not of attached parts — every raised form is gel shaped by hand before curing, held to the tip by a visible gel fillet at its base and sealed with a thin clear layer.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: a single uniform finish across the set, attached metal parts as the main event, a set with no raised relief anywhere, opaque chalky colour.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist fusion of coquette sweetness and punk-rock edge.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "texture-gummy-attach-02.png",
+      "planId": "v2",
+      "planTitle": "마감 리믹스",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: semi-sheer jelly colour with a thick chewy depth, like a gummy sweet lit from behind.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 10-30% of each tip stays free of motifs.\n- Length rule (medium tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.\n- TEXTURE: Raised gel relief is drawn as a repeating pattern — cable-knit ribs, quilted diamonds, or rolling waves — standing one to two millimetres proud of the base and reading by its own shadow.\n- TEXTURE: Blooming gel lets colour spread outward inside a clear layer, so the bloom on each tip comes out slightly different from the last.\n- TEXTURE: Domed clear gel droplets sit on top of the finished colour like water beads, each one holding a small highlight.\n- Finish: Mix finishes deliberately across the set: a matte base carrying glossy raised relief on top, one tip in cat-eye velvet, one tip in mirror chrome. Never the same finish on every tip.\n- The set is a study in touch: you should be able to guess how each tip would feel under a fingertip.\n- One tip is smooth and glossy, sitting next to a tip in deep relief — the contrast is what makes both read.\n- Colour stays semi-sheer so light travels into the gel and comes back out, keeping the jelly depth alive.\n- Every raised form is tone-on-tone or a half-step off the base colour, so shape carries the design rather than colour contrast.\n- Palette: milky white (#f4f3f0, 35% of the surface — the ground colour every tip starts from); baby pink (#ecaec0, 25% of the surface — a colour the design is drawn in); gothic black (#111111, 20% of the surface — a colour the design is drawn in); silver chrome (#c2c4c6, 20% of the surface — a small-quantity accent for lines, dots, and metal).\n- Motifs to use, each keeping exactly the material named here: animal print pattern rendered as painted at standard scale; script lettering rendered as painted at standard scale.\n- Reassign the finishes across the set so a different tip carries the matte, the cat-eye velvet, and the mirror chrome than before.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: volume here is made of gel, not of attached parts — every raised form is gel shaped by hand before curing, held to the tip by a visible gel fillet at its base and sealed with a thin clear layer.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: a single uniform finish across the set, attached metal parts as the main event, a set with no raised relief anywhere, opaque chalky colour.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist fusion of coquette sweetness and punk-rock edge.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "texture-gummy-attach-03.png",
+      "planId": "v3",
+      "planTitle": "블룸 밀도",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: semi-sheer jelly colour with a thick chewy depth, like a gummy sweet lit from behind.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 10-30% of each tip stays free of motifs.\n- Length rule (medium tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.\n- TEXTURE: Raised gel relief is drawn as a repeating pattern — cable-knit ribs, quilted diamonds, or rolling waves — standing one to two millimetres proud of the base and reading by its own shadow.\n- TEXTURE: Blooming gel lets colour spread outward inside a clear layer, so the bloom on each tip comes out slightly different from the last.\n- TEXTURE: Domed clear gel droplets sit on top of the finished colour like water beads, each one holding a small highlight.\n- Finish: Mix finishes deliberately across the set: a matte base carrying glossy raised relief on top, one tip in cat-eye velvet, one tip in mirror chrome. Never the same finish on every tip.\n- The set is a study in touch: you should be able to guess how each tip would feel under a fingertip.\n- One tip is smooth and glossy, sitting next to a tip in deep relief — the contrast is what makes both read.\n- Colour stays semi-sheer so light travels into the gel and comes back out, keeping the jelly depth alive.\n- Every raised form is tone-on-tone or a half-step off the base colour, so shape carries the design rather than colour contrast.\n- Palette: milky white (#f4f3f0, 35% of the surface — the ground colour every tip starts from); baby pink (#ecaec0, 25% of the surface — a colour the design is drawn in); gothic black (#111111, 20% of the surface — a colour the design is drawn in); silver chrome (#c2c4c6, 20% of the surface — a small-quantity accent for lines, dots, and metal).\n- Motifs to use, each keeping exactly the material named here: animal print pattern rendered as painted at standard scale; script lettering rendered as painted at standard scale.\n- Vary how far the blooming colour spreads inside the clear layer: tight compact blooms on one tip, wide diffuse blooms on another.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: volume here is made of gel, not of attached parts — every raised form is gel shaped by hand before curing, held to the tip by a visible gel fillet at its base and sealed with a thin clear layer.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: a single uniform finish across the set, attached metal parts as the main event, a set with no raised relief anywhere, opaque chalky colour.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist fusion of coquette sweetness and punk-rock edge.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    }
+  ]
+}

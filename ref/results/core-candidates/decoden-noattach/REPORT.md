@@ -1,0 +1,48 @@
+# 데코덴·갸루 실측 (사진첨부: X)
+
+- 원본 사진: `ref/trendy/IMG_6259.jpg`
+- 생성 3/3장
+- 합격 기준: 1장이라도 "이 코어답다"가 나오면 통과
+
+## 판정
+
+| 파일 | 변주 | 코어다움 | 메모 |
+|---|---|---|---|
+| decoden-noattach-01.png | 재질 교체 | ⬜ | |
+| decoden-noattach-02.png | 볼륨 업 | ⬜ | |
+| decoden-noattach-03.png | 클러스터 밀집 | ⬜ | |
+
+## 프롬프트 (1번)
+
+```
+You are a top Korean nail artist presenting a design set.
+Create ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.
+
+DESIGN BRIEF — follow every line exactly:
+- Base of every tip: opaque milky white or sheer pink covered edge to edge — the base is a canvas to build on, not empty space to protect.
+- Structure: the design covers the whole tip edge to edge, leaving no empty ground
+- Negative space: 0-15% of each tip stays free of motifs.
+- Length rule (medium tips): the build covers 85-100% of each tip, with one sculpted form rising as the centrepiece.
+- TEXTURE: Sculpted gel relief rises one to three millimetres above the tip, hand-shaped before curing so each curve holds a highlight.
+- TEXTURE: Tone-on-tone embossed baroque scrollwork covers a tip in the same colour as its base, readable only by the shadows it casts.
+- TEXTURE: Domed clear gel droplets sit over finished art like beads of water caught on a surface.
+- Finish: Mix finishes across the set: several tips in high gloss, one tip in mirror chrome polished like liquid metal, one tip matte with glossy raised relief standing on it.
+- One focal tip carries a sculpted lily or rose whose petals are shaped one at a time and rise clear of the surface.
+- One or two tips are covered in sculpted white baroque scrollwork, raised in tone-on-tone white so shadow alone draws the pattern.
+- One tip is packed with a cluster of three to six domed pearls in graded sizes, sitting shoulder to shoulder, each sealed under clear gel.
+- One tip is finished in mirror chrome, polished until it reads as liquid metal.
+- Density is the point: a tip that looks unfinished breaks the set.
+- Palette: Ivory White (#f3f1ec, 40% of the surface — the ground colour every tip starts from); Baby Pink (#efa2b4, 30% of the surface — a colour the design is drawn in); Ink Black (#121212, 15% of the surface — a colour the design is drawn in); Metallic Silver (#a8a8a8, 10% of the surface — a small-quantity accent for lines, dots, and metal); Deep Burgundy (#721625, 5% of the surface — a small-quantity accent for lines, dots, and metal).
+- Motifs to use, each keeping exactly the material named here: 3D sculpted orchid and rose rendered as sculpted at big scale, 3mm or more; pearl embellishments rendered as pearl at standard scale; metal rings and studs rendered as metal at standard scale; hand-painted roses rendered as painted at standard scale.
+- Repeat the same motif in a different material on each tip: painted on one, raised tone-on-tone gel on another, cast metal on a third, domed pearl on a fourth.
+- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.
+- PART PHYSICS: parts are built UP in volume — sculpted gel flowers with individually shaped petals, domed pearls in graded sizes, cast metal ornaments with clean closed outlines. Each part is held by a visible gel fillet where it meets the tip and sealed with a thin clear layer over its base. The volume rises off the surface while the silhouette stays inside the tip outline.
+- Parts budget for the whole set: 3 statement parts plus 6-12 small studs or beads in total.
+- This set stays clear of: bare negative space left as a design choice, flat decoration only, a single uniform finish across the set, timid single-bead accents as the main event.
+- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.
+- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.
+- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.
+- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.
+- Mood: An ornate, maximalist collection of coquette and punk-chic nail designs featuring heavy 3D elements.
+- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame.
+```

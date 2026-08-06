@@ -1,0 +1,113 @@
+{
+  "coreId": "texture-gummy",
+  "attach": false,
+  "photoPath": "ref/trendy/IMG_6259.jpg",
+  "photoTake": {
+    "palette": [
+      {
+        "hex": "#f3c3cd",
+        "role": "main",
+        "ratio": 0.35000000000000003,
+        "nameEn": "soft bubblegum pink"
+      },
+      {
+        "hex": "#fafafa",
+        "role": "base",
+        "ratio": 0.30000000000000004,
+        "nameEn": "milky white"
+      },
+      {
+        "hex": "#a8adb4",
+        "role": "accent",
+        "ratio": 0.20000000000000004,
+        "nameEn": "mirror chrome silver"
+      },
+      {
+        "hex": "#121212",
+        "role": "main",
+        "ratio": 0.15000000000000002,
+        "nameEn": "inky black"
+      }
+    ],
+    "motifs": [
+      {
+        "name": "3D sculpted rose",
+        "material": "sculpted",
+        "scale": "big",
+        "prominence": 3
+      },
+      {
+        "name": "half-pearl cluster",
+        "material": "pearl",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "metal piercing ring",
+        "material": "metal",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "zebra print",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "molten liquid silver ribbon",
+        "material": "chrome",
+        "scale": "big",
+        "prominence": 2
+      },
+      {
+        "name": "hand-painted vintage rose",
+        "material": "painted",
+        "scale": "standard",
+        "prominence": 2
+      },
+      {
+        "name": "metal stud cross",
+        "material": "metal",
+        "scale": "standard",
+        "prominence": 2
+      }
+    ],
+    "moodKo": [
+      "화려한",
+      "맥시멀리즘",
+      "키치한"
+    ],
+    "moodEn": "An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.",
+    "tone": {
+      "saturation": "medium",
+      "brightness": "light",
+      "temperature": "cool"
+    },
+    "fidelityAnchors": [
+      "Chunky 3D sculpted florals",
+      "Heavy silver metal piercings and studs",
+      "High-contrast Y2K animal print accents"
+    ]
+  },
+  "records": [
+    {
+      "file": "texture-gummy-noattach-01.png",
+      "planId": "v1",
+      "planTitle": "릴리프 교체",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: semi-sheer jelly colour with a thick chewy depth, like a gummy sweet lit from behind.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 10-30% of each tip stays free of motifs.\n- Length rule (medium tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.\n- TEXTURE: Raised gel relief is drawn as a repeating pattern — cable-knit ribs, quilted diamonds, or rolling waves — standing one to two millimetres proud of the base and reading by its own shadow.\n- TEXTURE: Blooming gel lets colour spread outward inside a clear layer, so the bloom on each tip comes out slightly different from the last.\n- TEXTURE: Domed clear gel droplets sit on top of the finished colour like water beads, each one holding a small highlight.\n- Finish: Mix finishes deliberately across the set: a matte base carrying glossy raised relief on top, one tip in cat-eye velvet, one tip in mirror chrome. Never the same finish on every tip.\n- The set is a study in touch: you should be able to guess how each tip would feel under a fingertip.\n- One tip is smooth and glossy, sitting next to a tip in deep relief — the contrast is what makes both read.\n- Colour stays semi-sheer so light travels into the gel and comes back out, keeping the jelly depth alive.\n- Every raised form is tone-on-tone or a half-step off the base colour, so shape carries the design rather than colour contrast.\n- Palette: soft bubblegum pink (#f3c3cd, 35% of the surface — a colour the design is drawn in); milky white (#fafafa, 30% of the surface — the ground colour every tip starts from); mirror chrome silver (#a8adb4, 20% of the surface — a small-quantity accent for lines, dots, and metal); inky black (#121212, 15% of the surface — a colour the design is drawn in).\n- Motifs to use, each keeping exactly the material named here: zebra print rendered as painted at standard scale; molten liquid silver ribbon rendered as chrome at big scale, 3mm or more.\n- Give each tip a different raised relief pattern at the same height: cable-knit ribs, quilted diamonds, rolling waves, and a plain smooth tip for contrast.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: volume here is made of gel, not of attached parts — every raised form is gel shaped by hand before curing, held to the tip by a visible gel fillet at its base and sealed with a thin clear layer.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: a single uniform finish across the set, attached metal parts as the main event, a set with no raised relief anywhere, opaque chalky colour.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "texture-gummy-noattach-02.png",
+      "planId": "v2",
+      "planTitle": "마감 리믹스",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: semi-sheer jelly colour with a thick chewy depth, like a gummy sweet lit from behind.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 10-30% of each tip stays free of motifs.\n- Length rule (medium tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.\n- TEXTURE: Raised gel relief is drawn as a repeating pattern — cable-knit ribs, quilted diamonds, or rolling waves — standing one to two millimetres proud of the base and reading by its own shadow.\n- TEXTURE: Blooming gel lets colour spread outward inside a clear layer, so the bloom on each tip comes out slightly different from the last.\n- TEXTURE: Domed clear gel droplets sit on top of the finished colour like water beads, each one holding a small highlight.\n- Finish: Mix finishes deliberately across the set: a matte base carrying glossy raised relief on top, one tip in cat-eye velvet, one tip in mirror chrome. Never the same finish on every tip.\n- The set is a study in touch: you should be able to guess how each tip would feel under a fingertip.\n- One tip is smooth and glossy, sitting next to a tip in deep relief — the contrast is what makes both read.\n- Colour stays semi-sheer so light travels into the gel and comes back out, keeping the jelly depth alive.\n- Every raised form is tone-on-tone or a half-step off the base colour, so shape carries the design rather than colour contrast.\n- Palette: soft bubblegum pink (#f3c3cd, 35% of the surface — a colour the design is drawn in); milky white (#fafafa, 30% of the surface — the ground colour every tip starts from); mirror chrome silver (#a8adb4, 20% of the surface — a small-quantity accent for lines, dots, and metal); inky black (#121212, 15% of the surface — a colour the design is drawn in).\n- Motifs to use, each keeping exactly the material named here: zebra print rendered as painted at standard scale; molten liquid silver ribbon rendered as chrome at big scale, 3mm or more.\n- Reassign the finishes across the set so a different tip carries the matte, the cat-eye velvet, and the mirror chrome than before.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: volume here is made of gel, not of attached parts — every raised form is gel shaped by hand before curing, held to the tip by a visible gel fillet at its base and sealed with a thin clear layer.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: a single uniform finish across the set, attached metal parts as the main event, a set with no raised relief anywhere, opaque chalky colour.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    },
+    {
+      "file": "texture-gummy-noattach-03.png",
+      "planId": "v3",
+      "planTitle": "블룸 밀도",
+      "prompt": "You are a top Korean nail artist presenting a design set.\nCreate ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.\n\nDESIGN BRIEF — follow every line exactly:\n- Base of every tip: semi-sheer jelly colour with a thick chewy depth, like a gummy sweet lit from behind.\n- Structure: the design covers the whole tip edge to edge, leaving no empty ground\n- Negative space: 10-30% of each tip stays free of motifs.\n- Length rule (medium tips): on every tip except the one smooth-glossy tip, the one cat-eye velvet tip, and the one mirror chrome tip, the raised texture covers the whole tip, with the relief pattern repeating three to five times across the surface.\n- TEXTURE: Raised gel relief is drawn as a repeating pattern — cable-knit ribs, quilted diamonds, or rolling waves — standing one to two millimetres proud of the base and reading by its own shadow.\n- TEXTURE: Blooming gel lets colour spread outward inside a clear layer, so the bloom on each tip comes out slightly different from the last.\n- TEXTURE: Domed clear gel droplets sit on top of the finished colour like water beads, each one holding a small highlight.\n- Finish: Mix finishes deliberately across the set: a matte base carrying glossy raised relief on top, one tip in cat-eye velvet, one tip in mirror chrome. Never the same finish on every tip.\n- The set is a study in touch: you should be able to guess how each tip would feel under a fingertip.\n- One tip is smooth and glossy, sitting next to a tip in deep relief — the contrast is what makes both read.\n- Colour stays semi-sheer so light travels into the gel and comes back out, keeping the jelly depth alive.\n- Every raised form is tone-on-tone or a half-step off the base colour, so shape carries the design rather than colour contrast.\n- Palette: soft bubblegum pink (#f3c3cd, 35% of the surface — a colour the design is drawn in); milky white (#fafafa, 30% of the surface — the ground colour every tip starts from); mirror chrome silver (#a8adb4, 20% of the surface — a small-quantity accent for lines, dots, and metal); inky black (#121212, 15% of the surface — a colour the design is drawn in).\n- Motifs to use, each keeping exactly the material named here: zebra print rendered as painted at standard scale; molten liquid silver ribbon rendered as chrome at big scale, 3mm or more.\n- Vary how far the blooming colour spreads inside the clear layer: tight compact blooms on one tip, wide diffuse blooms on another.\n- Tip shape almond, length medium. This is the client's order and it holds for every tip on the board.\n- PART PHYSICS: volume here is made of gel, not of attached parts — every raised form is gel shaped by hand before curing, held to the tip by a visible gel fillet at its base and sealed with a thin clear layer.\n- Parts budget for the whole set: 0 statement parts plus 0-2 small studs or beads in total.\n- This set stays clear of: a single uniform finish across the set, attached metal parts as the main event, a set with no raised relief anywhere, opaque chalky colour.\n- Every element is physically buildable by hand with gel, powder, film, and attachable parts, each part sealed under a layer of clear gel.\n- The render reads as a photograph of real finished nail tips: each tip's own outline is crisp and unwarped, and every material renders honestly, with no melted or smeared silhouette edges.\n- Keep believable hand-made character: micro-variations between tips, natural gel thickness and edge highlights, not computer-perfect symmetry.\n- Keep it abstract nail art: no eyes, eyeballs, iris or pupil shapes, no faces.\n- Mood: An ultra-maximalist gyaru fantasy blending sweet pinks with heavy metal textures and bold 3D structures.\n- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+    }
+  ]
+}
