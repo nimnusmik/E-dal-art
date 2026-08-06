@@ -126,7 +126,7 @@ const RICH_DEFAULT_PARTS_LINE =
   'Exactly one tip carries a single small pearl and exactly two tips each carry a single flat silver metal stud, every part lying flat on the nail surface. Every other tip is painted gel only — no metal, no gems, no pearls.';
 
 /** partsLine이 파츠 제로 서술인지 판별 (expectedMetalTips와 동일 기준) */
-function isZeroParts(partsLine: string): boolean {
+export function isZeroParts(partsLine: string): boolean {
   const line = partsLine.toLowerCase();
   return /painted gel only/.test(line) && !/carries|carry/.test(line);
 }
@@ -575,7 +575,13 @@ const VARIANT_OP_LINES: Record<string, { titleKo: string; line: string; zeroPart
   },
 };
 
-/** 코어의 파츠 예산을 명시 문장으로 — judge가 숫자를 셀 수 있는 형태 */
+/**
+ * 코어의 파츠 예산을 명시 문장으로 — judge가 숫자를 셀 수 있는 형태.
+ * 스터드를 받는 팁과 배제 문장이 가리키는 팁이 겹치지 않도록,
+ * 배제는 "이 파츠들 중 아무것도 갖지 않은 팁"에만 걸리게 쓴다
+ * (예전 버그: "the rest of the set"에 스터드를 준 다음, 같은 문장의
+ * "every remaining tip"으로 그 팁들을 다시 페인트 온리로 못박아 자기모순이었음).
+ */
 function corePartsLine(core: NailCore): string {
   const [lo, hi] = core.partsBudget.studs;
   if (core.partsBudget.big === 0 && hi === 0) return ZERO_PARTS_LINE;
@@ -583,7 +589,7 @@ function corePartsLine(core: NailCore): string {
     core.partsBudget.big > 0
       ? `Exactly ${numberWord(core.partsBudget.big)} tip${core.partsBudget.big === 1 ? '' : 's'} carr${core.partsBudget.big === 1 ? 'ies' : 'y'} a statement part as its centrepiece. `
       : '';
-  return `${bigPart}Across the rest of the set ${lo}-${hi} small studs, beads, or pearls are placed in total, and every remaining tip is painted gel only.`;
+  return `${bigPart}Across the set ${lo}-${hi} small studs, beads, or pearls are placed in total. Every tip that carries none of these is painted gel only — no metal, no gems, no pearls.`;
 }
 
 function numberWord(n: number): string {
