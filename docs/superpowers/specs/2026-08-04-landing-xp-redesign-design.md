@@ -52,7 +52,8 @@
 ## 기술 구조
 
 ### 신규
-- `components/landing/` — `TopBar.tsx`, `Hero.tsx`, `Stats.tsx`, `Gallery.tsx`, `Services.tsx`, `ToolSection.tsx`, `Testimonials.tsx`, `Faq.tsx`, `FooterCta.tsx`, `Landing.tsx`(조립)
+- `components/landing/` — `TopBar.tsx`, `Stats.tsx`, `Gallery.tsx`, `Services.tsx`, `ToolSection.tsx`, `Testimonials.tsx`, `Faq.tsx`, `FooterCta.tsx`, `Landing.tsx`(조립)
+  - 히어로는 별도 `Hero.tsx`를 만들지 않고 기존 `components/story/HeroHand.tsx`를 제자리에서 리스킨했다 — 손 변신 애니메이션 로직을 옮기지 않는 편이 안전해서다 (실행 중 확정)
 - 랜딩 전용 CSS (새 디자인 토큰: 파스텔 5색, 페이퍼 화이트, 잉크 블랙, 디스플레이 폰트)
 - `public/landing/` — 초원 배경 webp
 

@@ -2,6 +2,18 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **실행 후 정정 (2026-08-05).** 이 문서는 실행 전에 쓴 계획이라 아래 두 가지가 실제 결과와 다르다.
+> 아래 본문을 읽을 때 이 정정을 우선한다.
+>
+> 1. **배경 자산은 `public/landing/meadow.jpg`다** (본문의 `meadow.webp`는 전부 `.jpg`로 읽을 것).
+>    이 환경의 `sips`가 webp 출력을 지원하지 않아 계획에 적어둔 jpeg 폴백 경로를 탔다.
+>    출처·가공 이력은 `docs/landing-assets.md` 참조.
+> 2. **계획이 지목한 Unsplash 사진 ID는 초원이 아니라 숲 사진이었다.** 실행 중 발견해
+>    초록 언덕+파란 하늘 사진(Chris Barbalis, `oOBMoCOgGrY`)으로 교체했다.
+>
+> 그리고 파일 구조 표의 `components/landing/Hero.tsx`는 만들지 않았다 — 히어로는 기존
+> `components/story/HeroHand.tsx`를 제자리에서 리스킨하는 쪽(Task 5)으로 갔다.
+
 **Goal:** 이달아 랜딩을 잡지(에디토리얼) 스타일에서 "푸른 하늘·초원 배경 + 파스텔 스티커 카드" 포트폴리오 스타일로 전면 교체하되, 히어로 손 변신 애니메이션과 사진 주입 툴은 동작 그대로 유지한다.
 
 **Architecture:** `components/landing/`에 섹션 컴포넌트 9개를 새로 만들고 `Landing.tsx`가 조립한다. `page.tsx`는 `StoryLanding` 대신 `Landing`을 렌더하며 상태 머신·API 흐름·`toolSlot` 주입 패턴은 손대지 않는다. `HeroHand.tsx`는 잡지 장치(바코드·커버라인·고스트 발행호·크롭마크·매스트헤드)만 걷어내고 rAF 루프·`heroMorph` 타임라인·`.hand-stage` 내부 DOM은 한 글자도 바꾸지 않는다. 스타일은 `app/landing.css`(신규)에 두고 `app/globals.css`는 디자인 토큰만 교체해 내부 화면(생성·결과·마감)이 새 색·폰트를 자동으로 물려받게 한다.
