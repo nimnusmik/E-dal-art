@@ -120,3 +120,43 @@ describe('코케트 등가성 — 새 경로가 옛 헌법을 모두 담는가',
     expect(prompt).not.toMatch(/[가-힣]/);
   });
 });
+
+import { decoden } from '@/config/cores/decoden';
+import { nuance } from '@/config/cores/nuance';
+import { textureGummy } from '@/config/cores/texture-gummy';
+
+describe('코어별 프롬프트 분기 — 같은 사진에서 다른 지시가 나온다', () => {
+  const opts = { shape: 'almond' as const, length: 'medium' as const, partsIntensity: 'auto' as const };
+  const build = (core: typeof coquette) => buildCorePrompt(composeBrief(core, PHOTO, opts));
+
+  it('데코덴은 여백을 0-15%로, 코케트는 55-70%로 지시한다', () => {
+    expect(build(decoden)).toContain('Negative space: 0-15%');
+    expect(build(coquette)).toContain('Negative space: 55-70%');
+  });
+
+  it('데코덴은 볼륨을 쌓으라 하고, 코케트는 납작하게 붙이라 한다', () => {
+    expect(build(decoden)).toContain('built UP in volume');
+    expect(build(coquette)).toContain('FLAT embossed metal stud');
+  });
+
+  it('데코덴·텍스처는 마감 믹싱을 요구하고, 코케트는 단일 마감을 요구한다', () => {
+    expect(build(decoden)).toMatch(/Never the same finish|Mix finishes/);
+    expect(build(textureGummy)).toMatch(/Never the same finish|Mix finishes/);
+    expect(build(coquette)).toContain('One single finish');
+  });
+
+  it('뉘앙스는 프렌치 경계선을 배제한다', () => {
+    expect(build(nuance)).toContain('a french boundary line');
+    expect(build(nuance)).toContain('no boundary line');
+  });
+
+  it('텍스처·구미는 질감 줄을 넣고, 코케트는 넣지 않는다', () => {
+    expect(build(textureGummy)).toContain('TEXTURE:');
+    expect(build(coquette)).not.toContain('TEXTURE:');
+  });
+
+  it('4개 코어의 프롬프트는 서로 모두 다르다', () => {
+    const prompts = [coquette, nuance, textureGummy, decoden].map(build);
+    expect(new Set(prompts).size).toBe(4);
+  });
+});
