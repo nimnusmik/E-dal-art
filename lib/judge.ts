@@ -3,6 +3,7 @@ import type { ImagePayload } from './types';
 import type { NailBrief } from './brief';
 import { buildBriefPrompt } from './brief';
 import { generateImage } from './provider';
+import type { NailCore } from './core';
 
 /**
  * 3단계: vision 검수기 — 생성 결과를 브리프 대비 채점한다.
@@ -217,4 +218,57 @@ async function mockJudgement(): Promise<NailJudgement> {
     cleanRender: true,
     notes: '브리프 준수 — 통과.',
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* 코어 기반 판정 (스펙 6절) — 기존 verdict은 옛 경로용으로 남겨둔다      */
+/* ------------------------------------------------------------------ */
+
+/** 원본 대비 충실도 3항목을 더한 검수 결과 */
+export interface CoreJudgement extends NailJudgement {
+  /** 추출 팔레트의 역할·비율이 지켜졌나 */
+  paletteFidelity: boolean;
+  /** fidelityAnchors 중 살아있는 개수 */
+  motifFidelity: number;
+  /** 선택한 코어의 정체성(여백률·질감·파츠 밀도)이 드러나나 */
+  coreFidelity: boolean;
+}
+
+/**
+ * 기대 파츠 팁 수 — 코어 레코드를 직접 읽는다.
+ * 기존 expectedMetalTips는 partsLine 문자열을 정규식으로 파싱해 추정했는데,
+ * 코어가 숫자를 직접 갖고 있으므로 그 추정이 불필요해졌다.
+ */
+export function coreExpectedParts(core: NailCore): { min: number; max: number } {
+  return { min: core.judge.minPartsTips, max: core.judge.maxPartsTips };
+}
+
+/**
+ * 코어 기준 판정. 즉시 탈락은 3종만 — 물리 위반·AI 티·파츠 개수 위반.
+ * 충실도 3항목(palette/motif/core)은 D8에 따라 점수만 기록하고 탈락시키지 않는다.
+ */
+export function verdictForCore(
+  j: CoreJudgement,
+  core: NailCore,
+  anchorCount: number,
+): { pass: boolean; score: number } {
+  const { min, max } = coreExpectedParts(core);
+  const countOk = j.metalTipCount >= min && j.metalTipCount <= max;
+  const partsOk = j.partsMatch && countOk;
+  const motifOk = anchorCount === 0 ? true : j.motifFidelity >= Math.ceil(anchorCount / 2);
+
+  const checks = [
+    j.baseMatch,
+    j.paletteMatch,
+    partsOk,
+    j.physicsOk,
+    j.cleanRender,
+    j.paletteFidelity,
+    motifOk,
+    j.coreFidelity,
+  ];
+  const score = checks.filter(Boolean).length;
+
+  const pass = j.physicsOk && j.cleanRender && partsOk;
+  return { pass, score };
 }

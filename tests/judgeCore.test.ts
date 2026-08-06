@@ -1,0 +1,69 @@
+import { describe, it, expect } from 'vitest';
+import { coreExpectedParts, verdictForCore } from '@/lib/judge';
+import type { CoreJudgement } from '@/lib/judge';
+import { coquette } from '@/config/cores/coquette';
+import { decoden } from '@/config/cores/decoden';
+
+const CLEAN: CoreJudgement = {
+  baseMatch: true,
+  paletteMatch: true,
+  partsMatch: true,
+  metalTipCount: 1,
+  letteringCount: 0,
+  physicsOk: true,
+  cleanRender: true,
+  notes: '',
+  paletteFidelity: true,
+  motifFidelity: 2,
+  coreFidelity: true,
+};
+
+describe('coreExpectedParts', () => {
+  it('코어 judge 값을 그대로 읽는다 (문자열 파싱 없음)', () => {
+    expect(coreExpectedParts(coquette)).toEqual({ min: 1, max: 2 });
+    expect(coreExpectedParts(decoden)).toEqual({ min: 4, max: 10 });
+  });
+});
+
+describe('verdictForCore', () => {
+  it('전부 충족하면 통과, 만점', () => {
+    const v = verdictForCore(CLEAN, coquette, 2);
+    expect(v.pass).toBe(true);
+    expect(v.score).toBe(8);
+  });
+
+  it('파츠 개수가 코어 범위를 벗어나면 탈락', () => {
+    const v = verdictForCore({ ...CLEAN, metalTipCount: 7 }, coquette, 2);
+    expect(v.pass).toBe(false);
+  });
+
+  it('같은 파츠 개수가 데코덴에서는 통과한다', () => {
+    const v = verdictForCore({ ...CLEAN, metalTipCount: 7 }, decoden, 2);
+    expect(v.pass).toBe(true);
+  });
+
+  it('물리 위반은 즉시 탈락', () => {
+    expect(verdictForCore({ ...CLEAN, physicsOk: false }, coquette, 2).pass).toBe(false);
+  });
+
+  it('AI 티는 즉시 탈락', () => {
+    expect(verdictForCore({ ...CLEAN, cleanRender: false }, coquette, 2).pass).toBe(false);
+  });
+
+  it('코어 충실도 실패는 점수만 깎고 탈락시키지 않는다 (D8)', () => {
+    const v = verdictForCore({ ...CLEAN, coreFidelity: false }, coquette, 2);
+    expect(v.pass).toBe(true);
+    expect(v.score).toBe(7);
+  });
+
+  it('모티프 충실도는 앵커 개수 대비로 점수에 반영된다', () => {
+    const full = verdictForCore(CLEAN, coquette, 2);
+    const half = verdictForCore({ ...CLEAN, motifFidelity: 0 }, coquette, 2);
+    expect(half.score).toBeLessThan(full.score);
+  });
+
+  it('앵커가 0개면 모티프 충실도는 만족으로 본다', () => {
+    const v = verdictForCore({ ...CLEAN, motifFidelity: 0 }, coquette, 0);
+    expect(v.score).toBe(8);
+  });
+});
