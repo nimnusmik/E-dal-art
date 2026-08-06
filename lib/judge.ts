@@ -232,6 +232,22 @@ export interface CoreJudgement extends NailJudgement {
   motifFidelity: number;
   /** 선택한 코어의 정체성(여백률·질감·파츠 밀도)이 드러나나 */
   coreFidelity: boolean;
+  /**
+   * 융기·조소된 젤 볼륨이 눈에 보이게 존재하는가.
+   * allowGelVolume이 true인 코어에서만 채점에 반영된다 — 볼륨을 안 쓰는 코어는
+   * 이 값이 false여도 감점되지 않는다.
+   */
+  raisedVolumeObserved?: boolean;
+  /**
+   * 세트 전체에서 마감(광택/매트/크롬 등)이 2종 이상 섞여 보이는가.
+   * finishMix가 "여러 마감을 섞으라"고 요구하는 코어에서만 채점에 반영된다.
+   */
+  finishVarietyObserved?: boolean;
+  /**
+   * 관찰된 미장식·맨 표면 비율(0~1). 조밀한 커버리지를 요구하는 코어(minNegativeSpace가
+   * 낮은 코어)에서만 채점에 반영된다 — 파츠 개수만으론 "60% 맨손톱" 같은 결과를 못 잡는다.
+   */
+  bareSurfaceShare?: number;
 }
 
 /**
@@ -267,8 +283,165 @@ export function verdictForCore(
     motifOk,
     j.coreFidelity,
   ];
+
+  // 코어가 실제로 요구하는 정체성만 관찰해 점수에 반영한다 (탈락 게이트가 아니다 — D8).
+  // 볼륨을 허용하지 않는 코어는 볼륨 부재로 감점하지 않고, 마감 혼합·조밀 커버리지를
+  // 요구하지 않는 코어는 그 관찰 자체를 채점에서 뺀다.
+  if (core.judge.allowGelVolume) {
+    checks.push(Boolean(j.raisedVolumeObserved));
+  }
+  if (expectsFinishVariety(core)) {
+    checks.push(Boolean(j.finishVarietyObserved));
+  }
+  if (expectsDenseCoverage(core)) {
+    const maxBare = core.negativeSpace[1] + BARE_SURFACE_TOLERANCE;
+    checks.push(j.bareSurfaceShare != null && j.bareSurfaceShare <= maxBare);
+  }
+
   const score = checks.filter(Boolean).length;
 
   const pass = j.physicsOk && j.cleanRender && partsOk;
   return { pass, score };
+}
+
+/** finishMix가 "여러 마감을 섞으라"고 명시하는 코어인가 (데코덴·텍스처구미 등) */
+function expectsFinishVariety(core: NailCore): boolean {
+  return /mix finishes/i.test(core.finishMix);
+}
+
+/** 여백이 거의 없는(조밀한 커버리지를 쓰는) 코어인가 — 이 경우에만 맨 표면 비율을 채점한다 */
+function expectsDenseCoverage(core: NailCore): boolean {
+  return core.judge.minNegativeSpace < 0.5;
+}
+
+/** 관찰치의 자연스러운 흔들림을 흡수하는 여유치 */
+const BARE_SURFACE_TOLERANCE = 0.15;
+
+/** 코어 기반 검수 지시문 — 코어가 실제로 요구하는 것만 관찰하게 한다 (게이트 판정은 코드가 함) */
+export function coreJudgeInstruction(core: NailCore): string {
+  return `You are a strict quality inspector at a Korean press-on nail factory.
+The attached image was generated for the "${core.id}" nail-art core below. Inspect the image and report ONLY what you observe — verdicts are computed elsewhere.
+
+CORE RULES:
+- Base/structure: ${core.baseLine} / ${core.structure}
+- Finish: ${core.finishMix}
+- Parts physics: ${core.partsPhysics}
+- Allowed materials: ${core.allowedMaterials.join(', ')}
+- Forbidden: ${core.forbidden.join(' | ')}
+
+Report:
+- baseMatch: base color/sheerness and structure follow the core rules (design contained where specified, negative space preserved as intended).
+- paletteMatch: all colors belong to the intended palette; true only if there is no clearly foreign color (small neutral accents are fine).
+- partsMatch: judge ONLY whether the KIND of parts and their PLACEMENT match the core rules. partsMatch MUST stay true even when there are more or fewer decorated tips than the budget — quantity is reported separately in metalTipCount and judged elsewhere.
+- metalTipCount: how many tips carry any metal stud, gem, pearl, or built-up part. Count carefully, tip by tip.
+- letteringCount: how many tips show script lettering.
+- physicsOk: every part lies flat or is built up from the nail surface and everything is buildable by a human artist with gel — no hanging/dangling pieces, no floating elements, no impossible shapes.
+- cleanRender: crisp edges, no melted or warped tips, no extra objects, no text overlays.
+- paletteFidelity: the palette's roles and proportions from the source photo are preserved.
+- motifFidelity: how many of the source photo's motifs are still recognizable in the result.
+- coreFidelity: the core's own identity (negative space ratio, texture, part density) reads clearly in the result.
+- raisedVolumeObserved: true only if sculpted or raised gel volume is clearly visible standing up off the nail surface (not just flat paint).
+- finishVarietyObserved: true only if more than one distinct surface finish (glossy / matte / chrome / velvet / textured) is visible across the set, not the same finish repeated on every tip.
+- bareSurfaceShare: your best estimate, as a number between 0 and 1, of the fraction of total nail surface across the set that is left undecorated/bare.
+- notes: one short Korean sentence — the single most important observation.`;
+}
+
+const CORE_JUDGE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    baseMatch: { type: Type.BOOLEAN },
+    paletteMatch: { type: Type.BOOLEAN },
+    partsMatch: { type: Type.BOOLEAN },
+    metalTipCount: { type: Type.NUMBER },
+    letteringCount: { type: Type.NUMBER },
+    physicsOk: { type: Type.BOOLEAN },
+    cleanRender: { type: Type.BOOLEAN },
+    paletteFidelity: { type: Type.BOOLEAN },
+    motifFidelity: { type: Type.NUMBER },
+    coreFidelity: { type: Type.BOOLEAN },
+    raisedVolumeObserved: { type: Type.BOOLEAN },
+    finishVarietyObserved: { type: Type.BOOLEAN },
+    bareSurfaceShare: { type: Type.NUMBER },
+    notes: { type: Type.STRING },
+  },
+  required: [
+    'baseMatch', 'paletteMatch', 'partsMatch', 'metalTipCount',
+    'letteringCount', 'physicsOk', 'cleanRender', 'paletteFidelity',
+    'motifFidelity', 'coreFidelity', 'raisedVolumeObserved',
+    'finishVarietyObserved', 'bareSurfaceShare', 'notes',
+  ],
+};
+
+/** 생성 이미지 1장을 코어 기준으로 채점. 일시 오류 대비 1회 재시도, 최종 실패 시 null */
+export async function judgeImageForCore(image: ImagePayload, core: NailCore): Promise<CoreJudgement | null> {
+  const first = await judgeOnceForCore(image, core);
+  if (first) return first;
+  await new Promise((r) => setTimeout(r, 1500));
+  return judgeOnceForCore(image, core);
+}
+
+async function judgeOnceForCore(image: ImagePayload, core: NailCore): Promise<CoreJudgement | null> {
+  if (process.env.GEMINI_MOCK === '1') return mockCoreJudgement();
+  try {
+    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
+    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await client.models.generateContent({
+      model,
+      contents: [
+        { inlineData: { data: image.data, mimeType: image.mimeType } },
+        { text: coreJudgeInstruction(core) },
+      ],
+      config: { responseMimeType: 'application/json', responseSchema: CORE_JUDGE_SCHEMA },
+    });
+    return parseCoreJudgement(response.text ?? '');
+  } catch {
+    return null;
+  }
+}
+
+/** 코어 기반 검수 응답 파싱 — 기존 parseJudgement와 별도 경로 (신규 관찰 3필드 포함) */
+export function parseCoreJudgement(text: string): CoreJudgement | null {
+  const base = parseJudgement(text);
+  if (!base) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== 'object' || parsed === null) return null;
+  const j = parsed as Record<string, unknown>;
+  if (typeof j.paletteFidelity !== 'boolean') return null;
+  if (typeof j.motifFidelity !== 'number') return null;
+  if (typeof j.coreFidelity !== 'boolean') return null;
+  const result: CoreJudgement = {
+    ...base,
+    paletteFidelity: j.paletteFidelity,
+    motifFidelity: j.motifFidelity,
+    coreFidelity: j.coreFidelity,
+  };
+  if (typeof j.raisedVolumeObserved === 'boolean') result.raisedVolumeObserved = j.raisedVolumeObserved;
+  if (typeof j.finishVarietyObserved === 'boolean') result.finishVarietyObserved = j.finishVarietyObserved;
+  if (typeof j.bareSurfaceShare === 'number') result.bareSurfaceShare = j.bareSurfaceShare;
+  return result;
+}
+
+async function mockCoreJudgement(): Promise<CoreJudgement> {
+  await new Promise((r) => setTimeout(r, 200));
+  return {
+    baseMatch: true,
+    paletteMatch: true,
+    partsMatch: true,
+    metalTipCount: 1,
+    letteringCount: 1,
+    physicsOk: true,
+    cleanRender: true,
+    notes: '코어 규칙 준수 — 통과.',
+    paletteFidelity: true,
+    motifFidelity: 2,
+    coreFidelity: true,
+    raisedVolumeObserved: true,
+    finishVarietyObserved: true,
+    bareSurfaceShare: 0.1,
+  };
 }
