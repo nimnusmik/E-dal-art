@@ -36,6 +36,8 @@ export interface CoreBrief {
   /** 변주 플랜이 주입하는 팁별 변주 서술. 기본은 빈 배열 */
   patternLines: string[];
   letteringWord: string | null;
+  /** 손님이 주문한 파츠 강도 — stage 8 예산 줄이 이 값을 읽는다 */
+  partsIntensity: PartsIntensity;
 }
 
 export interface ComposeOptions {
@@ -65,6 +67,7 @@ export function composeBrief(
     motifs,
     patternLines: [],
     letteringWord: null,
+    partsIntensity: opts.partsIntensity,
   };
 }
 
@@ -148,11 +151,9 @@ export function buildCorePrompt(brief: CoreBrief): string {
     `- Tip shape ${brief.shape}, length ${brief.length}. This is the client's order and it holds for every tip on the board.`,
   );
 
-  // 8. 코어 파츠 물리
+  // 8. 코어 파츠 물리 + 손님 주문 파츠 강도
   lines.push(`- ${core.partsPhysics}`);
-  lines.push(
-    `- Parts budget for the whole set: ${core.partsBudget.big} statement part${core.partsBudget.big === 1 ? '' : 's'} plus ${core.partsBudget.studs[0]}-${core.partsBudget.studs[1]} small studs or beads in total.`,
-  );
+  lines.push(`- ${partsBudgetSentence(core, brief.partsIntensity)}`);
 
   // 9. 코어 금지 + 공통분모
   if (core.forbidden.length > 0) {
@@ -166,6 +167,31 @@ export function buildCorePrompt(brief: CoreBrief): string {
   );
 
   return lines.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+/**
+ * 파츠 강도(손님 주문) → stage 8 예산 문장. lib/brief.ts의 applyOptions와 같은
+ * 의미를 코어의 숫자 예산(core.partsBudget)에 옮겨 낸다.
+ *  - auto: 코어 예산 그대로
+ *  - none: 예산 줄 대신 파츠 제로 문장 (ZERO_PARTS_LINE과 동일 문장)
+ *  - point: 세트 전체 파츠 1개로 고정
+ *  - rich: big은 그대로(최소 1), studs는 상한을 상하한 모두로 써서 상단을 겨냥한다
+ */
+function partsBudgetSentence(core: NailCore, intensity: PartsIntensity): string {
+  switch (intensity) {
+    case 'none':
+      return 'Every tip is painted gel only — no metal, no gems, no pearls, no 3D parts.';
+    case 'point':
+      return 'Exactly one tip carries a single small part as its only accent, and every other tip is painted gel only.';
+    case 'rich': {
+      const big = Math.max(core.partsBudget.big, 1);
+      const top = core.partsBudget.studs[1];
+      return `Parts budget for the whole set: ${big} statement part${big === 1 ? '' : 's'} plus ${top}-${top} small studs or beads in total.`;
+    }
+    case 'auto':
+    default:
+      return `Parts budget for the whole set: ${core.partsBudget.big} statement part${core.partsBudget.big === 1 ? '' : 's'} plus ${core.partsBudget.studs[0]}-${core.partsBudget.studs[1]} small studs or beads in total.`;
+  }
 }
 
 /** 구조 enum → 영어 문장. 모델은 enum 토큰이 아니라 문장을 이해한다 */
