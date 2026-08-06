@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { STATS, SERVICES, GALLERY, SCENES, FAQS } from '@/components/landing/content';
 
 const TONES = ['pink', 'blue', 'yellow', 'green', 'purple'];
@@ -22,10 +24,24 @@ describe('랜딩 콘텐츠', () => {
     expect(new Set(nos).size).toBe(nos.length);
   });
 
-  it('갤러리 컷은 4장이고 src는 webp를 가리킨다', () => {
+  it('갤러리 컷은 4장이고 src는 /gallery/ 아래 이미지를 가리킨다', () => {
     expect(GALLERY).toHaveLength(4);
     for (const g of GALLERY) {
-      expect(g.src).toMatch(/^\/.+\.webp$/);
+      expect(g.src).toMatch(/^\/gallery\/.+\.(jpg|webp)$/);
+    }
+  });
+
+  it('갤러리에 영감 사진(입력물)을 섞지 않는다', () => {
+    // 이 섹션의 문구가 "이런 시안이 나와요"이므로, 사용자가 올리는 입력물이 아니라
+    // 실제 생성·검수를 통과한 결과물만 실려야 한다.
+    for (const g of GALLERY) {
+      expect(g.src).not.toContain('/hero/insp/');
+    }
+  });
+
+  it('갤러리 이미지 파일이 실제로 존재한다', () => {
+    for (const g of GALLERY) {
+      expect(existsSync(join(process.cwd(), 'public', g.src))).toBe(true);
     }
   });
 

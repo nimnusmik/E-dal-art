@@ -66,11 +66,16 @@ export interface GalleryCut {
   tilt: number;
 }
 
+/**
+ * 실제 생성·검수를 통과한 시안만 싣는다. 영감 사진(`/hero/insp/*`)을 여기 쓰면
+ * "이런 시안이 나와요"라는 문구가 거짓이 되므로 절대 섞지 말 것.
+ * 출처와 판정 근거는 `public/gallery/SOURCES.md` 참조.
+ */
 export const GALLERY: GalleryCut[] = [
-  { src: '/hero/insp/tattoo.webp', title: '타투 플래시', meta: '라인 아트 · 블랙', tilt: -4 },
-  { src: '/hero/insp/dreamy.webp', title: '몽환 파스텔', meta: '시어 밀키 · 글레이즈드', tilt: 3 },
-  { src: '/hero/insp/fairycore.webp', title: '페어리코어', meta: '플로럴 · 아이보리', tilt: -2 },
-  { src: '/hero/insp/wings.webp', title: '엔젤윙', meta: '크롬 · 화이트 펄', tilt: 5 },
+  { src: '/gallery/celestial-gold.jpg', title: '천체 골드', meta: '마블 · 골드 글리터', tilt: -4 },
+  { src: '/gallery/citrus.jpg', title: '시트러스', meta: '오렌지 프렌치 · 감귤', tilt: 3 },
+  { src: '/gallery/dot-gingham.jpg', title: '도트 깅엄', meta: '핑크·블루 체크 · 로즈', tilt: -2 },
+  { src: '/gallery/lilac-check.jpg', title: '라일락 체크', meta: '라일락 깅엄 · 핑크 로즈', tilt: 5 },
 ];
 
 export interface SceneCard {
