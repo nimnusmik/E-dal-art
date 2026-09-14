@@ -1,8 +1,5 @@
-import { useIssue } from '@/lib/useIssue';
-
-/** 초원 배경 초대형 타이포 CTA + 미니 풋터 바 */
+/** 초원 배경 초대형 타이포 CTA. 풋터 바는 <main> 밖 SiteFooter가 소유한다 */
 export default function FooterCta() {
-  const issue = useIssue();
   return (
     <section className="xp-meadow xp-footer-cta" aria-label="시안 만들러 가기">
       <div className="xp-footer-inner">
@@ -12,14 +9,10 @@ export default function FooterCta() {
           <br />
           먼저 만나요
         </h2>
-        <a className="xp-cta xp-cta-light" href="#tool">
-          이번 호 시안 만들기
+        <a className="xp-cta" href="#tool">
+          무료로 시안 만들기
         </a>
       </div>
-      <footer className="xp-footer-bar">
-        <span>이달아 — AI가 만드는 이달의 네일</span>
-        <span suppressHydrationWarning>{issue.label}</span>
-      </footer>
     </section>
   );
 }

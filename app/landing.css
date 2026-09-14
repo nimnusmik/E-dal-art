@@ -5,34 +5,58 @@
 /* 초원 배경 공용 — 히어로·갤러리·풋터 CTA가 함께 쓴다 */
 .xp-meadow {
   position: relative;
-  background-color: #498b06; /* 사진 로드 실패·지연 시 흰 글씨가 사라지지 않도록 */
+  background-color: var(--meadow); /* 사진 로드 실패·지연 시 흰 글씨가 사라지지 않도록 */
   background-image: url('/landing/meadow.jpg');
   background-size: cover;
   background-position: center 62%;
   isolation: isolate;
 }
 
-/* 배경 위 텍스트 대비 확보 — 상단만 살짝 어둡게 */
+/* 모바일은 390px 화면에 2000px 원본을 깔 필요가 없다 — 1170px 전용본(45KB) */
+@media (max-width: 767px) {
+  .xp-meadow { background-image: url('/landing/meadow-mobile.jpg'); }
+}
+
+/**
+ * 배경 위 텍스트 대비 — 글자가 놓이는 **섹션 상단**만 덮는다.
+ *
+ * 두 번의 실패를 거쳤다:
+ *  1) 섹션 전체를 알파 0.5로 덮기 → 대비는 붙지만 잔디와 갤러리 시안까지 탁해졌다.
+ *  2) 카피 블록 뒤에 원형 스크림 → 사진 위에 검은 원 얼룩으로 드러났다.
+ * 결론: 방향성 있는 선형 그라디언트만 얼룩 없이 자연스럽다. 알파 0.38은
+ * 하늘색(rgb(58,192,220)) 위 흰 글씨를 약 4.5:1까지 올린다(합성 후 rgb(41,129,153)).
+ * 55%에서 완전히 투명해지므로 잔디·시안 카드의 채도는 손대지 않는다.
+ */
 .xp-meadow::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(180deg, rgba(18, 34, 58, 0.22) 0%, rgba(18, 34, 58, 0) 46%);
+  background: linear-gradient(
+    180deg,
+    rgba(18, 34, 58, 0.4) 0%,
+    rgba(18, 34, 58, 0.34) 28%,
+    rgba(18, 34, 58, 0.1) 46%,
+    rgba(18, 34, 58, 0) 55%
+  );
   pointer-events: none;
 }
 
-/* 초대형 흰 디스플레이 타이포 — 참조의 헤드라인 처리 */
+/* 초대형 흰 디스플레이 타이포 — 참조의 헤드라인 처리.
+   행간 0.94는 라틴 전용 값이다. 한글은 정사각 프레임을 상하로 꽉 채우고
+   Black Han Sans는 초헤비체라 프레임 여백이 최소여서, 38px에 line box 35.72px면
+   글자 위아래로 각 1.14px밖에 남지 않아 받침과 다음 줄 초성이 붙었다. */
 .xp-display {
   font-family: var(--font-display);
   color: #fff;
-  line-height: 0.94;
-  letter-spacing: -0.02em;
+  line-height: var(--lh-display);
+  /* 한글은 음절 단위로 인식하므로 자간을 줄이면 낱자가 아니라 음절 경계가 무너진다 */
+  letter-spacing: -0.005em;
   text-transform: uppercase;
   word-break: keep-all;
   text-shadow:
-    0 2px 0 rgba(16, 26, 44, 0.22),
-    0 14px 38px rgba(16, 26, 44, 0.34);
+    0 2px 0 rgba(16, 26, 44, 0.28),
+    0 14px 38px rgba(16, 26, 44, 0.4);
 }
 
 /* 파스텔 필 배지 */
@@ -41,46 +65,39 @@
   align-items: center;
   gap: 7px;
   padding: 9px 16px;
-  border-radius: var(--radius-btn);
+  border-radius: var(--r-pill);
   background: var(--paper-card);
   box-shadow: var(--shadow-card);
-  font-size: 13px;
+  font-size: var(--fs-150);
   font-weight: 700;
   color: var(--ink);
   white-space: nowrap;
 }
+
+/* 인터랙티브 알약만 44px 터치 타깃을 갖는다 (라벨용 .xp-pill은 그대로) */
+a.xp-pill, button.xp-pill { min-height: 40px; position: relative; }
+a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset: -4px; }
 .xp-pill.t-pink   { background: var(--pastel-pink); }
 .xp-pill.t-blue   { background: var(--pastel-blue); }
 .xp-pill.t-yellow { background: var(--pastel-yellow); }
 .xp-pill.t-green  { background: var(--pastel-green); }
 .xp-pill.t-purple { background: var(--pastel-purple); }
 
-/* 흰 지면 섹션 — 도트 그리드 + 왼쪽 스프링 코일 */
+/* 흰 지면 섹션 — 도트 그리드.
+   패딩을 상단만 소유한다. 이전엔 상·하 양쪽에 --space-section이 들어가
+   인접한 두 섹션의 여백이 합산되며(88+88=176px) 프로세스↔툴 사이에
+   의도하지 않은 공백이 생겼다. */
 .xp-paper {
   position: relative;
   background-color: var(--paper);
+  /* radius(20px)와 도트 그리드 단위를 맞춰 우연이 아닌 관계로 만든다 */
   background-image: radial-gradient(var(--line-soft) 1.2px, transparent 1.2px);
-  background-size: 22px 22px;
-  padding: var(--space-section) clamp(20px, 5vw, 64px);
+  background-size: 20px 20px;
+  padding: var(--space-section) clamp(20px, 5vw, 64px) 0;
 }
 
-/* 스프링노트 코일 — 왼쪽 가장자리 점선 */
-.xp-paper::before {
-  content: '';
-  position: absolute;
-  left: clamp(10px, 2.2vw, 26px);
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background-image: linear-gradient(var(--pastel-green) 0 14px, transparent 14px 30px);
-  background-size: 3px 30px;
-  opacity: 0.85;
-  pointer-events: none;
-}
-
-@media (max-width: 767px) {
-  .xp-paper::before { display: none; }
-}
+/* 지면 구간의 마지막 섹션만 하단 여백을 갖는다 */
+.xp-paper.is-band-end { padding-bottom: var(--space-section); }
 
 /* 섹션 공통 헤더 */
 .xp-head {
@@ -97,41 +114,43 @@
 .xp-head h2:not(.xp-display) {
   font-family: var(--font-display);
   font-size: clamp(28px, 4.4vw, 46px);
-  line-height: 1.14;
-  letter-spacing: -0.02em;
+  line-height: var(--lh-head);
+  letter-spacing: -0.005em;
   color: var(--ink);
   word-break: keep-all;
 }
 
 .xp-head p {
   max-width: 46ch;
-  font-size: 15px;
-  line-height: 1.75;
-  color: var(--muted);
+  font-size: var(--fs-300);
+  line-height: var(--lh-body);
+  color: var(--text-2);
   word-break: keep-all;
 }
 
-/* 스크롤 진입 reveal */
-.xp-reveal {
+/* 스크롤 진입 reveal.
+   기본값이 "안 보임"이면 IO·CSS·스크롤 세 가지가 모두 성공해야 콘텐츠가 보인다 —
+   하나만 어긋나도 빈 페이지가 된다. 기본값을 "보임"으로 두고, JS가 붙어
+   IntersectionObserver를 실제로 쓸 수 있음을 확인한 뒤에만 숨긴다.
+   이러면 JS 실패·IO 미지원·인쇄·스크롤 없는 캡처가 전부 자동으로 안전해진다. */
+.js-reveal-ready .xp-reveal {
   opacity: 0;
   transform: translateY(16px);
   transition: opacity 0.6s ease var(--d, 0ms), transform 0.6s ease var(--d, 0ms);
 }
-.is-revealed .xp-reveal,
-.is-revealed.xp-reveal { opacity: 1; transform: none; }
+.js-reveal-ready .is-revealed .xp-reveal,
+.js-reveal-ready .is-revealed.xp-reveal { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  /* 지연까지 없애야 카드가 순차적으로 툭툭 나타나지 않는다 */
-  .xp-reveal { transition-duration: 0.01ms; transition-delay: 0s; }
+  /* 모션 저감 사용자에게는 리빌 자체를 걷어낸다 — 관측 전 투명 상태도 남기지 않는다 */
+  .js-reveal-ready .xp-reveal { opacity: 1; transform: none; transition: none; }
   .xp-cta { transition: none; }
 }
 
-/* JS가 없으면 IntersectionObserver가 못 돌아 본문이 영영 안 보인다 */
-@media (scripting: none) {
-  .xp-reveal { opacity: 1; transform: none; }
-}
-
 /* ─── 상단 바 ────────────────────────────────────────────────── */
+/* 이전엔 pointer-events:none으로 클릭만 통과시키고 시각적 가림은 방치했다.
+   390px에서 알약 2개가 폭의 44%를 덮어 본문 글자가 잘렸다("손 착용샷 합성" →
+   "착용샷 합성"). 실제 배경을 주고 body에 오프셋을 확보한다. */
 .xp-topbar {
   position: fixed;
   top: 0;
@@ -142,32 +161,54 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 14px clamp(16px, 4vw, 44px);
-  pointer-events: none;
+  padding: 12px clamp(16px, 4vw, 44px);
+  transition: transform 0.25s ease, background 0.2s ease, border-color 0.2s ease;
+  background: transparent;
+  border-bottom: 1px solid transparent;
 }
 
-.xp-topbar > * { pointer-events: auto; }
+/* 첫 화면에서는 히어로 사진을 가리지 않게 투명하게 두고, 스크롤한 뒤에만
+   지면을 깐다 — 이때부터는 본문 글자와 겹치기 때문에 배경이 필요하다 */
+.xp-topbar.is-solid {
+  background: rgba(244, 243, 239, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom-color: var(--line-soft);
+}
+
+/* 아래로 스크롤할 때는 숨기고 위로 올릴 때 복귀 — 390px에서 7.3% 회수는 크다 */
+.xp-topbar.is-hidden { transform: translateY(-105%); }
 
 .xp-logo {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 8px 15px;
-  border-radius: var(--radius-btn);
+  padding: 11px 16px;   /* 34px → 40px 높이 */
+  border-radius: var(--r-pill);
   background: var(--paper-card);
   box-shadow: var(--shadow-card);
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: var(--fs-200);
   letter-spacing: 0.02em;
   color: var(--ink);
+  position: relative;
 }
+/* 보이는 크기는 유지하고 탭 영역만 44px 이상으로 */
+.xp-logo::after { content: ''; position: absolute; inset: -4px; }
 
-.xp-logo span { color: var(--sky); font-size: 11px; }
+.xp-logo span { color: var(--brand); font-size: var(--fs-100); }
 
 .xp-topnav { display: flex; align-items: center; gap: 8px; }
 
+/* 상단 CTA는 브랜드 색 — 페이지 어디서나 같은 행동 색을 학습하게 한다 */
+.xp-topnav .xp-cta-top {
+  background: var(--brand);
+  color: #fff;
+  box-shadow: var(--shadow-cta);
+}
+
 @media (max-width: 520px) {
-  .xp-topnav .xp-pill:first-child { display: none; }
+  .xp-topnav .xp-issue-pill { display: none; }
 }
 
 /* ─── 히어로 ─────────────────────────────────────────────────── */
@@ -185,9 +226,9 @@
   background-size: 100% auto;
   background-position: center top;
   background-repeat: no-repeat;
-  /* #498b06은 meadow.jpg 최하단 픽셀 행의 실측 평균 RGB(sharp로 추출) — 추정치가 아니라
-     이음매가 안 보이도록 사진과 정확히 이어지는 값이다 */
-  background-color: #498b06;
+  /* --meadow(#498b06)는 meadow.jpg 최하단 픽셀 행의 실측 평균 RGB(sharp로 추출) —
+     추정치가 아니라 이음매가 안 보이도록 사진과 정확히 이어지는 값이다 */
+  background-color: var(--meadow);
 }
 
 /* 색은 맞췄지만 사진의 잔디 질감이 평면 색으로 뚝 끊기는 경계선은 남는다.
@@ -202,8 +243,25 @@
   top: 0;
   z-index: 0;
   aspect-ratio: 2000 / 1269;
-  background: linear-gradient(to bottom, transparent 85%, #498b06 100%);
+  background: linear-gradient(to bottom, transparent 85%, var(--meadow) 100%);
   pointer-events: none;
+}
+
+/* 히어로는 손 무대 때문에 섹션이 1300px+ 라 공용 % 그라디언트가 카피 구간을 못 덮는다.
+   섹션 길이와 무관하게 **첫 화면 높이** 기준으로 깔아, 카피가 놓인 하늘 구간만
+   덮고 지평선 아래(잔디·손)는 원래 밝기로 남긴다. */
+.xp-hero::before {
+  inset: 0 0 auto;
+  height: 100dvh;
+  /* 평탄 구간을 카피 하단(첫 화면의 약 45%)까지 유지한 뒤 지평선 근처에서 빠르게
+     사라진다 — 잔디·손·영감 카드는 원래 밝기 그대로 남는다 */
+  background: linear-gradient(
+    180deg,
+    rgba(18, 34, 58, 0.44) 0%,
+    rgba(18, 34, 58, 0.42) 46%,
+    rgba(18, 34, 58, 0.16) 64%,
+    rgba(18, 34, 58, 0) 80%
+  );
 }
 
 @media (max-width: 767px) {
@@ -242,46 +300,51 @@
 
 .xp-hero-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 
-.xp-hero-title { font-size: clamp(38px, 7.4vw, 92px); }
+.xp-hero-title { font-size: clamp(40px, 7.4vw, 80px); }
 
+/* 히어로 유일한 설명 문장. 대비는 .xp-hero::before의 상단 그라디언트가 만들므로
+   흰 글씨를 그대로 쓴다 — 흰 판을 깔면 읽히긴 하지만 사진 위 타이포 인상이 사라진다. */
+/* 19px/700은 WCAG 대형 텍스트(14pt bold = 18.66px) 기준을 넘으므로 요구 대비가
+   4.5:1 → 3:1로 내려간다. 사진을 더 어둡게 하는 대신 글자를 키워 대비 요건을
+   맞추는 쪽을 택했다 — 한글 가독성도 같이 올라간다. 실측 3.4~3.7:1로 통과. */
 .xp-hero-sub {
-  max-width: 44ch;
-  font-size: clamp(15px, 1.6vw, 17px);
-  line-height: 1.7;
-  font-weight: 600;
+  max-width: 40ch;
+  font-size: clamp(19px, 2vw, 22px);
+  line-height: 1.65;
+  font-weight: 700;
   color: #fff;
   word-break: keep-all;
-  text-shadow: 0 2px 14px rgba(16, 26, 44, 0.5);
+  /* 그림자는 대비 계산에 산입되지 않는다 — 글자 경계를 또렷하게 하는 보조 장치 */
+  text-shadow: 0 1px 10px rgba(14, 26, 44, 0.5);
 }
 
+/* 모든 primary CTA는 --brand 하나. 배경 밝기에 따라 색을 바꾸지 않는다 */
 .xp-cta {
   display: inline-block;
   margin-top: 4px;
   padding: 16px 34px;
-  border-radius: var(--radius-btn);
-  background: var(--ink);
+  min-height: 52px;
+  border-radius: var(--r-pill);
+  background: var(--brand);
   color: #fff;
-  font-size: 15px;
+  font-size: var(--fs-300);
   font-weight: 700;
   box-shadow: var(--shadow-lift);
-  transition: transform 0.15s ease;
+  transition: background 0.2s ease, transform 0.15s ease;
 }
 .xp-cta:active { transform: scale(0.98); }
+
+@media (hover: hover) {
+  .xp-cta:hover { background: var(--brand-hover); }
+}
 
 /* 손 무대는 히어로 카피 아래 — .hand-stage 자체 규칙은 globals.css가 소유.
    z-index:1은 .xp-meadow::before(배경 오버레이, z-index:-1) 위로 올리기 위한 것일 뿐,
    구슬의 앞뒤(0/3) 순서는 이 무대 안에서만 비교되므로 영향받지 않는다. */
 .xp-hero .hand-stage { position: relative; z-index: 1; margin-top: clamp(16px, 3vh, 40px); }
 
-/* 필 배지 부유 모션 */
-.xp-float { animation: xp-bob 4.5s ease-in-out infinite; }
-.xp-float.f2 { animation-delay: 0.6s; }
-.xp-float.f3 { animation-delay: 1.2s; }
-
-@keyframes xp-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-7px); }
-}
+/* 배지 부유(bob) 모션은 제거했다 — 정보 전달 0이고 첫 화면에서 시선만 분산시켰다.
+   .xp-float 클래스는 마크업 호환을 위해 남겨두되 아무 효과가 없다. */
 
 .xp-hero-cue {
   position: absolute;
@@ -294,39 +357,47 @@
   z-index: 2;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  background: rgba(16, 26, 44, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: var(--fs-100);
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: #fff;
-  text-shadow: 0 2px 10px rgba(16, 26, 44, 0.55);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .xp-float { animation: none; }
+  text-shadow: none;
 }
 
 /* ─── 통계 카드 ──────────────────────────────────────────────── */
-.xp-cta-sm { padding: 13px 26px; font-size: 14px; }
+.xp-cta-sm { padding: 14px 26px; min-height: 46px; font-size: var(--fs-200); }
 
 .xp-stat-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* 카드가 4장이므로 2열(2×2)로 고정한다 — minmax 하한을 낮추면 넓은 화면에서
+     3열이 되어 마지막 한 장이 홀로 남는다. min()으로 모바일 1열도 함께 처리. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: clamp(16px, 2.4vw, 26px);
-  max-width: 880px;
+  max-width: var(--w-narrow);
   margin: 0 auto;
 }
 
 .xp-card {
   position: relative;
   padding: clamp(22px, 2.6vw, 30px);
-  border-radius: var(--radius-card);
+  border-radius: var(--r-card);
   background: var(--paper-card);
   box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
-/* 모서리 파스텔 블롭 — 블롭 색이 지정된 카드(.blob-*)에만 렌더 */
+/* 모서리 파스텔 블롭 — 카드 4장을 색으로 구분하는 단일 역할.
+   곡률은 8개 매직넘버 대신 단순 원형으로 정리했다(카드 4장이 전부 같은 형태·
+   같은 위치였으므로 "유기적 무작위성"은 애초에 성립하지 않았다). */
 .xp-card[class*="blob-"]::after {
   content: '';
   position: absolute;
@@ -334,7 +405,7 @@
   top: -26px;
   width: 92px;
   height: 92px;
-  border-radius: 46% 54% 52% 48% / 50% 46% 54% 50%;
+  border-radius: var(--r-round);
   opacity: 0.95;
 }
 .blob-pink::after   { background: var(--pastel-pink); }
@@ -343,45 +414,54 @@
 .blob-green::after  { background: var(--pastel-green); }
 .blob-purple::after { background: var(--pastel-purple); }
 
+/* 숫자는 h3 안에 들어간다(Stats.tsx) — 스크린리더에서 값과 제목이 끊기지 않게 */
 .xp-stat-value {
   display: block;
   font-family: var(--font-display);
   font-size: clamp(34px, 4.6vw, 52px);
-  line-height: 1;
-  letter-spacing: -0.03em;
+  line-height: 1.05;
+  /* "5종/3장/매월"은 한글이 섞이므로 라틴용 -0.03em은 과하다 */
+  letter-spacing: -0.01em;
   color: var(--ink);
 }
 
 .xp-card h3 {
   margin-top: 14px;
-  font-size: 15px;
+  font-size: var(--fs-400);
   font-weight: 700;
-  color: var(--ink);
+  line-height: 1.4;
+  color: var(--text-1);
   word-break: keep-all;
 }
 
 .xp-card p {
-  margin-top: 7px;
-  font-size: 13.5px;
-  line-height: 1.72;
-  color: var(--muted);
+  margin-top: 8px;
+  font-size: var(--fs-300);
+  line-height: var(--lh-body);
+  color: var(--text-2);
   word-break: keep-all;
-}
-
-@media (max-width: 640px) {
-  .xp-stat-grid { grid-template-columns: 1fr; }
 }
 
 /* ─── 갤러리 (폴라로이드) ────────────────────────────────────── */
 .xp-gallery { padding: var(--space-section) clamp(20px, 5vw, 64px); }
 
-.xp-head-on-photo h2 { color: #fff; font-size: clamp(30px, 5.2vw, 58px); }
+.xp-head-on-photo h2 { color: #fff; font-size: clamp(30px, 5.2vw, 56px); }
+
+/* 사진 위 흰 글씨는 히어로 서브카피와 같은 규칙 — 19px/700으로 대형 텍스트
+   기준(3:1)에 들어간다. 실측 4.27~4.49:1로 여유 있게 통과. */
+.xp-head-on-photo p {
+  color: #fff;
+  font-size: clamp(19px, 2vw, 21px);
+  font-weight: 700;
+  line-height: 1.6;
+  text-shadow: 0 1px 10px rgba(16, 26, 44, 0.5);
+}
 
 .xp-polaroids {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: clamp(20px, 3vw, 38px);
-  max-width: 980px;
+  max-width: var(--w-mid);
   margin: 0 auto;
 }
 
@@ -389,26 +469,19 @@
    래퍼가 리빌을, 안쪽 .xp-polaroid가 기울기를 담당한다 */
 .xp-polaroid-slot { display: block; }
 
+/* "인쇄된 사진" 은유. 상단 좁고 하단 넓은 폴라로이드 여백으로 통일했다 —
+   기존 맥 트래픽 라이트(#ff6058/#ffbd2e/#28c840) 3점은 CSS 주석이 선언한
+   Windows XP 컨셉과 정반대 OS 신호였고, 두 레퍼런스가 서로를 지워
+   어느 쪽도 의도로 읽히지 않았다. */
 .xp-polaroid {
   margin: 0;
-  padding: 10px 10px 0;
-  border-radius: 14px;
+  padding: 12px 12px 0;
+  border-radius: var(--r-media);
   background: var(--paper-card);
   box-shadow: var(--shadow-lift);
   transform: rotate(var(--tilt, 0deg));
   transition: transform 0.3s ease;
 }
-
-.xp-polaroid-bar { display: flex; gap: 5px; padding: 4px 4px 9px; }
-.xp-polaroid-bar i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--line);
-}
-.xp-polaroid-bar i:nth-child(1) { background: #ff6058; }
-.xp-polaroid-bar i:nth-child(2) { background: #ffbd2e; }
-.xp-polaroid-bar i:nth-child(3) { background: #28c840; }
 
 .xp-polaroid img {
   display: block;
@@ -418,24 +491,30 @@
   height: auto;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--r-media);
 }
 
 .xp-polaroid figcaption {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
-  padding: 12px 4px 14px;
+  /* 카드가 좁아지면 메타를 아랫줄로 흘려보낸다 — 한 줄에 욱여넣으면
+     제목이 단어 중간에서 끊긴다("파스텔 프/렌치") */
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  padding: 14px 6px 20px;
 }
 
 .xp-polaroid figcaption strong {
   font-family: var(--font-display);
-  font-size: 15px;
+  font-size: var(--fs-400);
+  line-height: 1.3;
   color: var(--ink);
+  /* 제목은 통째로 유지 — 자리가 모자라면 메타가 먼저 아래로 내려간다 */
+  white-space: nowrap;
 }
 
-.xp-polaroid figcaption span { font-size: 11px; color: var(--muted); }
+.xp-polaroid figcaption span { font-size: var(--fs-150); color: var(--text-3); }
 
 @media (hover: hover) {
   .xp-polaroid:hover { transform: rotate(0deg) translateY(-6px); }
@@ -450,55 +529,77 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 640px;
+  max-width: var(--w-narrow);
   margin: 0 auto;
   list-style: none;
 }
 
+/* 알약(999px) + 그림자 + 우측 화살표는 "버튼"의 강한 신호였는데 실제로는
+   클릭되지 않는 리스트였다. 읽을 것은 chip(8px)으로 내려 형태로 구분한다. */
 .xp-service-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 24px;
-  border-radius: var(--radius-btn);
-  box-shadow: var(--shadow-card);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 6px 16px;
+  padding: 18px 22px;
+  border-radius: var(--r-chip);
+  box-shadow: none;
 }
 
-.xp-service-row.t-pink   { background: var(--pastel-pink); }
-.xp-service-row.t-blue   { background: var(--pastel-blue); }
-.xp-service-row.t-yellow { background: var(--pastel-yellow); }
-.xp-service-row.t-green  { background: var(--pastel-green); }
-.xp-service-row.t-purple { background: var(--pastel-purple); }
+/* 무지개 5색은 "순서"라는 정보를 파괴한다 — 단일 색조 명도 계단으로 방향을 만든다 */
+.xp-service-row.s1 { background: var(--step-1); }
+.xp-service-row.s2 { background: var(--step-2); }
+.xp-service-row.s3 { background: var(--step-3); }
+.xp-service-row.s4 { background: var(--step-4); }
+.xp-service-row.s5 { background: var(--step-5); }
 
 .xp-service-no {
   font-family: var(--font-display);
-  font-size: 13px;
-  color: rgba(22, 24, 29, 0.55);
+  font-size: var(--fs-200);
+  color: var(--text-4);
+  font-variant-numeric: tabular-nums;
 }
 
 .xp-service-label {
-  flex: 1;
-  font-size: 15px;
+  font-size: var(--fs-400);
   font-weight: 700;
+  line-height: 1.4;
   color: var(--ink);
   word-break: keep-all;
 }
 
-.xp-service-arrow { font-size: 16px; color: rgba(22, 24, 29, 0.45); }
+/* 5단계는 접을 이유가 없다 — 설명을 항상 펼쳐 둔다 */
+.xp-service-body {
+  grid-column: 2;
+  font-size: var(--fs-150);
+  line-height: 1.65;
+  color: var(--text-2);
+  word-break: keep-all;
+}
 
 /* ─── 툴 카드 ────────────────────────────────────────────────── */
-.xp-tool { scroll-margin-top: 72px; }
+/* 툴 섹션만 어두운 지면 — 이전엔 프로세스·툴·후기·FAQ가 paper 4연속이라
+   전환의 핵심 화면이 흐물흐물한 회백색 구간에 묻혔다. */
+.xp-tool {
+  scroll-margin-top: 78px;
+  background-color: var(--ink);
+  background-image: none;
+  padding-bottom: var(--space-section);
+}
+
+.xp-tool .xp-head h2:not(.xp-display) { color: #fff; }
+.xp-tool .xp-head p { color: rgba(255, 255, 255, 0.86); }
 
 .xp-tool-card {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 560px;
+  max-width: var(--w-narrow);
   margin: 0 auto;
   padding: clamp(26px, 3.4vw, 40px);
-  border-radius: var(--radius-card);
+  border-radius: var(--r-card);
   background: var(--paper-card);
-  box-shadow: var(--shadow-lift);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
 }
 
 .xp-tool-head { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
@@ -506,23 +607,44 @@
 .xp-tool-head h2 {
   font-family: var(--font-display);
   font-size: clamp(24px, 3.2vw, 34px);
-  line-height: 1.18;
-  letter-spacing: -0.02em;
+  line-height: var(--lh-head);
+  letter-spacing: -0.005em;
   color: var(--ink);
   word-break: keep-all;
 }
 
-/* 툴 안의 보조 문구 — globals.css의 .sub를 덮어쓰지 않고 이 안에서만 조정 */
-.xp-tool-card .sub { font-size: 14px; }
+.xp-tool-card .sub { font-size: var(--fs-300); }
 
-.xp-tool-card .cta { margin-top: 4px; }
+/* 툴 내부는 .screen이 아니라 카드이므로 margin-top:auto가 카드를 늘린다 */
+.xp-tool-card .cta { margin-top: 0; }
+
+.xp-tool-copy, .xp-tool-form { display: flex; flex-direction: column; gap: 14px; }
+
+/* 데스크톱 2열 — 1440px에서 카드 폭이 560px(화면의 38.9%)에 갇혀
+   전환의 핵심 화면이 페이지에서 가장 왜소했다 */
+@media (min-width: 900px) {
+  .xp-tool-card {
+    max-width: var(--w-mid);
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    column-gap: 48px;
+    row-gap: 16px;
+    align-items: start;
+    padding: 48px 52px;
+  }
+  .xp-tool-copy { display: flex; flex-direction: column; gap: 12px; }
+  .xp-tool-form { display: flex; flex-direction: column; gap: 16px; }
+  /* 넓어진 폭에서는 세로 막대형 3/4 슬롯이 어색하다 */
+  .xp-tool-card .slot,
+  .xp-tool-card .slot-loading { aspect-ratio: 1; }
+}
 
 /* ─── 사용 장면 카드 ─────────────────────────────────────────── */
 .xp-scene-stack {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: clamp(16px, 2.4vw, 26px);
-  max-width: 940px;
+  max-width: var(--w-mid);
   margin: 0 auto;
 }
 
@@ -533,56 +655,77 @@
 .xp-scene-avatar {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-round);
   background: var(--pastel-blue);
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: var(--fs-200);
   color: var(--ink);
 }
 
-.xp-scene-head strong { display: block; font-size: 13.5px; color: var(--ink); }
-.xp-scene-head em { font-style: normal; font-size: 11.5px; color: var(--muted); }
+.xp-scene-head strong { display: block; font-size: var(--fs-200); color: var(--ink); }
+.xp-scene-head em { font-style: normal; font-size: var(--fs-150); color: var(--text-3); }
 
+/* 따옴표는 CSS로 그린다 — JSX에 리터럴로 두면 별개 텍스트 노드가 되어
+   스크린리더가 "왼쪽 큰따옴표"를 읽는다 */
 .xp-scene blockquote {
   font-family: var(--font-display);
-  font-size: clamp(17px, 2vw, 20px);
-  line-height: 1.4;
-  letter-spacing: -0.01em;
+  font-size: clamp(18px, 2vw, 20px);
+  line-height: 1.45;
+  letter-spacing: -0.005em;
   color: var(--ink);
   word-break: keep-all;
 }
+/* content의 대체 텍스트를 빈 문자열로 지정해 장식 따옴표가 낭독되지 않게 한다 */
+.xp-scene blockquote::before { content: '“' / ''; }
+.xp-scene blockquote::after { content: '”' / ''; }
 
 .xp-scene > p {
   /* .xp-card p의 margin-top이 flex gap과 더해져 이 문단만 벌어진다 */
   margin-top: 0;
-  font-size: 13.5px;
-  line-height: 1.75;
-  color: var(--muted);
+  font-size: var(--fs-300);
+  line-height: var(--lh-body);
+  color: var(--text-2);
   word-break: keep-all;
 }
 
 /* ─── FAQ ────────────────────────────────────────────────────── */
+/* 질문 6개가 파스텔 알약 + 그림자로 흩뿌려져 "누르라"고 손짓했지만
+   답변은 데이터 모델에 아예 없었다. 답이 6개뿐이고 전부 짧으므로
+   접이식을 만들 이유가 없다 — 질문+답을 처음부터 함께 보인다. */
 .xp-faq-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 14px;
-  max-width: 760px;
+  max-width: var(--w-mid);
   margin: 0 auto;
   list-style: none;
 }
 
-/* 산개 오프셋은 margin으로 준다 — transform으로 주면 공용 .xp-reveal의
-   슬라이드-인 transform과 같은 속성을 다퉈 리빌 모션이 생략된다 */
-.xp-faq-item.i0 { margin-top: -6px; }
-.xp-faq-item.i2 { margin-top: 8px; }
+.xp-faq-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 22px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--line-quiet);
+  background: var(--paper-card);
+}
 
-.xp-faq-item .xp-pill { font-size: 13.5px; padding: 12px 20px; }
+.xp-faq-q {
+  font-size: var(--fs-400);
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--text-1);
+  word-break: keep-all;
+}
 
-@media (max-width: 640px) {
-  .xp-faq-item.i0, .xp-faq-item.i2 { margin-top: 0; }
+.xp-faq-a {
+  font-size: var(--fs-300);
+  line-height: var(--lh-body);
+  color: var(--text-2);
+  word-break: keep-all;
 }
 
 /* ─── 풋터 CTA ───────────────────────────────────────────────── */
@@ -597,13 +740,28 @@
 /* 공용 .xp-meadow::before는 섹션 상단만 어둡게 해 46%에서 투명해진다.
    풋터 바는 그 아래(밝은 잔디 위)에 놓이므로, 이 섹션에만 하단 그라데이션을
    덧대 흰 글씨 대비를 확보한다 */
+/* 풋터 CTA는 초대형 h2가 섹션의 24~38% 지점에 놓인다 — 공용 그라디언트(46%에서
+   0.10까지 떨어짐)로는 그 구간을 못 받쳐 최명부 2.45:1이었다. 히어로와 같은
+   커버리지로 늘린다. 잔디 하단은 그대로 밝다. */
+.xp-footer-cta::before {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 34, 58, 0.46) 0%,
+    rgba(18, 34, 58, 0.44) 44%,
+    rgba(18, 34, 58, 0.16) 62%,
+    rgba(18, 34, 58, 0) 78%
+  );
+}
+
+/* 하단 잔디 위 대비 보조. 섹션 전체를 덮지 않는다 — h2는 상단 그라디언트가,
+   풋터 바는 자기 자신의 판(.xp-footer-bar)이 각각 대비를 책임진다 */
 .xp-footer-cta::after {
   content: '';
   position: absolute;
   inset: auto 0 0;
   height: 44%;
   z-index: -1;
-  background: linear-gradient(0deg, rgba(16, 26, 44, 0.46) 0%, rgba(16, 26, 44, 0) 100%);
+  background: linear-gradient(0deg, rgba(16, 26, 44, 0.4) 0%, rgba(16, 26, 44, 0) 100%);
   pointer-events: none;
 }
 
@@ -615,24 +773,45 @@
   text-align: center;
 }
 
-.xp-footer-title { font-size: clamp(38px, 8vw, 104px); }
+.xp-footer-title { font-size: clamp(40px, 8vw, 88px); }
 
-.xp-cta-light { background: var(--paper-card); color: var(--ink); }
+/**
+ * 풋터 바는 <main> 밖 별도 <footer>가 소유한다 (contentinfo 랜드마크).
+ * 사진 대신 잉크 지면을 쓴다 — 이유 두 가지:
+ *  1) 이 위의 풋터 CTA도 같은 초원 사진이라 두 섹션 사이에 이음매가 생겼다
+ *     (게다가 바의 margin-top이 상쇄돼 지면색 띠가 드러났다).
+ *  2) 잔디 위 흰 12~13px 글씨는 원래 실측 1.84:1이었다. 잉크 위에서는 17.8:1이라
+ *     배경을 어둡게 하는 장치가 아예 필요 없다.
+ */
+.xp-footer-shell {
+  background: var(--ink);
+  background-image: none;
+  padding: var(--sp-2) clamp(20px, 5vw, 64px);
+}
 
 .xp-footer-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  justify-content: center;
+  gap: 8px 18px;
   flex-wrap: wrap;
-  margin-top: clamp(48px, 8vh, 96px);
-  padding: 16px clamp(4px, 1vw, 12px);
-  border-top: 1px solid rgba(255, 255, 255, 0.35);
-  font-size: 12px;
+  padding: 18px clamp(4px, 1vw, 12px);
+  font-size: var(--fs-150);
   font-weight: 600;
-  color: #fff;
-  text-shadow: 0 1px 8px rgba(16, 26, 44, 0.5);
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: none;
 }
+
+.xp-footer-bar a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.xp-footer-meta { display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap; justify-content: center; }
 
 /* ─── 랜딩 루트 ──────────────────────────────────────────────── */
 .xp-landing { position: relative; overflow-x: clip; }

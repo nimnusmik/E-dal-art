@@ -112,55 +112,82 @@ export default function HeroHand() {
     // 시작하지 않는다(started로 구분) — "일시정지에서 재개"와 "최초 시작"을 섞지 않는다.
     let started = false;
     let paused = false;
+    // 뷰포트 밖으로 나갔는지 — 탭 가시성과 별개로 판단해야 한다. 이전에는
+    // visibilitychange만 처리해 사용자가 FAQ까지 스크롤한 뒤에도 rAF 루프가
+    // 매 프레임 DOM 쓰기를 시도했다(모바일 배터리 손해).
+    let offscreen = false;
+    const shouldRun = () => !document.hidden && !offscreen;
+
     const start = () => {
       started = true;
       t0.current = performance.now();
       loop();
     };
-    if (!document.hidden) start();
-    // 백그라운드 탭이면 일시정지 (배터리 배려)
-    const onVis = () => {
-      if (document.hidden) {
-        if (started && !paused) {
-          cancelAnimationFrame(rafRef.current);
-          pausedAt.current = performance.now();
-          paused = true;
-        }
-      } else if (!started) {
-        start();
-      } else if (paused) {
-        t0.current += performance.now() - pausedAt.current;
-        paused = false;
-        loop();
-      }
+    const pause = () => {
+      if (!started || paused) return;
+      cancelAnimationFrame(rafRef.current);
+      pausedAt.current = performance.now();
+      paused = true;
     };
+    const resume = () => {
+      if (!started) { start(); return; }
+      if (!paused) return;
+      t0.current += performance.now() - pausedAt.current;
+      paused = false;
+      loop();
+    };
+
+    if (shouldRun()) start();
+
+    const onVis = () => { if (shouldRun()) resume(); else pause(); };
     document.addEventListener('visibilitychange', onVis);
+
+    let io: IntersectionObserver | null = null;
+    const stage = stageRef.current;
+    if (stage && typeof IntersectionObserver !== 'undefined') {
+      io = new IntersectionObserver(
+        ([entry]) => {
+          offscreen = !entry.isIntersecting;
+          if (shouldRun()) resume();
+          else pause();
+        },
+        { threshold: 0 },
+      );
+      io.observe(stage);
+    }
+
     return () => {
       cancelAnimationFrame(rafRef.current);
       document.removeEventListener('visibilitychange', onVis);
+      io?.disconnect();
     };
   }, [loop]);
 
   return (
     <section className="xp-hero xp-meadow" id="top" aria-label="이달아 — 이달의 네일 아트">
       <div className="xp-hero-copy">
+        {/* 배지 3개는 모바일에서 2줄로 깨지며 정렬 축이 사라졌다. "지금 무료"는
+            나중에 유료라는 신호였는데 실제 한도를 말하지 않아 3회에서 벽을 만났다 —
+            처음부터 정직하게 "하루 3회 무료". */}
         <div className="xp-hero-pills" aria-hidden>
-          <span className="xp-pill t-pink xp-float f1">✨ K-네일 트렌드</span>
-          <span className="xp-pill t-yellow xp-float f2" suppressHydrationWarning>
+          <span className="xp-pill t-yellow" suppressHydrationWarning>
             {issue.monthLabel}
           </span>
-          <span className="xp-pill t-green xp-float f3">● 지금 무료</span>
+          <span className="xp-pill t-green">가입 없이 · 하루 3회 무료</span>
         </div>
         <h1 className="xp-display xp-hero-title">
           사진 한 장이
           <br />
           이달의 네일이 돼요
         </h1>
+        {/* "내 손"이라고 쓰지 않는다 — 사용자 손 사진을 받는 입력이 아직 없고,
+            착용샷의 손은 AI가 생성한 손이다 */}
         <p className="xp-hero-sub">
-          영감 사진을 올리면 AI가 다섯 갈래 시안을 만들어요. 마음에 든 시안은 내 손에 올려볼 수 있어요.
+          영감 사진을 올리면 AI가 다섯 갈래 시안을 만들어요. 마음에 든 시안은 손에 올린 모습까지
+          미리 볼 수 있어요.
         </p>
         <a className="xp-cta" href="#tool">
-          이번 호 시안 만들기
+          무료로 시안 만들기
         </a>
       </div>
       {/* ↓↓↓ 이 무대는 heroMorph 타임라인과 1:1로 묶여 있다 — 구조 변경 금지 ↓↓↓ */}
@@ -189,7 +216,9 @@ export default function HeroHand() {
           alt=""
           width={500}
           height={898}
-          loading="eager"
+          /* t≈5.8s까지 보이지 않으므로 비-reduced 사용자에게는 요청 자체를 미룬다 —
+             fetchPriority=low만으로는 요청이 나가는 것을 막지 못한다 */
+          loading={reduced ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={reduced ? 'high' : 'low'}
         />
@@ -201,7 +230,16 @@ export default function HeroHand() {
             ref={(el) => { cardRefs.current[i] = el; }}
           >
             <span className="inspo-no">{cut.no}</span>
-            <img className="inspo-img" src={cut.src} alt={`영감 예시 — ${cut.label}`} width={132} height={132} loading="eager" decoding="async" />
+            {/* 진입 애니메이션이 늦은 뒤쪽 2장은 첫 화면 전송량에서 뺀다 */}
+            <img
+              className="inspo-img"
+              src={cut.src}
+              alt={`영감 예시 — ${cut.label}`}
+              width={132}
+              height={132}
+              loading={i < 2 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
             <figcaption className="inspo-cap">{cut.label}</figcaption>
           </figure>
         ))}
@@ -217,7 +255,9 @@ export default function HeroHand() {
         ))}
       </div>
       {/* ↑↑↑ 무대 끝 ↑↑↑ */}
-      <div className="xp-hero-cue" aria-hidden>Scroll</div>
+      <div className="xp-hero-cue" aria-hidden>
+        Scroll <span>↓</span>
+      </div>
     </section>
   );
 }

@@ -1,6 +1,12 @@
 /**
  * 랜딩 카피·데이터 단일 소스.
  * 수치는 전부 제품 사실이어야 한다 — 없는 실적·후기를 지어내지 않는다.
+ *
+ * 표현 원칙 두 가지:
+ *  1) 발행호 번호(VOL.N)는 화면에 쓰지 않는다. 달력 계산값이라 "N호까지 발행됐다"는
+ *     거짓 이력으로 읽힌다 (lib/issue.ts 주석 참조).
+ *  2) 착용샷의 손은 AI가 생성한 손이다. "내 손"이라고 쓰지 않는다 —
+ *     사용자 손 사진을 받는 입력이 아직 없다.
  */
 export type Tone = 'pink' | 'blue' | 'yellow' | 'green' | 'purple';
 
@@ -23,15 +29,17 @@ export const STATS: StatCard[] = [
     tone: 'green',
   },
   {
-    value: '3장',
-    label: '필요한 영감 사진',
-    body: '스크린샷, 좋아하는 옷, 오늘의 하늘. 최대 세 장이면 충분해요.',
+    value: '1장',
+    label: '시작에 필요한 사진',
+    body: '한 장이면 시작할 수 있어요. 스크린샷, 좋아하는 옷, 오늘의 하늘 — 최대 세 장까지.',
     tone: 'yellow',
   },
   {
-    value: '100%',
-    label: 'AI 검수 통과작만',
-    body: '파츠 배치와 물리 법칙을 검수해 통과한 시안만 화면에 올라와요.',
+    // 이전 값은 '100% / AI 검수 통과작만'이었다. 동어반복이고, 제품은 이미 부분실패를
+    // 전제하며 낙제작을 '아쉬운 컷' 배지로 보여준다 — 방어 불가능한 약속이었다.
+    value: '0원',
+    label: '가입도 결제도 없이',
+    body: '하루 3회까지 무료로 만들 수 있어요. 실패하면 횟수는 차감되지 않아요.',
     tone: 'pink',
   },
   {
@@ -45,15 +53,40 @@ export const STATS: StatCard[] = [
 export interface ServiceRow {
   no: string;
   label: string;
-  tone: Tone;
+  /** 항상 펼쳐 두는 설명 한 줄 — 5단계는 접을 이유가 없다 */
+  body: string;
 }
 
+/**
+ * 색은 tone(무지개 5색)이 아니라 인덱스 기반 단일 색조 명도 계단(--step-1..5)을 쓴다.
+ * 무작위 5색은 "순서"라는 정보를 파괴해 5단계가 대등한 카테고리로 읽혔다.
+ */
 export const SERVICES: ServiceRow[] = [
-  { no: '01', label: '영감 사진 분석', tone: 'pink' },
-  { no: '02', label: '5종 변주 생성', tone: 'blue' },
-  { no: '03', label: 'AI 품질 검수', tone: 'yellow' },
-  { no: '04', label: '손 착용샷 합성', tone: 'green' },
-  { no: '05', label: '이달의 호 발행', tone: 'purple' },
+  {
+    no: '01',
+    label: '영감 사진 분석',
+    body: '올린 사진에서 색·질감·파츠 밀도를 읽어 이달의 무드로 옮겨요.',
+  },
+  {
+    no: '02',
+    label: '5종 변주 생성',
+    body: '색과 구조가 서로 다른 다섯 갈래를 동시에 그려요. 완성되는 순서대로 나타나요.',
+  },
+  {
+    no: '03',
+    label: 'AI 품질 검수',
+    body: '파츠 배치가 이상한 컷은 걸러내고, 아쉬운 컷은 그렇게 표시해 알려줘요.',
+  },
+  {
+    no: '04',
+    label: '착용샷 합성',
+    body: '고른 시안을 손에 올린 모습으로 만들어요. 지금은 AI가 그린 손이에요.',
+  },
+  {
+    no: '05',
+    label: '이달의 호 발행',
+    body: '매달 무드가 갱신돼요. 지난달 시안과 섞이지 않아요.',
+  },
 ];
 
 export interface GalleryCut {
@@ -72,10 +105,10 @@ export interface GalleryCut {
  * 출처와 판정 근거는 `public/gallery/SOURCES.md` 참조.
  */
 export const GALLERY: GalleryCut[] = [
-  { src: '/gallery/celestial-gold.jpg', title: '천체 골드', meta: '마블 · 골드 글리터', tilt: -4 },
-  { src: '/gallery/citrus.jpg', title: '시트러스', meta: '오렌지 프렌치 · 감귤', tilt: 3 },
-  { src: '/gallery/dot-gingham.jpg', title: '도트 깅엄', meta: '핑크·블루 체크 · 로즈', tilt: -2 },
-  { src: '/gallery/lilac-check.jpg', title: '라일락 체크', meta: '라일락 깅엄 · 핑크 로즈', tilt: 5 },
+  { src: '/gallery/pastel-french.jpg', title: '파스텔 프렌치', meta: '민트·레몬 · 진주 체인', tilt: -4 },
+  { src: '/gallery/sugar-dot.jpg', title: '슈가 도트', meta: '버건디 프렌치 · 레터링', tilt: 3 },
+  { src: '/gallery/blue-brown.jpg', title: '블루 브라운', meta: '지브라 · 마블 스월', tilt: -2 },
+  { src: '/gallery/lilac-swirl.jpg', title: '라일락 스월', meta: '톤온톤 양각 · 레터링', tilt: 5 },
 ];
 
 export interface SceneCard {
@@ -96,8 +129,8 @@ export const SCENES: SceneCard[] = [
   {
     persona: '셀프 네일러',
     role: '예상 사용 장면',
-    quote: '내 손에 올린 모습까지 미리 봐요',
-    body: '마음에 든 시안은 착용샷으로 확인해요. 길이와 쉐입을 바꿔가며 비교할 수 있어요.',
+    quote: '손에 올린 모습까지 미리 봐요',
+    body: '마음에 든 시안은 착용샷으로 확인해요. 길이와 쉐입을 바꿔가며 다시 만들 수 있어요.',
   },
   {
     persona: '네일 러버',
@@ -107,16 +140,39 @@ export const SCENES: SceneCard[] = [
   },
 ];
 
-export interface FaqPill {
+export interface FaqItem {
   q: string;
-  tone: Tone;
+  /** 답변은 필수다. 질문만 있는 FAQ는 불안을 활성화하고 해소를 거부한다. */
+  a: string;
 }
 
-export const FAQS: FaqPill[] = [
-  { q: '어떤 사진을 올리면 좋아요?', tone: 'pink' },
-  { q: '하루에 몇 번까지 만들 수 있어요?', tone: 'green' },
-  { q: '무료인가요?', tone: 'yellow' },
-  { q: '시안은 저장되나요?', tone: 'blue' },
-  { q: '손 착용샷도 만들 수 있어요?', tone: 'purple' },
-  { q: '길이랑 쉐입을 바꿀 수 있어요?', tone: 'pink' },
+export const FAQS: FaqItem[] = [
+  {
+    q: '어떤 사진을 올리면 좋아요?',
+    a: '색과 무드가 드러나는 사진이면 돼요. 스크린샷, 좋아하는 옷, 오늘의 하늘 — 네일 사진이 아니어도 괜찮아요. 한 장으로 시작해도 되고 최대 세 장까지 더할 수 있어요.',
+  },
+  {
+    q: '무료인가요?',
+    a: '네, 가입도 결제도 없이 무료예요. 지금은 하루 3회로 제한돼 있어요.',
+  },
+  {
+    q: '하루에 몇 번까지 만들 수 있어요?',
+    a: '하루 3회예요. 한국 시간 자정에 다시 채워져요. 생성이 실패하면 횟수는 차감되지 않아요.',
+  },
+  {
+    q: '올린 사진은 어디로 가요?',
+    a: '시안을 만드는 동안에만 쓰고 이달아 서버에 저장하지 않아요. 그림 생성은 외부 AI 모델을 거쳐요.',
+  },
+  {
+    q: '시안은 저장되나요?',
+    a: '이달아 서버에는 저장하지 않아요. 결과는 보고 있는 브라우저에만 잠시 남고 탭을 닫으면 사라져요. 마음에 든 시안은 저장이나 공유 버튼으로 꼭 내려받아 주세요.',
+  },
+  {
+    q: '착용샷도 만들 수 있어요?',
+    a: '네. 시안을 고르고 ‘착용샷 보기’를 누르면 손에 올린 모습을 만들어요. 지금은 AI가 그린 손이고, 내 손 사진을 올려 합성하는 기능은 준비 중이에요.',
+  },
+  {
+    q: '길이랑 쉐입을 바꿀 수 있어요?',
+    a: '만들기 전에도, 결과를 본 뒤에도 바꿀 수 있어요. 쉐입 4종·길이 3종·파츠 4종을 골라 다시 만들면 돼요.',
+  },
 ];

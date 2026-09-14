@@ -8,6 +8,7 @@ import ResultScreen from '@/components/ResultScreen';
 import Landing from '@/components/landing/Landing';
 import { useIssue } from '@/lib/useIssue';
 import { fileToResizedPayload } from '@/lib/resize';
+import { clearSnapshot, loadSnapshot, saveSnapshot } from '@/lib/resume';
 import type { NailBrief } from '@/lib/brief';
 import type { Mood, NailLength, NailShape, PartsIntensity, VariantPlan } from '@/lib/types';
 
@@ -53,10 +54,14 @@ type Phase = 'start' | 'analyzing' | 'generating' | 'result' | 'blocked-user' | 
 
 const MAX_PHOTOS = 3;
 
+/** 에러 종류 — 입력 관련은 툴 카드 안 인라인 배너, 시스템 오류는 토스트 */
+type AppError = { text: string; kind: 'inline' | 'toast' } | null;
+
 export default function Home() {
   const issue = useIssue();
   const [phase, setPhase] = useState<Phase>('start');
   const [photos, setPhotos] = useState<TrayPhoto[]>([]);
+  const [pendingPhotos, setPendingPhotos] = useState(0);
   const [shape, setShape] = useState<NailShape>('almond');
   const [length, setLength] = useState<NailLength>('medium');
   const [partsIntensity, setPartsIntensity] = useState<PartsIntensity>('auto');
@@ -65,14 +70,23 @@ export default function Home() {
   const [heroMap, setHeroMap] = useState<Record<string, HeroEntry>>({});
   const [mood, setMood] = useState<Mood | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  // 진화(evolve)로 start에 복귀할 때 툴 섹션으로 즉시 앵커하기 위한 플래그
+  const [error, setError] = useState<AppError>(null);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifyDone, setNotifyDone] = useState(false);
+  // 진화(evolve)·실패 복귀로 start에 돌아올 때 툴 섹션으로 즉시 앵커하기 위한 플래그
   const anchorToolRef = useRef(false);
   // 세션 토큰 — 리셋/재생성 이후 도착하는 이전 세션 응답을 무시
   const sessionRef = useRef(0);
   // analyze가 준 브리프·전송 이미지 — variant 재시도와 hero 호출에 재사용
   const briefRef = useRef<NailBrief | null>(null);
   const imagesRef = useRef<{ data: string; mimeType: string }[]>([]);
+  // 진행 중 요청 취소용
+  const abortRef = useRef<AbortController | null>(null);
+  // 파일 선택 트리거 — 사진 0장에서도 CTA가 활성이어야 하므로 버튼이 이 input을 연다
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showInline = useCallback((text: string) => setError({ text, kind: 'inline' }), []);
+  const showToast = useCallback((text: string) => setError({ text, kind: 'toast' }), []);
 
   useEffect(() => {
     if (phase === 'start' && anchorToolRef.current) {
@@ -84,9 +98,10 @@ export default function Home() {
     }
   }, [phase]);
 
+  // 토스트만 자동 소멸한다. 인라인 배너는 사용자가 다음 행동을 결정할 때까지 남는다.
   useEffect(() => {
-    if (!error) return;
-    const t = setTimeout(() => setError(null), 3500);
+    if (!error || error.kind !== 'toast') return;
+    const t = setTimeout(() => setError(null), 6000);
     return () => clearTimeout(t);
   }, [error]);
 
@@ -100,29 +115,57 @@ export default function Home() {
       .catch(() => {}); // 표시용이라 실패는 무시
   }, []);
 
-  const addPhotos = useCallback(async (files: FileList) => {
-    const freeSlots = MAX_PHOTOS - photos.length;
-    if (freeSlots <= 0) return;
-    const incoming = Array.from(files).slice(0, freeSlots);
-    const settled = await Promise.allSettled(
-      incoming.map(async (file) => {
-        const payload = await fileToResizedPayload(file);
-        return { id: crypto.randomUUID(), ...payload };
-      }),
-    );
-    const resized = settled
-      .filter((s): s is PromiseFulfilledResult<TrayPhoto> => s.status === 'fulfilled')
-      .map((s) => s.value);
-    if (files.length > freeSlots) {
-      setError(`사진은 최대 ${MAX_PHOTOS}장까지 올릴 수 있어요`);
-    }
-    if (resized.length < incoming.length) {
-      setError('불러올 수 없는 사진이 있어요. 다른 사진으로 시도해주세요');
-    }
-    if (resized.length > 0) {
-      setPhotos((prev) => [...prev, ...resized].slice(0, MAX_PHOTOS));
-    }
-  }, [photos]);
+  // 새로고침 복구 — 결과가 있었다면 되살린다 (탭을 닫으면 사라진다)
+  useEffect(() => {
+    const snap = loadSnapshot<VariantSlot[], Mood | null>();
+    if (!snap?.slots?.length) return;
+    setSlots(snap.slots);
+    setSelectedId(snap.selectedId);
+    setMood(snap.mood);
+    setShape(snap.shape as NailShape);
+    setLength(snap.length as NailLength);
+    setPartsIntensity(snap.partsIntensity as PartsIntensity);
+    setPhase('result');
+  }, []);
+
+  // 결과가 정착하면 스냅샷 저장
+  useEffect(() => {
+    if (phase !== 'result') return;
+    if (!slots.some((s) => s.status === 'done')) return;
+    saveSnapshot({ slots, selectedId, mood, shape, length, partsIntensity });
+  }, [phase, slots, selectedId, mood, shape, length, partsIntensity]);
+
+  const addPhotos = useCallback(
+    async (files: File[]) => {
+      const freeSlots = MAX_PHOTOS - photos.length;
+      if (freeSlots <= 0) return;
+      const incoming = files.slice(0, freeSlots);
+      // 리사이즈는 저사양 기기에서 수 초가 걸린다 — 선택 즉시 자리를 잡아
+      // "선택이 안 됐나?" 하고 다시 누르는 것을 막는다
+      setPendingPhotos(incoming.length);
+      const settled = await Promise.allSettled(
+        incoming.map(async (file) => {
+          const payload = await fileToResizedPayload(file);
+          return { id: crypto.randomUUID(), ...payload };
+        }),
+      );
+      setPendingPhotos(0);
+      const resized = settled
+        .filter((s): s is PromiseFulfilledResult<TrayPhoto> => s.status === 'fulfilled')
+        .map((s) => s.value);
+      // 에러를 각각 setError로 덮어쓰면 앞 메시지가 소실된다 — 하나로 합친다
+      const notes: string[] = [];
+      if (files.length > freeSlots) notes.push(`사진은 최대 ${MAX_PHOTOS}장까지 올릴 수 있어요`);
+      if (resized.length < incoming.length) {
+        notes.push('불러올 수 없는 사진이 있어요. JPG·PNG로 다시 시도해주세요');
+      }
+      if (notes.length) showInline(notes.join(' · '));
+      if (resized.length > 0) {
+        setPhotos((prev) => [...prev, ...resized].slice(0, MAX_PHOTOS));
+      }
+    },
+    [photos, showInline],
+  );
 
   const removePhoto = useCallback((id: string) => {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
@@ -143,6 +186,7 @@ export default function Home() {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ images: imagesRef.current, brief, plan }),
+          signal: abortRef.current?.signal,
         });
         const json = await res.json();
         if (sessionRef.current !== session) return; // 이전 세션 응답 폐기
@@ -155,7 +199,7 @@ export default function Home() {
           setSlots((prev) =>
             prev.map((s) => (s.status === 'pending' ? { ...s, status: 'stopped' } : s)),
           );
-          setError('오늘 시안 생성 한도에 도달했어요. 먼저 완성된 시안은 그대로 볼 수 있어요');
+          showToast('오늘 시안 생성 한도에 도달했어요. 먼저 완성된 시안은 그대로 볼 수 있어요');
           return;
         }
         // REJECTED/502 등 개별 실패 — 이 슬롯만 재시도 버튼으로 (전체를 죽이지 않는다)
@@ -164,7 +208,7 @@ export default function Home() {
         if (sessionRef.current === session) patchSlot(plan.id, { status: 'error' });
       }
     },
-    [patchSlot],
+    [patchSlot, showToast],
   );
 
   /** 실패 슬롯 재시도 */
@@ -182,19 +226,28 @@ export default function Home() {
   const generate = useCallback(async () => {
     if (photos.length === 0) return;
     const session = ++sessionRef.current;
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
     const images = photos.map(({ data, mimeType }) => ({ data, mimeType }));
     imagesRef.current = images;
     briefRef.current = null;
+    clearSnapshot();
     setSlots([]);
     setSelectedId(null);
     setHeroMap({});
     setMood(null);
+    setError(null);
     setPhase('analyzing');
+    // 실패로 start에 돌아올 때 사용자를 페이지 최상단이 아니라 툴 카드로 되돌린다.
+    // 이 한 줄이 없으면 12초 기다린 뒤 히어로로 튕겨 "초기화됐네" 하고 이탈한다.
+    anchorToolRef.current = true;
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ images, shape, length, partsIntensity }),
+        signal: ac.signal,
       });
       const json = await res.json();
       if (sessionRef.current !== session) return;
@@ -202,6 +255,7 @@ export default function Home() {
         const brief: NailBrief = json.brief;
         const plans: VariantPlan[] = json.plans;
         briefRef.current = brief;
+        anchorToolRef.current = false; // 성공했으므로 앵커 복귀는 필요 없다
         setMood({ keywords: brief.keywords ?? [], colors: brief.colors ?? [] });
         setRemaining(json.remaining);
         setSlots(plans.map((plan) => ({ plan, status: 'pending', tipSet: null, quality: null })));
@@ -213,17 +267,30 @@ export default function Home() {
       if (json.error === 'RATE_LIMIT_USER') { setPhase('blocked-user'); return; }
       if (json.error === 'RATE_LIMIT_TOTAL') { setPhase('blocked-total'); return; }
       setPhase('start');
-      setError(
+      showInline(
         json.error === 'INVALID_INPUT'
-          ? '이 사진으로는 만들기 어려워요. 다른 사진으로 시도해주세요'
-          : '사진 분석에 실패했어요. 잠시 후 다시 시도해주세요',
+          ? '이 사진으로는 만들기 어려워요. 색과 무드가 잘 보이는 다른 사진으로 시도해주세요'
+          : '사진 분석에 실패했어요. 올린 사진은 그대로 있으니 다시 시도해주세요',
       );
-    } catch {
+    } catch (err) {
       if (sessionRef.current !== session) return;
+      // 사용자가 취소한 경우는 에러가 아니다
+      if ((err as Error)?.name === 'AbortError') return;
       setPhase('start');
-      setError('사진 분석에 실패했어요. 잠시 후 다시 시도해주세요');
+      showInline('사진 분석에 실패했어요. 올린 사진은 그대로 있으니 다시 시도해주세요');
     }
-  }, [photos, shape, length, partsIntensity, fetchVariant]);
+  }, [photos, shape, length, partsIntensity, fetchVariant, showInline]);
+
+  /** 생성 취소 — 사진·옵션은 보존하고 시작 화면으로 */
+  const cancelGenerate = useCallback(() => {
+    sessionRef.current += 1; // 도착 중인 응답 전부 폐기
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setSlots([]);
+    setError(null);
+    anchorToolRef.current = true;
+    setPhase('start');
+  }, []);
 
   // 5개가 전부 정착(성공/실패/중단)하면 결과 화면으로 — 유저가 먼저 선택하면 그 시점에 넘어간다
   useEffect(() => {
@@ -276,7 +343,7 @@ export default function Home() {
           delete next[planId];
           return next;
         });
-        setError(
+        showToast(
           json.error === 'RATE_LIMIT_HERO'
             ? '오늘 착용샷 생성 한도에 도달했어요. 내일 다시 시도해주세요'
             : '착용샷 생성에 실패했어요. 다시 시도해주세요',
@@ -288,48 +355,102 @@ export default function Home() {
           delete next[planId];
           return next;
         });
-        setError('착용샷 생성에 실패했어요. 다시 시도해주세요');
+        showToast('착용샷 생성에 실패했어요. 다시 시도해주세요');
       }
     },
-    [slots, heroMap, shape, length],
+    [slots, heroMap, shape, length, showToast],
   );
 
+  /** 인라인 배너 — 사용자가 보고 있는 자리에 남는다 */
+  const inlineError =
+    error?.kind === 'inline' ? (
+      <div className="error-inline" role="alert">
+        <p>{error.text}</p>
+        <button className="error-inline-x" aria-label="알림 닫기" onClick={() => setError(null)}>
+          ✕
+        </button>
+      </div>
+    ) : null;
+
+  const toastError =
+    error?.kind === 'toast' ? (
+      <div className="error-toast" role="alert">
+        {error.text}
+      </div>
+    ) : null;
+
   if (phase === 'start') {
+    const hasPhotos = photos.length > 0;
     return (
       <Landing
         toolSlot={
           <>
-            <div className="xp-tool-head">
-              <span className="xp-pill t-yellow" suppressHydrationWarning>
-                Vol.{issue.vol}
-              </span>
-              {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
-              <h2>
-                영감 사진을 올리면,
-                <br />
-                이달의 시안이 나와요
-              </h2>
+            <div className="xp-tool-copy">
+              <div className="xp-tool-head">
+                <span className="xp-pill t-yellow" suppressHydrationWarning>
+                  {issue.koShort}
+                </span>
+                {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
+                <h2>
+                  영감 사진을 올리면,
+                  <br />
+                  이달의 시안이 나와요
+                </h2>
+              </div>
+              {/* 이전 문구("사진을 더할수록 진화해요")는 상한만 말해 3장을 다 올려야
+                  하는 것으로 읽혔다 — 최소 1장으로 시작할 수 있음을 먼저 말한다 */}
+              <p className="sub">사진 한 장으로 시작해도 돼요. 최대 3장까지 더할 수 있어요.</p>
+              <p className="assurance">
+                올린 사진은 시안을 만드는 동안에만 쓰고 이달아 서버에 저장하지 않아요.
+              </p>
             </div>
-            <p className="sub">사진을 더할수록 디자인이 진화해요 (최대 3장)</p>
-            <InspirationTray photos={photos} onAdd={addPhotos} onRemove={removePhoto} />
-            {photos.length > 0 && (
-              <OptionsPicker
-                shape={shape}
-                length={length}
-                partsIntensity={partsIntensity}
-                onShape={setShape}
-                onLength={setLength}
-                onPartsIntensity={setPartsIntensity}
+            <div className="xp-tool-form">
+              {inlineError}
+              <InspirationTray
+                photos={photos}
+                pendingCount={pendingPhotos}
+                onAdd={addPhotos}
+                onRemove={removePhoto}
               />
-            )}
-            <button className="cta" disabled={photos.length === 0} onClick={generate}>
-              이번 호 시안 만들기
-            </button>
-            {/* 잔여 횟수는 얼마 안 남았을 때만 노출 — 개발용 큰 한도가 그대로 보이는 것 방지 */}
-            {remaining !== null && remaining <= 10 && (
-              <p className="remaining">오늘 {remaining}회 남음</p>
-            )}
-            {error && <div className="error-toast">{error}</div>}
+              {hasPhotos && (
+                <OptionsPicker
+                  shape={shape}
+                  length={length}
+                  partsIntensity={partsIntensity}
+                  onShape={setShape}
+                  onLength={setLength}
+                  onPartsIntensity={setPartsIntensity}
+                />
+              )}
+              {/* 비활성 버튼은 퍼널에서 지운다. 사진이 없으면 버튼이 파일 선택기를 열어
+                  "다음에 필요한 행동"으로 직결된다 — 히어로 CTA로 여기 온 사용자가
+                  누를 수 없는 회색 버튼을 만나지 않는다. */}
+              <button
+                className="cta"
+                onClick={hasPhotos ? generate : () => fileInputRef.current?.click()}
+              >
+                {hasPhotos ? '무료로 시안 만들기' : '사진 골라서 시작하기'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="visually-hidden"
+                aria-hidden
+                tabIndex={-1}
+                onChange={(e) => {
+                  const list = e.target.files;
+                  if (list?.length) void addPhotos(Array.from(list));
+                  e.target.value = '';
+                }}
+              />
+              <p className="remaining">
+                가입 없이 무료
+                {remaining !== null && remaining <= 10 ? ` · 오늘 ${remaining}회 남음` : ''}
+              </p>
+            </div>
+            {toastError}
           </>
         }
       />
@@ -344,8 +465,9 @@ export default function Home() {
           slots={slots}
           onRetry={retrySlot}
           onSelect={selectVariant}
+          onCancel={cancelGenerate}
         />
-        {error && <div className="error-toast">{error}</div>}
+        {toastError}
       </main>
     );
   }
@@ -360,6 +482,12 @@ export default function Home() {
           mood={mood}
           photos={photos}
           remaining={remaining}
+          shape={shape}
+          length={length}
+          partsIntensity={partsIntensity}
+          onShape={setShape}
+          onLength={setLength}
+          onPartsIntensity={setPartsIntensity}
           onSelect={setSelectedId}
           onRetry={retrySlot}
           onHero={requestHero}
@@ -369,6 +497,7 @@ export default function Home() {
           }}
           onRegenerate={generate}
           onReset={() => {
+            clearSnapshot();
             setPhotos([]);
             setSlots([]);
             setSelectedId(null);
@@ -377,35 +506,85 @@ export default function Home() {
             setPhase('start');
           }}
         />
-        {error && <div className="error-toast">{error}</div>}
+        {toastError}
       </main>
     );
   }
 
-  // Task 14: blocked 화면
-  if (phase === 'blocked-user') {
-    return (
-      <main className="screen">
-        <div className="blocked">
-          <div className="blocked-card">
-            <p className="overline">Sold Out</p>
-            <h2 className="headline">오늘의 발행이 마감됐어요</h2>
-            <p className="sub">자정에 다시 채워져요. 내일 다시 만나요.</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  /**
+   * 한도 도달 화면.
+   * 이전에는 버튼도 링크도 없는 완전한 막다른 길이어서 브라우저 뒤로가기가
+   * 사이트 이탈이었다. 항상 빠져나갈 길을 두고, 매진은 수요 신호이므로
+   * 그 자리에서 알림 신청을 받는다.
+   */
+  const backToStart = () => {
+    setError(null);
+    setPhase('start');
+  };
+
+  const blocked = phase === 'blocked-user'
+    ? {
+        title: '오늘의 발행이 마감됐어요',
+        body: '하루 3회까지 만들 수 있어요. 한국 시간 자정에 다시 채워져요.',
+      }
+    : {
+        title: '이번 호가 매진됐어요',
+        body: '오늘 준비된 생성이 모두 끝났어요. 한국 시간 자정에 다시 열려요.',
+      };
 
   return (
     <main className="screen">
       <div className="blocked">
         <div className="blocked-card">
           <p className="overline">Sold Out</p>
-          <h2 className="headline">이번 호가 매진됐어요</h2>
-          <p className="sub">오늘 준비된 생성이 모두 끝났어요. 내일 다시 찾아와주세요.</p>
+          <h2 className="headline">{blocked.title}</h2>
+          <p className="sub">{blocked.body}</p>
+          {notifyDone ? (
+            <p className="assurance">알림 신청이 접수됐어요. 다음 호가 열리면 알려드릴게요.</p>
+          ) : (
+            <form
+              className="notify-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!notifyEmail.trim()) return;
+                fetch('/api/track', {
+                  method: 'POST',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ event: 'notify', email: notifyEmail.trim() }),
+                }).catch(() => {});
+                setNotifyDone(true);
+              }}
+            >
+              <label className="assurance" htmlFor="notify-email">
+                다시 열리면 알려드릴까요?
+              </label>
+              <div className="notify-row">
+                <input
+                  id="notify-email"
+                  className="notify-input"
+                  type="email"
+                  required
+                  placeholder="이메일 주소"
+                  value={notifyEmail}
+                  onChange={(e) => setNotifyEmail(e.target.value)}
+                />
+                <button className="btn-fill" type="submit">
+                  신청
+                </button>
+              </div>
+            </form>
+          )}
+          <div className="blocked-actions">
+            <button className="btn-outline" onClick={backToStart}>
+              처음으로
+            </button>
+            <a className="btn-outline" href="/#top" onClick={backToStart}>
+              시안 예시 보기
+            </a>
+          </div>
         </div>
       </div>
+      {toastError}
     </main>
   );
 }
