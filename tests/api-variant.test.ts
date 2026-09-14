@@ -110,7 +110,14 @@ describe('POST /api/variant', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.tipSet).toEqual({ image: 'cmVzdWx0', mimeType: 'image/png' });
-    expect(json.quality).toEqual({ pass: true, score: 6 });
+    // 배지 하나가 아니라 근거까지 — 심사평·미달 항목이 UI로 나가야 "왜"를 말할 수 있다
+    expect(json.quality).toEqual({
+      pass: true,
+      score: 6,
+      maxScore: 6,
+      notes: '통과',
+      issues: [],
+    });
     expect(store.data.get(variantKey())).toBe(1);
     expect(mockGenerateImage).toHaveBeenCalledTimes(1); // variant당 재시도 없음
   });

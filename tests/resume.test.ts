@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { clearSnapshot, loadSnapshot, saveSnapshot } from '@/lib/resume';
 
-const KEY = 'idala:result:v1';
+const KEY = 'idala:result:v2';
 
 function installSessionStorage(): Map<string, string> {
   const map = new Map<string, string>();

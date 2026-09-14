@@ -15,7 +15,20 @@
   --ink: var(--text-1);     /* 잉크 블랙 (하위 호환) */
   --muted: var(--text-3);   /* 보조 텍스트 (하위 호환) */
 
-  --line: rgba(22, 24, 29, 0.28);   /* 인풋·점선 테두리 — 1.4.11(3:1) 충족 */
+  /* 인풋·옵션 pill·아웃라인 버튼의 테두리.
+     0.28일 때 실측 1.83:1로 1.4.11(3:1) 미달이었다(주석은 충족이라 적혀 있었으나 오기).
+     미선택 pill은 배경이 투명해 테두리가 유일한 경계라, 안 보이면 버튼의 존재 자체가 사라진다.
+     0.50 → paper 3.30 / card 3.39 / deep 3.24 */
+  --line: rgba(22, 24, 29, 0.50);
+
+  /* 시맨틱 상태색 — 이전엔 상태색이 :root에 하나도 없어서 "검수 결과"라는 의미론이
+     브랜드 파랑(--accent)과 중립 회색에 얹혀 있었다. 파란 배지는 "합격"이 아니라
+     "브랜드 강조"로 읽힌다. 에러 색도 생값으로 3곳에 흩어져 있던 것을 여기로 모은다. */
+  --success: #1f7a4d;       /* 지면 위 4.9:1 */
+  --warning: #8a5a12;       /* 지면 위 4.8:1 — "아쉬운 컷" */
+  --danger: #8f2028;
+  --danger-bg: #fdf0f1;
+  --danger-line: rgba(176, 42, 55, 0.6);
   --line-quiet: rgba(22, 24, 29, 0.12); /* 순수 장식 구분선 */
   --line-soft: rgba(22, 24, 29, 0.06);
 
@@ -413,7 +426,8 @@ html { scroll-padding-top: 78px; }
 /* 데스크톱에서 460px 컬럼에 갇혀 결과 이미지가 실제보다 작게 보였다 */
 @media (min-width: 900px) {
   .screen { max-width: 680px; padding: 44px 32px 64px; }
-  .variant-grid { grid-template-columns: repeat(3, 1fr); }
+  /* .variant-grid 3열 규칙은 기본 선언(아래 "시안 5종 그리드")보다 뒤에 와야
+     소스 순서로 이긴다 — 여기 두면 특이도가 같아 조용히 죽는다 */
 }
 
 /* ─── 영감 트레이 ────────────────────────────────────────────── */
@@ -519,8 +533,17 @@ html { scroll-padding-top: 78px; }
   cursor: pointer;
 }
 
-label.slot:focus-within .slot-add,
 label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
+
+/* 실제 포커스를 받는 input은 clip-path로 1×1px까지 잘려 있어, 전역 :focus-visible 링이
+   그려져도 보이지 않는다. 다른 모든 컨트롤과 같은 링을 여기서 명시적으로 그린다
+   — 이전에는 점선 농도만 바뀌어 포커스와 비포커스를 구분할 수 없었다. */
+label.slot:focus-within .slot-add {
+  border-color: var(--ink);
+  color: var(--ink);
+  outline: 3px solid var(--brand);
+  outline-offset: 3px;
+}
 
 .slot-add .plus { font-size: 24px; line-height: 1; font-weight: 300; }
 
@@ -674,6 +697,27 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   width: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 데스크톱 3열 — 2+2+1(마지막 줄에 카드 한 장 크기 빈칸)로 깨지던 것을 3+2로.
+   이 규칙은 반드시 위 기본 선언 뒤에 있어야 한다(같은 특이도, 소스 순서 승부). */
+@media (min-width: 900px) {
+  .variant-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* li는 시맨틱 래퍼일 뿐 — 카드가 셀을 그대로 채우게 한다 */
+.variant-grid > li { display: flex; }
+.variant-grid > li > * { width: 100%; }
+
+/* 무엇이 다른 시안인지 한 줄. 제목만 있으면 무작위 단어 5개로 읽힌다 */
+.variant-note {
+  font-size: var(--fs-100);
+  line-height: var(--lh-body);
+  color: var(--text-3);
+  word-break: keep-all;
 }
 
 .variant-card {
@@ -721,13 +765,17 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 .variant-card.is-pending .variant-no,
 .variant-card.is-fail .variant-no { color: var(--line); text-shadow: none; }
 
+/* 제목 아래 설명 한 줄이 붙으므로 세로 정렬. min-height로 제목 1줄/2줄 카드의
+   높이가 갈리는 것을 막는다(390px에서 "마이크로 스케일"만 접혀 행 높이가 어긋났다) */
 .variant-caption {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-height: 62px;
   padding: 9px 11px;
   border-top: 1px solid var(--line-soft);
+  text-align: left;
 }
 
 .variant-title {
@@ -738,19 +786,22 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 }
 .variant-card.is-pending .variant-title { color: var(--muted); }
 
-/* 검수 결과 뱃지 — 통과는 액센트, 나머지는 은은하게 */
+/* 검수 결과 뱃지.
+   통과 뱃지는 없앴다 — 5장 중 4장에 붙으면 정보가 아니라 벽지다. 예외(낙제작)만 표시한다.
+   radius는 --r-chip: 알약(--r-pill)은 "누를 수 있음" 신호라 라벨에 쓰면 어포던스 인플레이션. */
 .variant-badge {
-  flex-shrink: 0;
+  align-self: flex-start;
   font-size: var(--fs-100);
   font-weight: 700;
   letter-spacing: 0.05em;
   color: var(--accent);
   border: 1px solid currentColor;
-  border-radius: var(--radius-btn);
+  border-radius: var(--r-chip);
   padding: 2px 8px;
   white-space: nowrap;
 }
 .variant-badge.soft { color: var(--muted); border-color: var(--line); }
+.variant-badge.warn { color: var(--warning); border-color: currentColor; }
 
 /* 스켈레톤 — 지면 위 은은한 셔머 */
 .variant-skeleton {
@@ -841,13 +892,23 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 }
 
 /* ─── 결과 — YOUR LOOK ───────────────────────────────────────── */
-.result-figure { display: flex; flex-direction: column; gap: 12px; }
+/* 랜딩 .xp-polaroid와 같은 여백 문법(상단 좁고 하단 넓게)을 결과에도 쓴다.
+   랜딩이 "인쇄된 시안 한 장"이라는 은유를 만들어 놓고, 정작 진짜 시안이 나오는
+   결과 화면은 맨 이미지였다 — 두 화면이 같은 제품으로 읽히지 않던 가장 큰 원인. */
+.result-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: 12px 12px 4px;
+  border-radius: var(--r-media);
+  background: var(--paper-card);
+  box-shadow: var(--shadow-lift);
+}
 
 .result-img {
   width: 100%;
   display: block;
   border-radius: var(--radius-img);
-  box-shadow: var(--shadow-card);
   animation: fadeIn 0.6s;
 }
 
@@ -896,6 +957,125 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   color: var(--muted);
 }
 
+/* ─── 시술 정보 (검수 근거 + 난이도·조정 메모) ─────────────────── */
+/* 이 제품의 차별점이 실제로 보이는 유일한 자리 — 배지 하나로 축소돼 있던 것을 편다 */
+.craft-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  border: 1px solid var(--line-quiet);
+  border-radius: var(--r-media);
+  background: var(--paper-card);
+}
+
+.craft-head {
+  font-size: var(--fs-200);
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.craft-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.craft-level {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  font-size: var(--fs-100);
+  font-weight: 700;
+  background: var(--bg-deep);
+  color: var(--text-2);
+}
+.craft-level.lv-easy { background: var(--pastel-green); }
+.craft-level.lv-medium { background: var(--pastel-yellow); }
+.craft-level.lv-hard { background: var(--pastel-pink); }
+
+.craft-notes {
+  font-size: var(--fs-150);
+  line-height: var(--lh-body);
+  color: var(--text-2);
+  word-break: keep-all;
+}
+
+.craft-judge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line-soft);
+}
+
+.craft-judge-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-size: var(--fs-200);
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.craft-score { font-size: var(--fs-100); font-weight: 600; color: var(--text-3); }
+
+.craft-judge-note {
+  font-size: var(--fs-150);
+  line-height: var(--lh-body);
+  color: var(--text-2);
+  word-break: keep-all;
+}
+
+.craft-issues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  list-style: none;
+  margin-top: var(--sp-1);
+}
+.craft-issues li {
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  border: 1px solid var(--warning);
+  font-size: var(--fs-100);
+  color: var(--warning);
+}
+
+/* 유료 액션의 비용을 라벨 안에 박는다 — 4개 중 1개만 비용을 표기하던 상태에서,
+   같은 1회를 쓰는 버튼과 무료 버튼이 시각적으로 동급이었다 */
+.cost-tag {
+  margin-left: var(--sp-2);
+  padding: 2px 8px;
+  border-radius: var(--r-chip);
+  background: var(--bg-deep);
+  font-size: var(--fs-100);
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.recut-cta { width: 100%; }
+
+.confirm-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-media);
+  background: var(--paper-card);
+}
+
+.generating-cancel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
 .restored-note {
   text-align: center;
   padding: 10px 12px;
@@ -905,21 +1085,28 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
 
 /* ─── 가격 수요 측정 (검증 장치) ──────────────────────────────── */
 /* 결과를 받은 직후, 가치를 체감한 자리에 둔다 — 클릭률이 B2C 트랙의 판정 지표 */
+/* 점선(dashed)은 이 제품에서 "아직 비어 있음" 신호다 — .slot-add(빈 업로드 슬롯)와
+   .hero-loading(로딩 중)이 이미 쓰고 있다. 수익 검증 장치가 미완성 플레이스홀더로
+   읽히면 안 되므로 실선 카드 + 파스텔 지면으로 바꾼다. 흰 지면 위 유일한 파스텔이라
+   시선을 얻고, 랜딩의 파스텔 팔레트를 결과 화면으로 잇는 연결점도 된다. */
 .price-probe {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--sp-2);
-  margin-top: 4px;
-  padding: 16px;
-  border: 1px dashed var(--line);
-  border-radius: 14px;
+  width: 100%;
+  padding: var(--sp-5);
+  border: 1px solid var(--line-quiet);
+  border-radius: var(--r-card);
+  background: var(--pastel-yellow);
   text-align: center;
 }
 
 .price-probe-head {
-  font-weight: 700;
-  font-size: 0.95rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-400);
+  line-height: var(--lh-head);
+  word-break: keep-all;
 }
 
 .price-probe-cta { width: 100%; max-width: 320px; }
@@ -1000,10 +1187,10 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   align-items: flex-start;
   gap: 10px;
   padding: 13px 14px;
-  border: 1px solid rgba(176, 42, 55, 0.35);
+  border: 1px solid var(--danger-line);
   border-radius: var(--r-media);
-  background: #fdf0f1;
-  color: #8f2028;
+  background: var(--danger-bg);
+  color: var(--danger);
   font-size: var(--fs-200);
   font-weight: 600;
   line-height: 1.5;
@@ -1076,4 +1263,14 @@ label.slot:active .slot-add { border-color: var(--ink); color: var(--ink); }
   .xp-topbar, .xp-hero-cue, .skip-link, .error-toast { display: none !important; }
   .xp-meadow { background-image: none !important; background-color: transparent !important; }
   .xp-display, .xp-head-on-photo h2, .xp-hero-sub, .xp-footer-bar { color: #000 !important; text-shadow: none !important; }
+}
+
+/* 착용샷 실패는 남는 안내로 — 토스트는 6초 뒤 사라져 이유를 다시 확인할 수 없었다 */
+.hero-error {
+  padding: 10px 12px;
+  border: 1px solid var(--danger-line);
+  border-radius: var(--r-media);
+  background: var(--danger-bg);
+  color: var(--danger);
+  text-align: center;
 }

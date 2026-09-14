@@ -13,6 +13,11 @@ export interface VariantPlan {
   partsLine: string;      // 베이스 브리프의 partsLine을 대체
   letteringWord: string | null;
   paletteLine?: string;   // 없으면 베이스 브리프 것 사용
+  /**
+   * 카드에 붙는 한국어 한 줄 — "이 시안이 다른 넷과 무엇이 다른가".
+   * 이름만 있으면 사용자에게는 무작위 단어 5개이고, "왜 5장인가"에 화면이 답하지 못한다.
+   */
+  note?: string;
 }
 
 export interface Mood {

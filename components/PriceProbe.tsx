@@ -62,6 +62,7 @@ export default function PriceProbe(): React.ReactElement {
               id="price-email"
               className="notify-input"
               type="email"
+              autoComplete="email"
               required
               placeholder="이메일 주소"
               value={email}
@@ -74,7 +75,7 @@ export default function PriceProbe(): React.ReactElement {
         </form>
       ) : (
         <button
-          className="btn-outline price-probe-cta"
+          className="btn-fill price-probe-cta"
           onClick={() => {
             track('price');
             setOpened(true);

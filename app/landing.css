@@ -445,10 +445,37 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* ─── 갤러리 (폴라로이드) ────────────────────────────────────── */
 .xp-gallery { padding: var(--space-section) clamp(20px, 5vw, 64px); }
 
-.xp-head-on-photo h2 { color: #fff; font-size: clamp(30px, 5.2vw, 56px); }
+/* 사진 위 헤드 국소 스크림.
+   섹션 스크림(.xp-meadow::before)은 55%에서 완전 투명해지는데, 갤러리는 폴라로이드가
+   길어 본문 단락이 옅어진 구간에 걸친다. 글자 마스크 실측 결과 본문이 최악 2.78:1로
+   1.4.3 미달이었다(주석에는 4.27~4.49로 기록돼 있었으나 중앙값만 본 수치).
+   text-shadow는 WCAG 대비 계산에 산입되지 않으므로 배경을 실제로 어둡게 한다. */
+.xp-head-on-photo {
+  position: relative;
+  isolation: isolate;
+}
+.xp-head-on-photo::before {
+  content: '';
+  position: absolute;
+  inset: -24px -16px;
+  z-index: -1;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(18, 34, 58, 0.55) 0%,
+    rgba(18, 34, 58, 0.42) 60%,
+    rgba(18, 34, 58, 0) 100%
+  );
+  pointer-events: none;
+}
 
-/* 사진 위 흰 글씨는 히어로 서브카피와 같은 규칙 — 19px/700으로 대형 텍스트
-   기준(3:1)에 들어간다. 실측 4.27~4.49:1로 여유 있게 통과. */
+/* :not(.xp-display)를 함께 써 특이도를 위 .xp-head h2:not(.xp-display)(0,2,1)와
+   맞춘다 — 없으면 (0,1,1)이라 기본 규칙의 color: var(--ink)에 져서 사진 위에
+   어두운 글씨가 그대로 남는다 */
+.xp-head-on-photo h2:not(.xp-display) {
+  color: #fff;
+  font-size: clamp(30px, 5.2vw, 56px);
+}
+
 .xp-head-on-photo p {
   color: #fff;
   font-size: clamp(19px, 2vw, 21px);
@@ -648,7 +675,17 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   margin: 0 auto;
 }
 
-.xp-scene { display: flex; flex-direction: column; gap: 12px; }
+/* 흰 카드 지면을 준다 — 이 섹션이 초원 사진 위로 올라가면서 배경 없는 잉크 텍스트는
+   읽을 수 없게 된다. 폴라로이드와 같은 "인쇄물" 문법이라 갤러리와도 이어진다. */
+.xp-scene {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(18px, 2.2vw, 24px);
+  border-radius: var(--r-card);
+  background: var(--paper-card);
+  box-shadow: var(--shadow-lift);
+}
 
 .xp-scene-head { display: flex; align-items: center; gap: 10px; }
 

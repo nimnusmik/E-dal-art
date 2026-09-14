@@ -23,3 +23,5 @@ ref/withpic/
 .agents/
 .claude/
 skills-lock.json
+.review/
+nailspo-audit/

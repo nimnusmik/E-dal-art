@@ -10,6 +10,7 @@ import { useIssue } from '@/lib/useIssue';
 import { fileToResizedPayload } from '@/lib/resize';
 import { clearSnapshot, loadSnapshot, saveSnapshot } from '@/lib/resume';
 import type { NailBrief } from '@/lib/brief';
+import type { QualityReport } from '@/lib/judge';
 import type { Mood, NailLength, NailShape, PartsIntensity, VariantPlan } from '@/lib/types';
 
 // 타입 원본은 lib/types.ts (계약: docs/api-variants-contract.md).
@@ -39,7 +40,8 @@ export interface VariantSlot {
   plan: VariantPlan;
   status: VariantStatus;
   tipSet: GeneratedImage | null;
-  quality: { pass: boolean; score: number } | null;
+  /** 검수 결과 — 통과 여부만이 아니라 심사평·미달 항목까지 (lib/judge.ts QualityReport) */
+  quality: QualityReport | null;
 }
 
 /** 착용샷은 시안당 1회만 호출하고 캐시 — planId 키 */
@@ -69,6 +71,14 @@ export default function Home() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [heroMap, setHeroMap] = useState<Record<string, HeroEntry>>({});
   const [mood, setMood] = useState<Mood | null>(null);
+  /**
+   * 시술 정보 — 브리프의 difficulty·feasibilityNotes.
+   * 분석 단계에서 이미 한국어로 만들어져 있었는데 화면에 0글자였다. "구경은
+   * 핀터레스트에서, 확정은 이달아에서"라는 주장의 유일한 물증이라 결과에 싣는다.
+   */
+  const [craft, setCraft] = useState<{ difficulty: string; notes: string } | null>(null);
+  /** 착용샷 실패 사유 — 토스트로 6초 뒤 사라지면 왜 안 됐는지 알 길이 없다 */
+  const [heroError, setHeroError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [error, setError] = useState<AppError>(null);
   const [notifyEmail, setNotifyEmail] = useState('');
@@ -82,6 +92,17 @@ export default function Home() {
   // analyze가 준 브리프·전송 이미지 — variant 재시도와 hero 호출에 재사용
   const briefRef = useRef<NailBrief | null>(null);
   const imagesRef = useRef<{ data: string; mimeType: string }[]>([]);
+  /**
+   * 지금 보고 있는 시안을 만들 때 쓴 옵션.
+   *
+   * 착용샷은 이 값으로 만들어야 한다. 결과 화면의 재설정 픽커(shape/length state)를
+   * 그대로 넘기면, 픽커만 스퀘어로 바꾸고 재생성은 안 한 사용자가 아몬드 팁셋을 보면서
+   * 스퀘어 착용샷을 받는다 — 조용히 틀린 산출물이 나가고 쿼터도 소모된다.
+   */
+  const genOptionsRef = useRef<{ shape: NailShape; length: NailLength }>({
+    shape: 'almond',
+    length: 'medium',
+  });
   // 진행 중 요청 취소용
   const abortRef = useRef<AbortController | null>(null);
   // 파일 선택 트리거 — 사진 0장에서도 CTA가 활성이어야 하므로 버튼이 이 input을 연다
@@ -99,6 +120,43 @@ export default function Home() {
       window.scrollTo(0, 0);
     }
   }, [phase]);
+
+  /**
+   * 화면이 바뀌면 새 화면의 제목으로 포커스를 옮긴다.
+   *
+   * 버튼을 누르면 그 버튼을 포함한 트리가 통째로 언마운트되면서 포커스가 <body>로
+   * 떨어졌다(전 구간 실측). 키보드 사용자는 "무료로 시안 만들기"를 누른 순간 포커스를
+   * 잃고, 8초 대기 화면의 취소 버튼에 닿으려면 문서 처음부터 Tab을 다시 해야 했다.
+   * 스크린리더 입장에서는 화면이 바뀐 사실 자체가 전달되지 않는다(특히 한도 도달 화면은
+   * 라이브 리전이 0개라 완전 무음이었다).
+   */
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (phase === 'start') return;
+    headingRef.current?.focus();
+  }, [phase]);
+
+  const phaseTitle =
+    phase === 'analyzing'
+      ? '사진 분석 중'
+      : phase === 'generating'
+        ? '시안 생성 중'
+        : phase === 'result'
+          ? '시안 결과'
+          : '오늘 생성 한도 도달';
+
+  // 탭을 여러 개 열어둔 사용자가 어느 탭이 생성 중인지 구분할 수 있게 (2.4.2)
+  useEffect(() => {
+    document.title =
+      phase === 'start' ? '이달아 — 이달의 네일 아트' : `${phaseTitle} · 이달아`;
+  }, [phase, phaseTitle]);
+
+  /** 각 화면 최상단에 두는 시각적 숨김 제목 — 포커스 착지점 겸 헤딩 구조의 뿌리 */
+  const screenHeading = (
+    <h1 className="visually-hidden" tabIndex={-1} ref={headingRef}>
+      {phaseTitle}
+    </h1>
+  );
 
   // 토스트만 자동 소멸한다. 인라인 배너는 사용자가 다음 행동을 결정할 때까지 남는다.
   useEffect(() => {
@@ -235,12 +293,14 @@ export default function Home() {
     const images = photos.map(({ data, mimeType }) => ({ data, mimeType }));
     imagesRef.current = images;
     briefRef.current = null;
+    genOptionsRef.current = { shape, length }; // 착용샷이 참조할 "이 시안을 만든 옵션"
     clearSnapshot();
     setRestored(false); // 새로 만드는 순간 복구본이 아니다
     setSlots([]);
     setSelectedId(null);
     setHeroMap({});
     setMood(null);
+    setCraft(null);
     setError(null);
     setPhase('analyzing');
     // 실패로 start에 돌아올 때 사용자를 페이지 최상단이 아니라 툴 카드로 되돌린다.
@@ -261,6 +321,7 @@ export default function Home() {
         briefRef.current = brief;
         anchorToolRef.current = false; // 성공했으므로 앵커 복귀는 필요 없다
         setMood({ keywords: brief.keywords ?? [], colors: brief.colors ?? [] });
+        setCraft({ difficulty: brief.difficulty, notes: brief.feasibilityNotes });
         setRemaining(json.remaining);
         setSlots(plans.map((plan) => ({ plan, status: 'pending', tipSet: null, quality: null })));
         setPhase('generating');
@@ -323,6 +384,7 @@ export default function Home() {
       if (!slot?.tipSet) return;
       if (heroMap[planId]) return; // 이미 로딩 중이거나 완료 — 중복 호출 방지
       const session = sessionRef.current;
+      setHeroError(null);
       setHeroMap((prev) => ({ ...prev, [planId]: { status: 'loading', image: null } }));
       try {
         const res = await fetch('/api/hero', {
@@ -331,8 +393,8 @@ export default function Home() {
           body: JSON.stringify({
             images: imagesRef.current,
             tipSet: { image: slot.tipSet.image, mimeType: slot.tipSet.mimeType },
-            shape,
-            length,
+            // 픽커의 현재값이 아니라 이 팁셋을 만든 옵션 — 시안과 착용샷의 쉐입이 갈리면 안 된다
+            ...genOptionsRef.current,
           }),
         });
         const json = await res.json();
@@ -347,10 +409,10 @@ export default function Home() {
           delete next[planId];
           return next;
         });
-        showToast(
+        setHeroError(
           json.error === 'RATE_LIMIT_HERO'
-            ? '오늘 착용샷 생성 한도에 도달했어요. 내일 다시 시도해주세요'
-            : '착용샷 생성에 실패했어요. 다시 시도해주세요',
+            ? '오늘 착용샷 생성 한도에 도달했어요. 내일 다시 시도해주세요.'
+            : '착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.',
         );
       } catch {
         if (sessionRef.current !== session) return;
@@ -359,10 +421,10 @@ export default function Home() {
           delete next[planId];
           return next;
         });
-        showToast('착용샷 생성에 실패했어요. 다시 시도해주세요');
+        setHeroError('착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.');
       }
     },
-    [slots, heroMap, shape, length, showToast],
+    [slots, heroMap, showToast], // shape·length는 genOptionsRef로 읽으므로 의존성 아님
   );
 
   /** 인라인 배너 — 사용자가 보고 있는 자리에 남는다 */
@@ -466,6 +528,7 @@ export default function Home() {
   if (phase === 'analyzing' || phase === 'generating') {
     return (
       <main className="screen">
+        {screenHeading}
         <GeneratingScreen
           stage={phase === 'analyzing' ? 'analyzing' : 'variants'}
           slots={slots}
@@ -481,11 +544,14 @@ export default function Home() {
   if (phase === 'result') {
     return (
       <main className="screen">
+        {screenHeading}
         <ResultScreen
           slots={slots}
           selectedId={selectedId}
           heroMap={heroMap}
           mood={mood}
+          craft={craft}
+          heroError={heroError}
           photos={photos}
           remaining={remaining}
           shape={shape}
@@ -511,6 +577,7 @@ export default function Home() {
             setSelectedId(null);
             setHeroMap({});
             setMood(null);
+            setCraft(null);
             setPhase('start');
           }}
         />
@@ -542,8 +609,10 @@ export default function Home() {
 
   return (
     <main className="screen">
+      {screenHeading}
       <div className="blocked">
-        <div className="blocked-card">
+        {/* 한도 도달은 라이브 리전이 0개라 완전 무음이었다 — 상태로 알린다 */}
+        <div className="blocked-card" role="status">
           <p className="overline">Sold Out</p>
           <h2 className="headline">{blocked.title}</h2>
           <p className="sub">{blocked.body}</p>
@@ -571,6 +640,7 @@ export default function Home() {
                   id="notify-email"
                   className="notify-input"
                   type="email"
+                  autoComplete="email"
                   required
                   placeholder="이메일 주소"
                   value={notifyEmail}

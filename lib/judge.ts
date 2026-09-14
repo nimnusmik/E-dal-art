@@ -65,6 +65,40 @@ export function expectedMetalTips(brief: NailBrief): { min: number; max: number 
 }
 
 /** 판정 로직 (코드에서 결정 — 모델은 관찰만 보고) */
+/** UI로 나가는 검수 결과 — 통과 여부만이 아니라 "왜"까지 */
+export interface QualityReport {
+  pass: boolean;
+  score: number;
+  maxScore: number;
+  /** 검수기의 한국어 심사평 */
+  notes: string;
+  /** 통과하지 못한 항목의 한국어 라벨 */
+  issues: string[];
+}
+
+/**
+ * verdict + 사용자에게 보여줄 근거.
+ *
+ * 이전에는 judgeImage가 만든 관찰값(심사평·파츠 개수·물리 판정)을 전부 계산한 뒤
+ * {pass, score}만 남기고 버렸다. 화면에는 배지 하나만 남아 "검수"가 무엇인지,
+ * 왜 이 컷이 아쉬운지 한 글자도 없었다 — 이 제품의 유일한 차별점을 스스로 감춘 셈이다.
+ */
+export function verdictDetail(j: NailJudgement, brief: NailBrief): QualityReport {
+  const { min, max } = expectedMetalTips(brief);
+  const countOk = j.metalTipCount >= min && j.metalTipCount <= max;
+  const letteringOk = brief.letteringWord ? j.letteringCount === 1 : j.letteringCount === 0;
+  const issues: string[] = [];
+  if (!j.physicsOk) issues.push('시술이 어려운 구조');
+  if (!j.cleanRender) issues.push('그림이 뭉개진 부분');
+  if (!j.partsMatch) issues.push('파츠 종류·배치 어긋남');
+  if (!countOk) issues.push(`파츠 개수 ${j.metalTipCount}개 (기대 ${min}~${max}개)`);
+  if (!j.baseMatch) issues.push('베이스·구조 어긋남');
+  if (!j.paletteMatch) issues.push('색이 팔레트 밖');
+  if (!letteringOk) issues.push('레터링 개수 어긋남');
+  const { pass, score } = verdict(j, brief);
+  return { pass, score, maxScore: 6, notes: j.notes, issues };
+}
+
 export function verdict(j: NailJudgement, brief: NailBrief): { pass: boolean; score: number } {
   const { min, max } = expectedMetalTips(brief);
   const countOk = j.metalTipCount >= min && j.metalTipCount <= max;

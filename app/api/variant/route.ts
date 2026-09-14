@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
 import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { applyPlan, buildBriefPrompt, parseBrief, parseVariantPlan } from '@/lib/brief';
-import { judgeImage, verdict } from '@/lib/judge';
+import { judgeImage, verdictDetail } from '@/lib/judge';
 import { generateImage } from '@/lib/provider';
 import { clientIp, dailyLimits, parseImages } from '@/lib/request';
 import type { NailBrief } from '@/lib/brief';
@@ -93,9 +93,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     return errorResponse(outcome.safetyBlocked ? 'REJECTED' : 'GENERATION_FAILED', outcome.safetyBlocked ? 422 : 502);
   }
 
-  // 검수 1회 — 실패(null)해도 이미지는 반환 (quality: null)
+  // 검수 1회 — 실패(null)해도 이미지는 반환 (quality: null).
+  // 심사평·미달 항목까지 함께 내보낸다: 배지 하나로는 "왜 아쉬운지"를 말할 수 없다.
   const judgement = await judgeImage(outcome.image, merged);
-  const quality = judgement ? verdict(judgement, merged) : null;
+  const quality = judgement ? verdictDetail(judgement, merged) : null;
 
   return NextResponse.json({
     tipSet: { image: outcome.image.data, mimeType: outcome.image.mimeType },

@@ -9,6 +9,12 @@ import { currentIssue } from '@/lib/issue';
 import type { HeroEntry, PartsIntensity, TrayPhoto, VariantSlot } from '@/app/page';
 import type { Mood, NailLength, NailShape } from '@/lib/types';
 
+const DIFFICULTY_KO: Record<string, string> = {
+  easy: '쉬움',
+  medium: '보통',
+  hard: '어려움',
+};
+
 async function base64ToBitmap(data: string, mimeType: string): Promise<ImageBitmap> {
   const res = await fetch(`data:${mimeType};base64,${data}`);
   return createImageBitmap(await res.blob());
@@ -64,6 +70,8 @@ export default function ResultScreen({
   selectedId,
   heroMap,
   mood,
+  craft,
+  heroError,
   photos,
   remaining,
   shape,
@@ -84,6 +92,10 @@ export default function ResultScreen({
   selectedId: string | null;
   heroMap: Record<string, HeroEntry>;
   mood: Mood | null;
+  /** 시술 난이도·조정 메모 — 분석이 이미 만든 한국어 자산 */
+  craft: { difficulty: string; notes: string } | null;
+  /** 착용샷 실패 사유 — 사라지지 않는 인라인 안내로 표시한다 */
+  heroError: string | null;
   photos: TrayPhoto[];
   remaining: number | null;
   shape: NailShape;
@@ -106,6 +118,8 @@ export default function ResultScreen({
 }) {
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  // 유료·파괴적 재생성은 2단 확인 — 네이티브 confirm 대신 인라인으로 맥락을 유지한다
+  const [confirmRegen, setConfirmRegen] = useState(false);
   // 결과를 만들 때 쓰인 옵션 — 여기서 값이 달라지면 "이 옵션으로 다시 만들기"가 열린다
   const [baseOptions] = useState({ shape, length, partsIntensity });
   const issue = currentIssue();
@@ -173,9 +187,9 @@ export default function ResultScreen({
     <>
       {/* 선택된 시안 — 확대 보기 */}
       <div className="result-figure">
-        <p className="overline" suppressHydrationWarning>
+        <h2 className="overline" suppressHydrationWarning>
           Your Pick — {issue.monthLabel}
-        </p>
+        </h2>
         {selected && tipSetUrl ? (
           <>
             {/* 길게 눌러 저장(iOS)도 되도록 img로 렌더 */}
@@ -185,18 +199,15 @@ export default function ResultScreen({
               alt={`선택한 네일 시안 — ${selected.plan.title}`}
             />
             <div className="pick-head">
-              <h2 className="pick-title">
+              <h3 className="pick-title">
                 {selectedIndex >= 0 && (
                   <span className="pick-no" aria-hidden>
                     {String(selectedIndex + 1).padStart(2, '0')}
                   </span>
                 )}
                 {selected.plan.title}
-              </h2>
-              {selected.quality?.pass === true && <span className="variant-badge">검수 통과</span>}
-              {selected.quality?.pass === false && (
-                <span className="variant-badge soft">아쉬운 컷</span>
-              )}
+              </h3>
+              {/* 검수 결과는 바로 아래 "시술 정보"가 근거까지 보여준다 — 여기 배지는 중복 */}
             </div>
           </>
         ) : (
@@ -210,16 +221,60 @@ export default function ResultScreen({
         )}
       </div>
 
+      {/* 시술 정보 — 이 제품이 핀터레스트와 다르다고 주장하는 근거를 실제로 보여주는 자리.
+          검수 심사평(왜 통과/왜 아쉬운지)과 난이도·조정 메모를 함께 둔다. */}
+      {selected && (selected.quality || craft) && (
+        <div className="craft-block">
+          <h3 className="craft-head">시술 정보</h3>
+          {craft && (
+            <p className="craft-row">
+              <span className={`craft-level lv-${craft.difficulty}`}>
+                난이도 {DIFFICULTY_KO[craft.difficulty] ?? craft.difficulty}
+              </span>
+              {craft.notes && <span className="craft-notes">{craft.notes}</span>}
+            </p>
+          )}
+          {selected.quality && (
+            <div className="craft-judge">
+              <p className="craft-judge-head">
+                {selected.quality.pass ? '검수 통과' : '검수에서 걸린 부분이 있어요'}
+                <span className="craft-score">
+                  {selected.quality.score}/{selected.quality.maxScore}점
+                </span>
+              </p>
+              {selected.quality.notes && (
+                <p className="craft-judge-note">{selected.quality.notes}</p>
+              )}
+              {/* 옵셔널 체이닝 — 스키마가 또 바뀌어도 화면이 통째로 죽지는 않게 */}
+              {selected.quality.issues?.length > 0 && (
+                <ul className="craft-issues">
+                  {selected.quality.issues.map((issue) => (
+                    <li key={issue}>{issue}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {(keywords.length > 0 || colors.length > 0) && (
         <div className="mood-line">
           {/* 키워드가 없을 땐(색상 추출 모드) 스와치만 덩그러니 놓이지 않게 라벨을 붙인다 */}
           <span className="mood-keywords">
             {keywords.length > 0 ? keywords.join(' · ') : '이 시안의 컬러'}
           </span>
+          {/* 빈 span에 배경색만 있으면 접근성 트리에서 색 정보가 통째로 사라진다 */}
           {colors.length > 0 && (
-            <span className="swatches">
+            <span className="swatches" role="list" aria-label="이 시안의 컬러">
               {colors.slice(0, 3).map((c, i) => (
-                <span className="swatch" key={i} style={{ background: c }} />
+                <span
+                  className="swatch"
+                  role="listitem"
+                  key={i}
+                  style={{ background: c }}
+                  aria-label={c}
+                />
               ))}
             </span>
           )}
@@ -233,6 +288,11 @@ export default function ResultScreen({
             <button className="btn-fill" onClick={() => onHero(selected.plan.id)}>
               이 시안 착용샷 보기
             </button>
+          )}
+          {heroError && (
+            <p className="assurance hero-error" role="status">
+              {heroError}
+            </p>
           )}
           {hero?.status === 'loading' && (
             <div className="hero-loading" role="status" aria-live="polite">
@@ -262,9 +322,14 @@ export default function ResultScreen({
         </div>
       )}
 
+      {/* 가치를 가장 크게 체감하는 자리 — 착용샷을 막 본 직후.
+          예전엔 페이지 최하단, 그것도 "탭 닫으면 사라지니 받아두세요"(이탈 유도)
+          바로 뒤에 있어서, 사용자를 내보낸 다음 결제 의사를 묻는 순서였다. */}
+      {hasAnyDone && <PriceProbe />}
+
       {/* 시안 5종 그리드 — 아직 그려지는 중이어도 완성분부터 갈아탈 수 있다 */}
       <div className="tipset-block">
-        <p className="overline">Five Looks{stillDrawing ? ' — 그리는 중' : ''}</p>
+        <h2 className="overline">Five Looks{stillDrawing ? ' — 그리는 중' : ''}</h2>
         <VariantGrid slots={slots} selectedId={selectedId} onSelect={onSelect} onRetry={onRetry} />
       </div>
 
@@ -281,13 +346,29 @@ export default function ResultScreen({
             onLength={onLength}
             onPartsIntensity={onPartsIntensity}
           />
-          {optionsChanged && (
-            <>
-              <button className="btn-fill" onClick={onRegenerate}>
-                이 옵션으로 다시 만들기
-              </button>
-              <p className="assurance">다시 만들면 오늘 횟수에서 1회 차감돼요.</p>
-            </>
+          {/* 재생성 입구는 여기 하나뿐이다. 예전엔 하단에 "다시 생성" 14px 링크가
+              무료 "새로 시작" 옆 96px에 있어, 확인도 없이 1회를 태우고 시안 5장을
+              지웠다. 유료·파괴적 액션은 입구를 하나로 모으고 확인을 받는다. */}
+          {confirmRegen ? (
+            <div className="confirm-row" role="group" aria-label="다시 만들기 확인">
+              <p className="assurance">
+                지금 시안 5장이 사라지고 오늘 1회를 써요. 저장 안 한 시안이 있으면 먼저
+                받아두세요.
+              </p>
+              <div className="actions-row">
+                <button className="btn-outline" onClick={() => setConfirmRegen(false)}>
+                  취소
+                </button>
+                <button className="btn-fill" onClick={onRegenerate}>
+                  네, 다시 만들기
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button className="btn-outline recut-cta" onClick={() => setConfirmRegen(true)}>
+              {optionsChanged ? '이 옵션으로 다시 만들기' : '같은 옵션으로 새로 뽑기'}
+              <span className="cost-tag">1회</span>
+            </button>
           )}
         </div>
       )}
@@ -300,41 +381,32 @@ export default function ResultScreen({
         </p>
       )}
 
-      {/* 버튼 위계: 공유가 이 사용자의 완료 조건이므로 프라이머리 */}
+      {/* 버튼 위계: 화면당 btn-fill은 1개. 비활성 프라이머리를 시선 최상단에 두면
+          "가장 큰 버튼이 안 눌리는" 완료 화면이 된다 — 콜라주가 없으면 저장을 올린다. */}
       <div className="actions">
-        {/* 복구본은 착용샷이 없어 콜라주도 없다 — 팁셋 저장을 프라이머리로 올린다 */}
-        {restored ? (
-          <button className="btn-fill" onClick={saveTipSet} disabled={!tipSetUrl}>
-            팁셋 저장
+        {collageUrl && (
+          <button className="btn-fill" onClick={shareHero}>
+            착용샷 공유하기
           </button>
-        ) : (
-          <>
-            <button className="btn-fill" onClick={shareHero} disabled={!collageUrl}>
-              착용샷 공유하기
-            </button>
-            <div className="actions-row">
-              <button className="btn-outline" onClick={saveTipSet} disabled={!tipSetUrl}>
-                팁셋 저장
-              </button>
-              <button className="btn-outline" onClick={evolve}>
-                사진 더해 진화
-              </button>
-            </div>
-          </>
         )}
+        <div className="actions-row">
+          <button
+            className={collageUrl ? 'btn-outline' : 'btn-fill'}
+            onClick={saveTipSet}
+            disabled={!tipSetUrl}
+          >
+            시안 이미지 저장
+          </button>
+          {!restored && (
+            <button className="btn-outline" onClick={evolve}>
+              사진 더해 진화
+            </button>
+          )}
+        </div>
         <p className="assurance">
           사진을 길게 눌러도 저장할 수 있어요. 탭을 닫으면 결과가 사라지니 꼭 받아두세요.
         </p>
-        <PriceProbe />
         <div className="actions-links">
-          {!restored && (
-            <>
-              <button className="btn-link" onClick={onRegenerate}>
-                다시 생성
-              </button>
-              <span aria-hidden>·</span>
-            </>
-          )}
           <button className="btn-link" onClick={onReset}>
             새로 시작
           </button>

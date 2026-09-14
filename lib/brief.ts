@@ -361,6 +361,7 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
   const partsLine = clampLine(p.partsLine);
   if (partsLine.length === 0) return null;
   const paletteLine = typeof p.paletteLine === 'string' ? clampLine(p.paletteLine) : '';
+  const note = typeof p.note === 'string' ? clampLine(p.note, FIELD_MAX.listItem) : '';
   return {
     id: clampLine(p.id, FIELD_MAX.listItem),
     title: clampLine(p.title, FIELD_MAX.listItem),
@@ -368,6 +369,7 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
     partsLine,
     letteringWord: lettering.length > 0 ? lettering : null,
     ...(paletteLine.length > 0 ? { paletteLine } : {}),
+    ...(note.length > 0 ? { note } : {}),
   };
 }
 
@@ -380,6 +382,7 @@ export function fallbackPlans(brief: NailBrief): VariantPlan[] {
     {
       id: 'v1',
       title: '오리지널',
+      note: '올린 사진을 가장 가깝게 옮겼어요',
       patternLines: brief.patternLines,
       partsLine: brief.partsLine,
       letteringWord: brief.letteringWord,
@@ -387,6 +390,7 @@ export function fallbackPlans(brief: NailBrief): VariantPlan[] {
     {
       id: 'v2',
       title: '컬러 반전',
+      note: '모티프와 배경 색을 서로 바꿨어요',
       patternLines: [
         'Invert figure and ground on every tip: paint each motif in the former background color and each background in the former motif color, keeping the same shapes and placement.',
         ...brief.patternLines,
@@ -397,6 +401,7 @@ export function fallbackPlans(brief: NailBrief): VariantPlan[] {
     {
       id: 'v3',
       title: '마이크로 스케일',
+      note: '무늬를 아주 작게 줄였어요',
       patternLines: [
         'Shrink every motif to micro scale: dots at 0.5-1mm diameter, lines at 0.5mm thickness, keeping the same layout and rhythm.',
         ...brief.patternLines,
@@ -407,6 +412,7 @@ export function fallbackPlans(brief: NailBrief): VariantPlan[] {
     {
       id: 'v4',
       title: '핸드페인트 온리',
+      note: '파츠 없이 붓으로만 그렸어요',
       patternLines: brief.patternLines,
       partsLine: ZERO_PARTS_LINE,
       letteringWord: null,
@@ -414,6 +420,7 @@ export function fallbackPlans(brief: NailBrief): VariantPlan[] {
     {
       id: 'v5',
       title: '사선 프렌치',
+      note: '프렌치 경계를 사선으로 그었어요',
       patternLines: [
         'Redraw every tip boundary as one clean straight diagonal line running from the lower left to the upper right of the tip, with the design fully contained inside the diagonal tip zone.',
         ...brief.patternLines,
@@ -499,6 +506,7 @@ BASE BRIEF:
 ## Output: exactly 5 plans, each with
 - id: "v1" to "v5"
 - title: a short Korean name for the variant card (e.g. "도트 반전", "레이스 포인트")
+- note: ONE short Korean sentence (under 30 characters) telling the customer what makes THIS variant different from the other four, in plain words a non-expert understands (e.g. "모티프와 배경 색을 서로 바꿨어요", "무늬를 아주 작게 줄였어요"). No jargon, no English.
 - patternLines: 2-5 English lines describing per-tip variations, written as generation instructions
 - partsLine: MUST use explicit counts ("Exactly one tip carries ...") AND end by excluding the rest ("Every other tip is painted gel only — no metal, no gems, no pearls."). A zero-parts variant uses "Every tip is painted gel only — no metal, no gems, no pearls, no 3D parts."
 - letteringWord: a common 4-6 letter word matching the mood (e.g. Sugar, Honey, Bonbon) in AT MOST 1-2 of the 5 plans; empty string for the rest
@@ -520,12 +528,13 @@ const PLANS_SCHEMA = {
         properties: {
           id: { type: Type.STRING },
           title: { type: Type.STRING },
+          note: { type: Type.STRING },
           patternLines: { type: Type.ARRAY, items: { type: Type.STRING } },
           partsLine: { type: Type.STRING },
           letteringWord: { type: Type.STRING },
           paletteLine: { type: Type.STRING },
         },
-        required: ['id', 'title', 'patternLines', 'partsLine', 'letteringWord', 'paletteLine'],
+        required: ['id', 'title', 'note', 'patternLines', 'partsLine', 'letteringWord', 'paletteLine'],
       },
     },
   },
@@ -541,70 +550,89 @@ const PLANS_SCHEMA = {
  * 예: zero-parts는 코케트에는 좋은 변주지만 데코덴에서는 정체성 파괴이므로
  * 데코덴의 variantOps에 들어 있지 않다.
  */
-const VARIANT_OP_LINES: Record<string, { titleKo: string; line: string; zeroParts?: boolean }> = {
+const VARIANT_OP_LINES: Record<
+  string,
+  { titleKo: string; noteKo: string; line: string; zeroParts?: boolean }
+> = {
   invert: {
     titleKo: '컬러 반전',
+    noteKo: '모티프와 배경 색을 서로 바꿨어요',
     line: 'Invert figure and ground on every tip: paint each motif in the former background colour and each background in the former motif colour, keeping the same shapes and placement.',
   },
   rescale: {
     titleKo: '마이크로 스케일',
+    noteKo: '무늬를 아주 작게 줄였어요',
     line: 'Shrink every motif to micro scale: dots at 0.5-1mm diameter, lines at 0.5mm thickness, keeping the same layout and rhythm.',
   },
   density: {
     titleKo: '밀도 변주',
+    noteKo: '빽빽한 손톱과 여백 많은 손톱을 섞었어요',
     line: 'Change the density across the set: one tip packed edge to edge, one tip sparse with wide breathing room, and a shrinking trail between them.',
   },
   'zero-parts': {
     titleKo: '핸드페인트 온리',
+    noteKo: '파츠 없이 붓으로만 그렸어요',
     line: 'Every motif on every tip is hand-painted with a brush, so the whole set reads as paint and gel alone.',
     zeroParts: true,
   },
   'boundary-swap': {
     titleKo: '사선 프렌치',
+    noteKo: '프렌치 경계를 사선으로 그었어요',
     line: 'Redraw every tip boundary as one clean straight diagonal running from the lower left to the upper right, with the design fully contained inside the diagonal tip zone.',
   },
   'material-swap': {
     titleKo: '재질 교체',
+    noteKo: '같은 무늬를 손톱마다 다른 재질로 냈어요',
     line: 'Repeat the same motif in a different material on each tip: painted on one, raised tone-on-tone gel on another, cast metal on a third, domed pearl on a fourth.',
   },
   'volume-up': {
     titleKo: '볼륨 업',
+    noteKo: '양각을 한 단계 더 도톰하게 올렸어요',
     line: 'Build every raised form one step taller and rounder, so each sculpted element carries a broader highlight and casts a longer shadow.',
   },
   'cluster-density': {
     titleKo: '클러스터 밀집',
+    noteKo: '작은 파츠를 한곳에 뭉쳐 배치했어요',
     line: 'Gather the small parts into tight clusters instead of spreading them: one tip holds a dense packed group, its neighbour holds a single graded line of the same parts.',
   },
   'palette-rotate': {
     titleKo: '팔레트 회전',
+    noteKo: '무늬는 그대로, 색 위치만 돌렸어요',
     line: 'Keep every shape and placement identical and rotate which colour goes where, so each tip wears a different member of the same palette.',
   },
   'motif-swap': {
     titleKo: '모티프 교체',
+    noteKo: '가운데 큰 모티프를 다른 꽃으로 바꿨어요',
     line: 'Swap the sculpted centrepiece for a different botanical form of the same size and build: a rose becomes a lily, a lily becomes a peony.',
   },
   'layer-depth': {
     titleKo: '레이어 심도',
+    noteKo: '손톱마다 비치는 층 수를 다르게 했어요',
     line: 'Vary how many sheer layers each tip carries, from two on the shallowest to five on the deepest, so the depth reads differently tip to tip.',
   },
   'swirl-direction': {
     titleKo: '스월 방향',
+    noteKo: '스월이 흐르는 방향을 손톱마다 바꿨어요',
     line: 'Turn the direction each swirl travels: one tip drifts lengthwise, the next diagonally, the next in a slow spiral, all with edges bleeding softly.',
   },
   'chrome-accent': {
     titleKo: '크롬 베인',
+    noteKo: '크롬 라인 위치를 옮기고 두 손톱은 뺐어요',
     line: 'Move the fine chrome vein to a different boundary on each tip, and leave two tips with no chrome at all.',
   },
   'relief-pattern-swap': {
     titleKo: '릴리프 교체',
+    noteKo: '손톱마다 다른 양각 패턴을 넣었어요',
     line: 'Give each tip a different raised relief pattern at the same height: cable-knit ribs, quilted diamonds, rolling waves, and a plain smooth tip for contrast.',
   },
   'finish-remix': {
     titleKo: '마감 리믹스',
+    noteKo: '매트·벨벳·크롬 마감 자리를 바꿨어요',
     line: 'Reassign the finishes across the set so a different tip carries the matte, the cat-eye velvet, and the mirror chrome than before.',
   },
   'bloom-density': {
     titleKo: '블룸 밀도',
+    noteKo: '번지는 색의 퍼짐 정도를 다르게 했어요',
     line: 'Vary how far the blooming colour spreads inside the clear layer: tight compact blooms on one tip, wide diffuse blooms on another.',
   },
 };
@@ -643,6 +671,7 @@ export function fallbackPlansForCore(core: NailCore): VariantPlan[] {
     return {
       id: `v${i + 1}`,
       title: spec.titleKo,
+      note: spec.noteKo,
       patternLines: [spec.line],
       partsLine: spec.zeroParts ? ZERO_PARTS_LINE : corePartsLine(core),
       letteringWord: null,

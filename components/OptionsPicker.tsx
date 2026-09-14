@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { NailShape, NailLength } from '@/lib/types';
 import type { PartsIntensity } from '@/app/page';
 
@@ -40,6 +41,7 @@ export default function OptionsPicker({
   onLength: (l: NailLength) => void;
   onPartsIntensity: (p: PartsIntensity) => void;
 }) {
+  const [touched, setTouched] = useState(false);
   return (
     <div className="options">
       <div className="option-group">
@@ -80,13 +82,19 @@ export default function OptionsPicker({
               key={p.value}
               className={`pill${partsIntensity === p.value ? ' active' : ''}`}
               aria-pressed={partsIntensity === p.value}
-              onClick={() => onPartsIntensity(p.value)}
+              onClick={() => {
+                setTouched(true);
+                onPartsIntensity(p.value);
+              }}
             >
               {p.label}
             </button>
           ))}
         </div>
-        <p className="option-note" aria-live="polite">
+        {/* 마운트 시점에는 낭독하지 않는다 — 결과 화면에서 이 픽커가 새로 붙으면
+            사용자가 건드리지도 않은 파츠 설명이 "생성 완료" 알림 자리를 가로챘다.
+            사용자가 실제로 값을 바꿨을 때만 라이브 리전으로 동작시킨다. */}
+        <p className="option-note" aria-live={touched ? 'polite' : 'off'}>
           {PARTS.find((p) => p.value === partsIntensity)?.note}
         </p>
       </div>

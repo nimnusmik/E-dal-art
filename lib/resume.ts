@@ -9,7 +9,12 @@
  * 복구 후에는 재생성·재시도·착용샷을 할 수 없다. 그 버튼들을 그대로 두면 눌러도
  * 아무 일이 없거나 카드가 영영 스켈레톤으로 남으므로, 복구본은 읽기 전용으로 표시한다.
  */
-const KEY = 'idala:result:v1';
+/**
+ * 스키마가 바뀌면 반드시 버전을 올린다.
+ * v1 → v2: quality가 {pass, score}에서 QualityReport(issues·notes 포함)로 바뀜.
+ * 옛 스냅샷을 그대로 되살리면 issues가 undefined라 결과 화면이 통째로 크래시했다.
+ */
+const KEY = 'idala:result:v2';
 
 /** base64 이미지가 들어가므로 용량 상한을 넘기면 저장을 포기한다(조용히) */
 const MAX_BYTES = 4_000_000;
