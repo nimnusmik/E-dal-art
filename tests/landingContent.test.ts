@@ -24,6 +24,12 @@ describe('랜딩 콘텐츠', () => {
     expect(new Set(nos).size).toBe(nos.length);
   });
 
+  it('서비스 행은 모두 설명을 갖는다 (클릭 없이 항상 펼쳐 두는 문구)', () => {
+    for (const s of SERVICES) {
+      expect(s.body.trim().length).toBeGreaterThan(0);
+    }
+  });
+
   it('갤러리 컷은 4장이고 src는 /gallery/ 아래 이미지를 가리킨다', () => {
     expect(GALLERY).toHaveLength(4);
     for (const g of GALLERY) {
@@ -59,19 +65,33 @@ describe('랜딩 콘텐츠', () => {
     }
   });
 
-  it('FAQ는 6개이고 모두 물음표로 끝난다', () => {
-    expect(FAQS).toHaveLength(6);
+  it('FAQ는 모두 물음표로 끝나고 답변이 비어 있지 않다', () => {
+    expect(FAQS.length).toBeGreaterThanOrEqual(6);
     for (const f of FAQS) {
       expect(f.q.trim().endsWith('?')).toBe(true);
+      // 질문만 있는 FAQ는 불안을 활성화하고 해소를 거부한다
+      expect(f.a.trim().length).toBeGreaterThan(10);
     }
   });
 
-  it('모든 톤 값은 파스텔 5색 중 하나다', () => {
-    const tones = [
-      ...STATS.map((s) => s.tone),
-      ...SERVICES.map((s) => s.tone),
-      ...FAQS.map((f) => f.tone),
-    ];
-    for (const t of tones) expect(TONES).toContain(t);
+  it('가격·횟수·사진 보관은 FAQ에서 반드시 답한다', () => {
+    const joined = FAQS.map((f) => `${f.q} ${f.a}`).join('\n');
+    expect(joined).toMatch(/무료/);
+    expect(joined).toMatch(/3회/);
+    expect(joined).toMatch(/저장하지 않아요/);
+  });
+
+  it('카피에 "내 손" 표현을 쓰지 않는다 (사용자 손 사진 입력이 없다)', () => {
+    const joined = [
+      ...STATS.map((s) => `${s.label} ${s.body}`),
+      ...SERVICES.map((s) => `${s.label} ${s.body}`),
+      ...SCENES.map((s) => `${s.quote} ${s.body}`),
+      ...FAQS.map((f) => f.q),
+    ].join('\n');
+    expect(joined).not.toMatch(/내 손/);
+  });
+
+  it('통계 카드 톤은 파스텔 5색 중 하나다', () => {
+    for (const s of STATS) expect(TONES).toContain(s.tone);
   });
 });

@@ -87,7 +87,7 @@ export async function recordScoped(
 
 export async function recordMetric(
   store: CounterStore,
-  event: 'save' | 'evolve',
+  event: 'save' | 'evolve' | 'share' | 'notify',
   now: Date,
 ): Promise<void> {
   await store.incr(`metric:${event}:${kstDateKey(now)}`);
