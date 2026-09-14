@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
-import { getScopedUsage, recordScoped } from '@/lib/quota';
+import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { applyPlan, buildBriefPrompt, parseBrief, parseVariantPlan } from '@/lib/brief';
 import { judgeImage, verdict } from '@/lib/judge';
 import { generateImage } from '@/lib/provider';
@@ -18,7 +18,12 @@ export const maxDuration = 60; // 생성 1장 + 검수 1회 + 여유
 
 const VARIANT_LIMIT_MULTIPLIER = 6;
 
-type VariantErrorCode = 'INVALID_INPUT' | 'RATE_LIMIT_VARIANT' | 'REJECTED' | 'GENERATION_FAILED';
+type VariantErrorCode =
+  | 'INVALID_INPUT'
+  | 'RATE_LIMIT_VARIANT'
+  | 'RATE_LIMIT_TOTAL'
+  | 'REJECTED'
+  | 'GENERATION_FAILED';
 
 interface VariantRequest {
   images: ImagePayload[];
@@ -56,10 +61,23 @@ export async function POST(req: Request): Promise<NextResponse> {
   const store = getRedis();
   const ip = clientIp(req);
   const now = new Date();
-  const limit = dailyLimits().userLimit * VARIANT_LIMIT_MULTIPLIER;
+  const { userLimit, imageLimit } = dailyLimits();
 
-  const used = await getScopedUsage(store, 'variant', ip, now);
-  if (used >= limit) return errorResponse('RATE_LIMIT_VARIANT', 429);
+  // IP별 한도 + 전역 이미지 한도를 함께 선점한다. 전역 한도가 없으면 IP를 갈아끼우는
+  // 만큼 비용이 선형으로 늘어난다 — 이 키가 하루 지출의 실질적 상한이다.
+  const held = await reserve(
+    store,
+    [
+      {
+        key: scopedQuotaKey('variant', ip, now),
+        limit: userLimit * VARIANT_LIMIT_MULTIPLIER,
+        code: 'RATE_LIMIT_VARIANT',
+      },
+      { key: imageQuotaKey(now), limit: imageLimit, code: 'RATE_LIMIT_TOTAL' },
+    ],
+    now,
+  );
+  if (!held.ok) return errorResponse(held.code as VariantErrorCode, 429);
 
   // 플랜을 브리프에 병합 → 팁셋 1장 생성
   const merged = applyPlan(body.brief, body.plan);
@@ -67,17 +85,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     outcome = await generateImage(body.images, buildBriefPrompt(merged));
   } catch {
+    await held.release();
     return errorResponse('GENERATION_FAILED', 502);
   }
   if (!outcome.image) {
+    await held.release();
     return errorResponse(outcome.safetyBlocked ? 'REJECTED' : 'GENERATION_FAILED', outcome.safetyBlocked ? 422 : 502);
   }
 
   // 검수 1회 — 실패(null)해도 이미지는 반환 (quality: null)
   const judgement = await judgeImage(outcome.image, merged);
   const quality = judgement ? verdict(judgement, merged) : null;
-
-  await recordScoped(store, 'variant', ip, now); // 성공 시에만 차감
 
   return NextResponse.json({
     tipSet: { image: outcome.image.data, mimeType: outcome.image.mimeType },

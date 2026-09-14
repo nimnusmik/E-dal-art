@@ -9,6 +9,7 @@ const store = {
 const fakeStore: CounterStore = {
   async get(key) { return store.data.has(key) ? String(store.data.get(key)) : null; },
   async incr(key) { const n = (store.data.get(key) ?? 0) + 1; store.data.set(key, n); return n; },
+  async decr(key) { const n = (store.data.get(key) ?? 0) - 1; store.data.set(key, n); return n; },
   async expire() {},
 };
 
@@ -94,18 +95,31 @@ describe('POST /api/hero', () => {
     expect(mockGenerateImage).not.toHaveBeenCalled();
   });
 
+  it('전역 이미지 한도 소진 → 429, IP를 바꿔도 통과 못 한다', async () => {
+    store.data.set('quota:image:' + kstToday(), 200); // DAILY_IMAGE_LIMIT 기본값
+    const res = await POST(makeRequest(VALID_BODY, '9.9.9.9'));
+    expect(res.status).toBe(429);
+    expect((await res.json()).error).toBe('RATE_LIMIT_TOTAL');
+    expect(mockGenerateImage).not.toHaveBeenCalled();
+  });
+
+  it('variant와 같은 전역 카운터를 공유한다 — 성공 시 1 증가', async () => {
+    await POST(makeRequest(VALID_BODY));
+    expect(store.data.get('quota:image:' + kstToday())).toBe(1);
+  });
+
   it('안전 차단 → 422 REJECTED, 카운터 미차감', async () => {
     mockGenerateImage.mockResolvedValue({ image: null, mood: null, safetyBlocked: true });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(422);
-    expect(store.data.get(heroKey())).toBeUndefined();
+    expect(store.data.get(heroKey())).toBe(0); // 선점분 환불됨
   });
 
   it('이미지 없이 응답 → 502 GENERATION_FAILED, 카운터 미차감', async () => {
     mockGenerateImage.mockResolvedValue({ image: null, mood: null, safetyBlocked: false });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(502);
-    expect(store.data.get(heroKey())).toBeUndefined();
+    expect(store.data.get(heroKey())).toBe(0); // 선점분 환불됨
   });
 
   it('생성 예외 → 502 GENERATION_FAILED', async () => {

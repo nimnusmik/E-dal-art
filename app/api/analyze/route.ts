@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
-import { getQuota, recordGeneration } from '@/lib/quota';
+import { getQuota, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
 import { analyzeToBrief, applyOptions, planVariants } from '@/lib/brief';
 import { clientIp, dailyLimits, isNailLength, isNailShape, parseImages } from '@/lib/request';
 import type { ImagePayload, NailLength, NailShape, PartsIntensity } from '@/lib/types';
@@ -52,13 +52,23 @@ export async function POST(req: Request): Promise<NextResponse> {
   const now = new Date();
   const { userLimit, totalLimit } = dailyLimits();
 
-  const quota = await getQuota(store, ip, now, userLimit, totalLimit);
-  if (quota.userRemaining <= 0) return errorResponse('RATE_LIMIT_USER', 429);
-  if (quota.totalExhausted) return errorResponse('RATE_LIMIT_TOTAL', 429);
+  // 선점 후 작업 — 조회 후 차감하면 분석에 걸리는 수십 초가 그대로 경쟁 조건 창이 된다
+  const held = await reserve(
+    store,
+    [
+      { key: userQuotaKey(ip, now), limit: userLimit, code: 'RATE_LIMIT_USER' },
+      { key: totalQuotaKey(now), limit: totalLimit, code: 'RATE_LIMIT_TOTAL' },
+    ],
+    now,
+  );
+  if (!held.ok) return errorResponse(held.code as AnalyzeErrorCode, 429);
 
-  // 분석 실패 시 502 — 크레딧 미차감 (성공 시에만 차감 규칙)
+  // 분석 실패 시 502 — 예약분을 환불해 "실패는 미차감" 규칙을 유지한다
   const rawBrief = await analyzeToBrief(body.images);
-  if (!rawBrief) return errorResponse('ANALYZE_FAILED', 502);
+  if (!rawBrief) {
+    await held.release();
+    return errorResponse('ANALYZE_FAILED', 502);
+  }
 
   // 쉐입·길이·파츠 강도는 손님 주문이 사진을 이긴다
   const brief = applyOptions(rawBrief, {
@@ -68,9 +78,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
   const plans = await planVariants(brief); // 실패 시 내부 폴백 — 항상 5개
 
-  await recordGeneration(store, ip, now);
-
-  return NextResponse.json({ brief, plans, remaining: quota.userRemaining - 1 });
+  const quota = await getQuota(store, ip, now, userLimit, totalLimit);
+  return NextResponse.json({ brief, plans, remaining: quota.userRemaining });
 }
 
 /** 남은 횟수 조회 (차감 없음) — 시작 화면 표시용, 기존 GET /api/generate와 동일 로직 */

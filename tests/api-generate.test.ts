@@ -9,6 +9,7 @@ const store = {
 const fakeStore: CounterStore = {
   async get(key) { return store.data.has(key) ? String(store.data.get(key)) : null; },
   async incr(key) { const n = (store.data.get(key) ?? 0) + 1; store.data.set(key, n); return n; },
+  async decr(key) { const n = (store.data.get(key) ?? 0) - 1; store.data.set(key, n); return n; },
   async expire() {},
 };
 
@@ -177,14 +178,14 @@ describe('POST /api/generate', () => {
     mockCallGemini.mockResolvedValue({ image: null, mood: null, safetyBlocked: true });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(422);
-    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBeUndefined();
+    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
   });
 
   it('이미지 없이 응답 → 502 GENERATION_FAILED, 횟수 미차감', async () => {
     mockCallGemini.mockResolvedValue({ image: null, mood: null, safetyBlocked: false });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(502);
-    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBeUndefined();
+    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
   });
 
   it('Gemini 예외 → 502 GENERATION_FAILED', async () => {

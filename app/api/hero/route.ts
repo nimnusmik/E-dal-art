@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
-import { getScopedUsage, recordScoped } from '@/lib/quota';
+import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { buildPrompt } from '@/lib/prompt';
 import { getTrendKeywords } from '@/config/trends';
 import { generateImage } from '@/lib/provider';
@@ -17,7 +17,12 @@ export const maxDuration = 60; // 생성 1장 + 여유
 
 const HERO_LIMIT_MULTIPLIER = 5;
 
-type HeroErrorCode = 'INVALID_INPUT' | 'RATE_LIMIT_HERO' | 'REJECTED' | 'GENERATION_FAILED';
+type HeroErrorCode =
+  | 'INVALID_INPUT'
+  | 'RATE_LIMIT_HERO'
+  | 'RATE_LIMIT_TOTAL'
+  | 'REJECTED'
+  | 'GENERATION_FAILED';
 
 interface HeroRequest {
   images: ImagePayload[];
@@ -62,10 +67,22 @@ export async function POST(req: Request): Promise<NextResponse> {
   const store = getRedis();
   const ip = clientIp(req);
   const now = new Date();
-  const limit = dailyLimits().userLimit * HERO_LIMIT_MULTIPLIER;
+  const { userLimit, imageLimit } = dailyLimits();
 
-  const used = await getScopedUsage(store, 'hero', ip, now);
-  if (used >= limit) return errorResponse('RATE_LIMIT_HERO', 429);
+  // variant와 같은 전역 이미지 카운터를 공유한다 — 모든 생성 경로가 하나의 지출 상한 아래
+  const held = await reserve(
+    store,
+    [
+      {
+        key: scopedQuotaKey('hero', ip, now),
+        limit: userLimit * HERO_LIMIT_MULTIPLIER,
+        code: 'RATE_LIMIT_HERO',
+      },
+      { key: imageQuotaKey(now), limit: imageLimit, code: 'RATE_LIMIT_TOTAL' },
+    ],
+    now,
+  );
+  if (!held.ok) return errorResponse(held.code as HeroErrorCode, 429);
 
   // 팁셋 이미지를 참조로 넘겨 손톱이 팁과 같은 디자인이 되게 함 (기존 generate 2단계와 동일)
   const refs: ImagePayload[] = [
@@ -78,13 +95,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     outcome = await generateImage(refs, prompt);
   } catch {
+    await held.release();
     return errorResponse('GENERATION_FAILED', 502);
   }
   if (!outcome.image) {
+    await held.release();
     return errorResponse(outcome.safetyBlocked ? 'REJECTED' : 'GENERATION_FAILED', outcome.safetyBlocked ? 422 : 502);
   }
-
-  await recordScoped(store, 'hero', ip, now); // 성공 시에만 차감
 
   return NextResponse.json({
     hero: { image: outcome.image.data, mimeType: outcome.image.mimeType },

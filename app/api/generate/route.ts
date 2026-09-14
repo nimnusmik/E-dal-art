@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
-import { getQuota, recordGeneration } from '@/lib/quota';
+import { getQuota, imageQuotaKey, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
 import { buildPrompt, buildTipSetPrompt } from '@/lib/prompt';
 import { getTrendKeywords } from '@/config/trends';
 import { generateImage } from '@/lib/provider';
 import { analyzeReferences, moodFromAnalysis } from '@/lib/analyze';
 import { analyzeToBrief } from '@/lib/brief';
 import { generateJudged } from '@/lib/judge';
+import { clientIp, dailyLimits } from '@/lib/request';
 import type { ImageOutcome, ImagePayload } from '@/lib/types';
 import type { GenerateErrorCode, GenerateRequest, NailLength, NailShape } from '@/lib/types';
 
@@ -16,19 +17,10 @@ const SHAPES: NailShape[] = ['almond', 'round', 'square', 'stiletto'];
 const LENGTHS: NailLength[] = ['short', 'medium', 'long'];
 const MAX_IMAGE_BASE64_CHARS = 2_000_000; // 리사이즈된 JPEG 기준 넉넉한 상한 (~1.5MB)
 
-function clientIp(req: Request): string {
-  const realIp = req.headers.get('x-real-ip');
-  if (realIp && realIp.trim()) return realIp.trim();
-  const header = req.headers.get('x-forwarded-for');
-  return header?.split(',')[0]?.trim() || 'unknown';
-}
+// IP 추출·한도 파싱은 신규 라우트와 공유한다 — 레거시만 IPv6 우회에 열려 있으면 의미가 없다
 
-function limits(): { userLimit: number; totalLimit: number } {
-  return {
-    userLimit: Number(process.env.DAILY_USER_LIMIT ?? 3),
-    totalLimit: Number(process.env.DAILY_TOTAL_LIMIT ?? 200),
-  };
-}
+/** 한도 파싱은 신규 라우트와 동일 규칙을 쓴다 (환경변수 오타 시 기본값 폴백 포함) */
+const limits = dailyLimits;
 
 /** Promise.allSettled 결과에서 성공 결과만 꺼냄 (실패는 null) */
 function settledOutcome(r: PromiseSettledResult<ImageOutcome>): ImageOutcome | null {
@@ -67,11 +59,25 @@ export async function POST(req: Request): Promise<NextResponse> {
   const store = getRedis();
   const ip = clientIp(req);
   const now = new Date();
-  const { userLimit, totalLimit } = limits();
+  const { userLimit, totalLimit, imageLimit } = limits();
 
-  const quota = await getQuota(store, ip, now, userLimit, totalLimit);
-  if (quota.userRemaining <= 0) return errorResponse('RATE_LIMIT_USER', 429);
-  if (quota.totalExhausted) return errorResponse('RATE_LIMIT_TOTAL', 429);
+  // 이 라우트는 호출 1회에 이미지 3장(팁셋 2장 + 착용샷 1장)까지 생성하므로
+  // 전역 이미지 카운터도 3장분 선점한다 — 실제 지출과 카운터를 일치시킨다.
+  const IMAGES_PER_CALL = 3;
+  const held = await reserve(
+    store,
+    [
+      { key: userQuotaKey(ip, now), limit: userLimit, code: 'RATE_LIMIT_USER' },
+      { key: totalQuotaKey(now), limit: totalLimit, code: 'RATE_LIMIT_TOTAL' },
+      ...Array.from({ length: IMAGES_PER_CALL }, () => ({
+        key: imageQuotaKey(now),
+        limit: imageLimit,
+        code: 'RATE_LIMIT_TOTAL',
+      })),
+    ],
+    now,
+  );
+  if (!held.ok) return errorResponse(held.code as GenerateErrorCode, 429);
 
   const trends = getTrendKeywords();
 
@@ -116,13 +122,12 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   // 히어로는 필수. 없으면 안전 차단이면 REJECTED, 그 외 생성 실패.
   if (!heroOutcome?.image) {
+    await held.release(); // 실패는 미차감 — 선점분 전액 환불
     const blocked = heroOutcome?.safetyBlocked === true || tipOutcome?.safetyBlocked === true;
     return errorResponse(blocked ? 'REJECTED' : 'GENERATION_FAILED', blocked ? 422 : 502);
   }
 
-  // 성공 후에만 차감 (실패 미차감 규칙). 손+팁 합쳐 1회로 계산.
-  // getQuota→recordGeneration 사이 동시성으로 소폭 초과 가능하나 전체 총량 한도가 상한을 보장 — 의도된 트레이드오프.
-  await recordGeneration(store, ip, now);
+  const quota = await getQuota(store, ip, now, userLimit, totalLimit);
 
   return NextResponse.json({
     hero: { image: heroOutcome.image.data, mimeType: heroOutcome.image.mimeType },
@@ -133,7 +138,8 @@ export async function POST(req: Request): Promise<NextResponse> {
       (brief ? { keywords: brief.keywords, colors: brief.colors } : moodFromAnalysis(analysis)),
     // 검수 결과 (신규 경로에서만 존재) — 클라이언트가 "검수 통과" 배지 등에 활용 가능한 추가 필드
     tipSetQuality: tipQuality,
-    remaining: quota.userRemaining - 1,
+    // reserve()가 이미 차감했으므로 조회값이 곧 잔여
+    remaining: quota.userRemaining,
   });
 }
 
