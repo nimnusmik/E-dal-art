@@ -16,3 +16,10 @@ ref/hand-after-check.png
 변천사/
 ref/nail-candidates/
 ref/withpic/
+.vercel
+.env*
+
+# Vercel Upstash 통합이 자동 설치한 에이전트 스킬 (도구 산출물)
+.agents/
+.claude/
+skills-lock.json
