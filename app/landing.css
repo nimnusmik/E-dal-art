@@ -852,3 +852,7 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 
 /* ─── 랜딩 루트 ──────────────────────────────────────────────── */
 .xp-landing { position: relative; overflow-x: clip; }
+
+/* 구독 수요 측정 — 갤러리(실제 검수 통과작) 직후, 누구나 닿는 자리 */
+.xp-price { padding: var(--space-section) clamp(20px, 5vw, 64px); }
+.xp-price-inner { max-width: 520px; margin: 0 auto; }

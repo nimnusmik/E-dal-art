@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
 import { getQuota, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
 import { analyzeToBrief, applyOptions, planVariants } from '@/lib/brief';
-import { clientIp, dailyLimits, isNailLength, isNailShape, parseImages } from '@/lib/request';
+import { clientIp, dailyLimits, hasValidInvite, inviteRequired, isNailLength, isNailShape, parseImages } from '@/lib/request';
 import type { ImagePayload, NailLength, NailShape, PartsIntensity } from '@/lib/types';
 
 /**
@@ -14,7 +14,12 @@ export const maxDuration = 60; // 분석 + 플랜 텍스트 호출 2회 + 여유
 
 const PARTS_INTENSITIES: PartsIntensity[] = ['auto', 'none', 'point', 'rich'];
 
-type AnalyzeErrorCode = 'INVALID_INPUT' | 'RATE_LIMIT_USER' | 'RATE_LIMIT_TOTAL' | 'ANALYZE_FAILED';
+type AnalyzeErrorCode =
+  | 'INVALID_INPUT'
+  | 'INVITE_REQUIRED'
+  | 'RATE_LIMIT_USER'
+  | 'RATE_LIMIT_TOTAL'
+  | 'ANALYZE_FAILED';
 
 interface AnalyzeRequest {
   images: ImagePayload[];
@@ -46,6 +51,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   const body = validateBody(raw);
   if (!body) return errorResponse('INVALID_INPUT', 400);
+
+  // 초대 코드 게이트 — 생성 1건이 곧 실비이므로 검증 전까지는 초대받은 사람만
+  if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
 
   const store = getRedis();
   const ip = clientIp(req);
@@ -82,9 +90,17 @@ export async function POST(req: Request): Promise<NextResponse> {
   return NextResponse.json({ brief, plans, remaining: quota.userRemaining });
 }
 
-/** 남은 횟수 조회 (차감 없음) — 시작 화면 표시용, 기존 GET /api/generate와 동일 로직 */
+/**
+ * 남은 횟수 + 게이트 상태 조회 (차감 없음).
+ * inviteRequired로 클라이언트가 "코드 입력"을 보여줄지 결정한다.
+ * hasInvite는 이미 유효한 코드를 들고 있는 재방문자를 위한 것 — 코드 입력을 다시 묻지 않는다.
+ */
 export async function GET(req: Request): Promise<NextResponse> {
   const { userLimit, totalLimit } = dailyLimits();
   const quota = await getQuota(getRedis(), clientIp(req), new Date(), userLimit, totalLimit);
-  return NextResponse.json({ remaining: quota.userRemaining });
+  return NextResponse.json({
+    remaining: quota.userRemaining,
+    inviteRequired: inviteRequired(),
+    hasInvite: hasValidInvite(req),
+  });
 }

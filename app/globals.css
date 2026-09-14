@@ -1274,3 +1274,19 @@ label.slot:focus-within .slot-add {
   color: var(--danger);
   text-align: center;
 }
+
+/* ─── 초대 코드 게이트 ───────────────────────────────────────── */
+/* 업로드보다 앞에 둔다 — 사진을 다 올리게 한 뒤 "사실 못 만들어요"는 최악의 순서다 */
+.invite-gate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.invite-label {
+  font-size: var(--fs-400);
+  font-weight: 700;
+  color: var(--text-1);
+  word-break: keep-all;
+}

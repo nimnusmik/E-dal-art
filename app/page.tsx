@@ -9,6 +9,8 @@ import Landing from '@/components/landing/Landing';
 import { useIssue } from '@/lib/useIssue';
 import { fileToResizedPayload } from '@/lib/resize';
 import { clearSnapshot, loadSnapshot, saveSnapshot } from '@/lib/resume';
+import { clearInvite, inviteHeaders, setInvite } from '@/lib/invite';
+import { fetchGate } from '@/lib/useGate';
 import type { NailBrief } from '@/lib/brief';
 import type { QualityReport } from '@/lib/judge';
 import type { Mood, NailLength, NailShape, PartsIntensity, VariantPlan } from '@/lib/types';
@@ -80,6 +82,14 @@ export default function Home() {
   /** 착용샷 실패 사유 — 토스트로 6초 뒤 사라지면 왜 안 됐는지 알 길이 없다 */
   const [heroError, setHeroError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
+  /**
+   * 초대 게이트 상태. 이미지 생성은 무료 티어가 없어 호출 1건이 곧 실비이므로,
+   * 수요 검증이 끝나기 전까지는 초대받은 사람만 생성한다(지출을 구조적으로 0에 가깝게).
+   * gateOpen=false면 툴 카드가 생성 CTA 대신 코드 입력을 보여준다.
+   */
+  const [inviteOn, setInviteOn] = useState(false);
+  const [gateOpen, setGateOpen] = useState(true);
+  const [inviteInput, setInviteInput] = useState('');
   const [error, setError] = useState<AppError>(null);
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifyDone, setNotifyDone] = useState(false);
@@ -167,12 +177,11 @@ export default function Home() {
 
   // 시작 화면 잔여 횟수 (GET /api/analyze — 조회만, 차감 없음)
   useEffect(() => {
-    fetch('/api/analyze')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json: { remaining?: number } | null) => {
-        if (json && typeof json.remaining === 'number') setRemaining(json.remaining);
-      })
-      .catch(() => {}); // 표시용이라 실패는 무시
+    void fetchGate().then((g) => {
+      setRemaining(g.remaining);
+      setInviteOn(g.inviteRequired);
+      setGateOpen(!g.inviteRequired || g.hasInvite);
+    });
   }, []);
 
   // 새로고침 복구 — 결과가 있었다면 되살린다 (탭을 닫으면 사라진다)
@@ -245,7 +254,7 @@ export default function Home() {
       try {
         const res = await fetch('/api/variant', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...inviteHeaders() },
           body: JSON.stringify({ images: imagesRef.current, brief, plan }),
           signal: abortRef.current?.signal,
         });
@@ -309,7 +318,7 @@ export default function Home() {
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...inviteHeaders() },
         body: JSON.stringify({ images, shape, length, partsIntensity }),
         signal: ac.signal,
       });
@@ -327,6 +336,15 @@ export default function Home() {
         setPhase('generating');
         // 5개를 병렬 발사 — await 없이 각자 resolve되는 순서대로 슬롯이 채워진다
         plans.forEach((plan) => void fetchVariant(plan, session));
+        return;
+      }
+      if (json.error === 'INVITE_REQUIRED') {
+        // 코드가 틀렸거나 만료 — 저장분을 버리고 다시 묻는다
+        clearInvite();
+        setGateOpen(false);
+        setPhase('start');
+        anchorToolRef.current = true;
+        showInline('초대 코드가 맞지 않아요. 다시 확인해주세요');
         return;
       }
       if (json.error === 'RATE_LIMIT_USER') { setPhase('blocked-user'); return; }
@@ -389,7 +407,7 @@ export default function Home() {
       try {
         const res = await fetch('/api/hero', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...inviteHeaders() },
           body: JSON.stringify({
             images: imagesRef.current,
             tipSet: { image: slot.tipSet.image, mimeType: slot.tipSet.mimeType },
@@ -472,31 +490,73 @@ export default function Home() {
             </div>
             <div className="xp-tool-form">
               {inlineError}
-              <InspirationTray
-                photos={photos}
-                pendingCount={pendingPhotos}
-                onAdd={addPhotos}
-                onRemove={removePhoto}
-              />
-              {hasPhotos && (
-                <OptionsPicker
-                  shape={shape}
-                  length={length}
-                  partsIntensity={partsIntensity}
-                  onShape={setShape}
-                  onLength={setLength}
-                  onPartsIntensity={setPartsIntensity}
-                />
+              {/* 게이트가 닫혀 있으면 업로드부터 막는다 — 사진을 다 올리게 한 뒤
+                  "사실 못 만들어요"라고 하는 건 최악의 순서다 */}
+              {!gateOpen ? (
+                <form
+                  className="invite-gate"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const code = inviteInput.trim();
+                    if (!code) return;
+                    setInvite(code);
+                    setGateOpen(true);
+                    setError(null);
+                  }}
+                >
+                  <label className="invite-label" htmlFor="invite-code">
+                    지금은 초대받은 분만 시안을 만들 수 있어요
+                  </label>
+                  <p className="assurance">
+                    코드가 없어도 아래 시안 예시는 모두 실제로 만들어 검수를 통과한 결과물이에요.
+                  </p>
+                  <div className="notify-row">
+                    <input
+                      id="invite-code"
+                      className="notify-input"
+                      type="text"
+                      required
+                      autoComplete="off"
+                      placeholder="초대 코드"
+                      value={inviteInput}
+                      onChange={(e) => setInviteInput(e.target.value)}
+                    />
+                    <button className="btn-fill" type="submit">
+                      확인
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <InspirationTray
+                    photos={photos}
+                    pendingCount={pendingPhotos}
+                    onAdd={addPhotos}
+                    onRemove={removePhoto}
+                  />
+                  {hasPhotos && (
+                    <OptionsPicker
+                      shape={shape}
+                      length={length}
+                      partsIntensity={partsIntensity}
+                      onShape={setShape}
+                      onLength={setLength}
+                      onPartsIntensity={setPartsIntensity}
+                    />
+                  )}
+                </>
               )}
               {/* 비활성 버튼은 퍼널에서 지운다. 사진이 없으면 버튼이 파일 선택기를 열어
                   "다음에 필요한 행동"으로 직결된다 — 히어로 CTA로 여기 온 사용자가
                   누를 수 없는 회색 버튼을 만나지 않는다. */}
-              <button
-                className="cta"
-                onClick={hasPhotos ? generate : () => fileInputRef.current?.click()}
-              >
-                {hasPhotos ? '무료로 시안 만들기' : '사진 골라서 시작하기'}
-              </button>
+              {gateOpen && (
+                <button
+                  className="cta"
+                  onClick={hasPhotos ? generate : () => fileInputRef.current?.click()}
+                >
+                  {hasPhotos ? '무료로 시안 만들기' : '사진 골라서 시작하기'}
+                </button>
+              )}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -513,9 +573,11 @@ export default function Home() {
               />
               {/* 잔여를 숨기면 "아껴 쓰려다 아예 안 누르는" 역효과가 난다.
                   보이면 희소성이 행동을 밀어준다 — 알 수 있을 때는 항상 보여준다. */}
+              {/* 게이트가 닫혀 있으면 "무료 · N회 남음"은 지킬 수 없는 약속이다 */}
               <p className="remaining">
-                가입 없이 무료
-                {remaining !== null ? ` · 오늘 ${remaining}회 남음` : ''}
+                {!gateOpen
+                  ? '시안 예시는 코드 없이도 볼 수 있어요'
+                  : `가입 없이 무료${remaining !== null ? ` · 오늘 ${remaining}회 남음` : ''}`}
               </p>
             </div>
             {toastError}

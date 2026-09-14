@@ -7,6 +7,7 @@ import Services from './Services';
 import ToolSection from './ToolSection';
 import Testimonials from './Testimonials';
 import Faq from './Faq';
+import PriceSection from './PriceSection';
 import FooterCta from './FooterCta';
 import SiteFooter from './SiteFooter';
 
@@ -31,6 +32,7 @@ export default function Landing({ toolSlot }: { toolSlot: ReactNode }) {
         <HeroHand />
         <ToolSection>{toolSlot}</ToolSection>
         <Gallery />
+        <PriceSection />
         <Stats />
         <Services />
         <Testimonials />

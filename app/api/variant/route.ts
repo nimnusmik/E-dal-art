@@ -4,7 +4,7 @@ import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { applyPlan, buildBriefPrompt, parseBrief, parseVariantPlan } from '@/lib/brief';
 import { judgeImage, verdictDetail } from '@/lib/judge';
 import { generateImage } from '@/lib/provider';
-import { clientIp, dailyLimits, parseImages } from '@/lib/request';
+import { hasValidInvite, clientIp, dailyLimits, parseImages } from '@/lib/request';
 import type { NailBrief } from '@/lib/brief';
 import type { ImagePayload, VariantPlan } from '@/lib/types';
 
@@ -20,6 +20,7 @@ const VARIANT_LIMIT_MULTIPLIER = 6;
 
 type VariantErrorCode =
   | 'INVALID_INPUT'
+  | 'INVITE_REQUIRED'
   | 'RATE_LIMIT_VARIANT'
   | 'RATE_LIMIT_TOTAL'
   | 'REJECTED'
@@ -57,6 +58,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   const body = validateBody(raw);
   if (!body) return errorResponse('INVALID_INPUT', 400);
+
+  // 초대 코드 게이트 — 생성 1건이 곧 실비이므로 검증 전까지는 초대받은 사람만
+  if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
 
   const store = getRedis();
   const ip = clientIp(req);

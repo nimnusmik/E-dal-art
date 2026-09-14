@@ -5,7 +5,7 @@ import './landing.css';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 const TITLE = '이달아 — 이달의 네일 아트';
 const DESCRIPTION = '영감 사진을 올리면, 이달의 네일 아트 시안이 나와요';
-const OG_DESCRIPTION = '영감 사진 한 장으로 이달의 네일 시안 5종을 만들어요. 가입 없이 무료.';
+const OG_DESCRIPTION = '영감 사진 한 장으로 이달의 네일 시안 5종을 만들어요. 실제로 만들어 검수를 통과한 시안 예시를 볼 수 있어요.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

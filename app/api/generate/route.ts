@@ -7,7 +7,7 @@ import { generateImage } from '@/lib/provider';
 import { analyzeReferences, moodFromAnalysis } from '@/lib/analyze';
 import { analyzeToBrief } from '@/lib/brief';
 import { generateJudged } from '@/lib/judge';
-import { clientIp, dailyLimits } from '@/lib/request';
+import { hasValidInvite, clientIp, dailyLimits } from '@/lib/request';
 import type { ImageOutcome, ImagePayload } from '@/lib/types';
 import type { GenerateErrorCode, GenerateRequest, NailLength, NailShape } from '@/lib/types';
 
@@ -55,6 +55,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   const body = validateBody(raw);
   if (!body) return errorResponse('INVALID_INPUT', 400);
+
+  // 초대 코드 게이트 — 생성 1건이 곧 실비이므로 검증 전까지는 초대받은 사람만
+  if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
 
   const store = getRedis();
   const ip = clientIp(req);

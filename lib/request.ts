@@ -35,6 +35,34 @@ export function clientIp(req: Request): string {
 }
 
 /**
+ * 초대 코드 게이트.
+ *
+ * 이미지 생성은 무료 티어가 없어 호출 1건이 곧 실비다. 수요 검증이 끝나기 전까지는
+ * "누구나 무료로 생성"이 아니라 "초대받은 사람만 생성"으로 두어 지출을 구조적으로 0에
+ * 가깝게 유지한다. 검증에 필요한 신호(가격 버튼 클릭률)는 생성 없이 랜딩에서 측정한다.
+ *
+ * INVITE_CODES가 비어 있으면 게이트는 꺼진다 — 로컬 개발과 나중의 전체 공개를 위해.
+ */
+export function inviteCodes(): string[] {
+  return (process.env.INVITE_CODES ?? '')
+    .split(',')
+    .map((c) => c.trim().toLowerCase())
+    .filter((c) => c.length > 0);
+}
+
+export function inviteRequired(): boolean {
+  return inviteCodes().length > 0;
+}
+
+/** 요청의 초대 코드가 유효한가. 게이트가 꺼져 있으면 항상 true */
+export function hasValidInvite(req: Request): boolean {
+  const codes = inviteCodes();
+  if (codes.length === 0) return true;
+  const given = req.headers.get('x-invite-code')?.trim().toLowerCase();
+  return !!given && codes.includes(given);
+}
+
+/**
  * 환경변수 숫자 파싱 — 오타·빈값이면 기본값으로 떨어진다.
  *
  * Number("오타")는 NaN이고 NaN 비교는 전부 false라, 그냥 Number()를 쓰면 환경변수 오타

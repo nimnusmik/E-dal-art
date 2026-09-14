@@ -80,6 +80,7 @@ export interface GenerateSuccess {
 
 export type GenerateErrorCode =
   | 'INVALID_INPUT'
+  | 'INVITE_REQUIRED'
   | 'RATE_LIMIT_USER'
   | 'RATE_LIMIT_TOTAL'
   | 'REJECTED'

@@ -4,7 +4,7 @@ import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { buildPrompt } from '@/lib/prompt';
 import { getTrendKeywords } from '@/config/trends';
 import { generateImage } from '@/lib/provider';
-import { clientIp, dailyLimits, isNailLength, isNailShape, parseImages, MAX_IMAGE_BASE64_CHARS } from '@/lib/request';
+import { hasValidInvite, clientIp, dailyLimits, isNailLength, isNailShape, parseImages, MAX_IMAGE_BASE64_CHARS } from '@/lib/request';
 import type { ImagePayload, NailLength, NailShape } from '@/lib/types';
 
 /**
@@ -19,6 +19,7 @@ const HERO_LIMIT_MULTIPLIER = 5;
 
 type HeroErrorCode =
   | 'INVALID_INPUT'
+  | 'INVITE_REQUIRED'
   | 'RATE_LIMIT_HERO'
   | 'RATE_LIMIT_TOTAL'
   | 'REJECTED'
@@ -63,6 +64,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   const body = validateBody(raw);
   if (!body) return errorResponse('INVALID_INPUT', 400);
+
+  // 초대 코드 게이트 — 생성 1건이 곧 실비이므로 검증 전까지는 초대받은 사람만
+  if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
 
   const store = getRedis();
   const ip = clientIp(req);

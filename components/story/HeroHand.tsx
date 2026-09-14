@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIssue } from '@/lib/useIssue';
+import { useGate } from '@/lib/useGate';
 import { HERO_INSPO } from './heroInspo';
 import { beadLayoutAt, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
 
@@ -14,6 +15,7 @@ const AFTER_SRC = '/hero/hand-after.webp';
  */
 export default function HeroHand() {
   const issue = useIssue();
+  const gate = useGate();
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const beadRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -173,7 +175,12 @@ export default function HeroHand() {
           <span className="xp-pill t-yellow" suppressHydrationWarning>
             {issue.monthLabel}
           </span>
-          <span className="xp-pill t-green">가입 없이 · 하루 3회 무료</span>
+          {/* 게이트가 켜져 있으면 "하루 3회 무료"는 거짓이 된다 — 상태에 맞춰 말한다 */}
+          <span className="xp-pill t-green">
+            {gate.inviteRequired && !gate.hasInvite
+              ? '초대받은 분만 · 예시는 자유롭게'
+              : '가입 없이 · 하루 3회 무료'}
+          </span>
         </div>
         <h1 className="xp-display xp-hero-title">
           사진 한 장이
