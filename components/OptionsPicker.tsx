@@ -17,11 +17,12 @@ const LENGTHS: { value: NailLength; label: string }[] = [
 ];
 
 // 파츠 강도 — auto: 사진의 파츠 밀도 그대로 / none: 파츠 0 / point: 포인트 1~2개 / rich: 화려하게
-const PARTS: { value: PartsIntensity; label: string }[] = [
-  { value: 'auto', label: '사진대로' },
-  { value: 'none', label: '깔끔하게' },
-  { value: 'point', label: '포인트만' },
-  { value: 'rich', label: '화려하게' },
+// 라벨만으로는 차이를 알 수 없어 선택 시 한 줄 설명을 노출한다
+const PARTS: { value: PartsIntensity; label: string; note: string }[] = [
+  { value: 'auto', label: '사진대로', note: '올린 사진의 파츠 밀도를 그대로 따라가요.' },
+  { value: 'none', label: '깔끔하게', note: '스톤·참 같은 파츠 없이 컬러와 아트만으로 채워요.' },
+  { value: 'point', label: '포인트만', note: '한두 손톱에만 파츠를 얹어 포인트를 줘요.' },
+  { value: 'rich', label: '화려하게', note: '파츠를 넉넉히 올려 볼륨감 있게 만들어요.' },
 ];
 
 export default function OptionsPicker({
@@ -85,6 +86,9 @@ export default function OptionsPicker({
             </button>
           ))}
         </div>
+        <p className="option-note" aria-live="polite">
+          {PARTS.find((p) => p.value === partsIntensity)?.note}
+        </p>
       </div>
     </div>
   );

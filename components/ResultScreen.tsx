@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import OptionsPicker from '@/components/OptionsPicker';
 import VariantGrid from '@/components/VariantGrid';
 import { drawCollage, extractColors } from '@/lib/collage';
 import { currentIssue } from '@/lib/issue';
-import type { HeroEntry, TrayPhoto, VariantSlot } from '@/app/page';
-import type { Mood } from '@/lib/types';
+import type { HeroEntry, PartsIntensity, TrayPhoto, VariantSlot } from '@/app/page';
+import type { Mood, NailLength, NailShape } from '@/lib/types';
 
 async function base64ToBitmap(data: string, mimeType: string): Promise<ImageBitmap> {
   const res = await fetch(`data:${mimeType};base64,${data}`);
@@ -17,7 +18,7 @@ async function urlToBitmap(url: string): Promise<ImageBitmap> {
   return createImageBitmap(await res.blob());
 }
 
-function track(event: 'save' | 'evolve'): void {
+function track(event: 'save' | 'evolve' | 'share'): void {
   fetch('/api/track', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -32,6 +33,31 @@ function downloadDataUrl(url: string, name: string): void {
   a.click();
 }
 
+async function dataUrlToFile(url: string, name: string): Promise<File> {
+  const blob = await (await fetch(url)).blob();
+  return new File([blob], name, { type: blob.type });
+}
+
+/**
+ * 공유가 이 제품의 완료 조건이다 — "샵에 가져갈 사진이 생겨요"라는 약속의 실행 경로가
+ * 파일 다운로드뿐이면 카톡으로 보내는 데 스크린샷을 찍게 된다.
+ * Web Share(파일)를 우선하고, 미지원 브라우저는 다운로드로 폴백한다.
+ */
+async function shareOrDownload(url: string, name: string, text: string): Promise<'share' | 'download'> {
+  try {
+    const file = await dataUrlToFile(url, name);
+    const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+    if (nav.share && nav.canShare?.({ files: [file] })) {
+      await nav.share({ files: [file], text });
+      return 'share';
+    }
+  } catch {
+    // 사용자 취소 또는 미지원 — 폴백으로 넘어간다
+  }
+  downloadDataUrl(url, name);
+  return 'download';
+}
+
 export default function ResultScreen({
   slots,
   selectedId,
@@ -39,6 +65,12 @@ export default function ResultScreen({
   mood,
   photos,
   remaining,
+  shape,
+  length,
+  partsIntensity,
+  onShape,
+  onLength,
+  onPartsIntensity,
   onSelect,
   onRetry,
   onHero,
@@ -52,6 +84,12 @@ export default function ResultScreen({
   mood: Mood | null;
   photos: TrayPhoto[];
   remaining: number | null;
+  shape: NailShape;
+  length: NailLength;
+  partsIntensity: PartsIntensity;
+  onShape: (s: NailShape) => void;
+  onLength: (l: NailLength) => void;
+  onPartsIntensity: (p: PartsIntensity) => void;
   onSelect: (planId: string) => void;
   onRetry: (planId: string) => void;
   onHero: (planId: string) => void;
@@ -61,7 +99,13 @@ export default function ResultScreen({
 }) {
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  // 결과를 만들 때 쓰인 옵션 — 여기서 값이 달라지면 "이 옵션으로 다시 만들기"가 열린다
+  const [baseOptions] = useState({ shape, length, partsIntensity });
   const issue = currentIssue();
+  const optionsChanged =
+    shape !== baseOptions.shape ||
+    length !== baseOptions.length ||
+    partsIntensity !== baseOptions.partsIntensity;
 
   const selected = slots.find((s) => s.plan.id === selectedId) ?? null;
   const selectedIndex = selected ? slots.indexOf(selected) : -1;
@@ -91,11 +135,15 @@ export default function ResultScreen({
     return () => { cancelled = true; };
   }, [hero, mood, photos]);
 
-  const saveHero = () => {
+  const shareHero = async () => {
     if (!collageUrl) return;
-    track('save');
     const ext = collageUrl.startsWith('data:image/png') ? 'png' : 'jpg';
-    downloadDataUrl(collageUrl, `idala-${Date.now()}.${ext}`);
+    const how = await shareOrDownload(
+      collageUrl,
+      `idala-${Date.now()}.${ext}`,
+      '이달아에서 만든 이달의 네일 시안이에요',
+    );
+    track(how === 'share' ? 'share' : 'save');
   };
 
   const saveTipSet = () => {
@@ -189,10 +237,17 @@ export default function ResultScreen({
           )}
           {hero?.status === 'done' &&
             (collageUrl ? (
-              <img className="result-img" src={collageUrl} alt="생성된 네일 착용샷 콜라주" />
+              <>
+                <img className="result-img" src={collageUrl} alt="생성된 네일 착용샷 콜라주" />
+                {/* "내 손"으로 오해하지 않게 명시한다 — 사용자 손 사진을 받는 입력은 아직 없다 */}
+                <p className="hero-caption">
+                  AI가 그린 손이에요. 내 손 사진을 올려 합성하는 기능은 준비 중이에요.
+                </p>
+              </>
             ) : (
-              <div className="result-loading" aria-hidden>
-                <div className="progress-track">
+              <div className="result-loading" role="status" aria-live="polite">
+                <p className="sub">이미지 정리 중...</p>
+                <div className="progress-track" aria-hidden>
                   <div className="progress-fill" />
                 </div>
               </div>
@@ -206,19 +261,46 @@ export default function ResultScreen({
         <VariantGrid slots={slots} selectedId={selectedId} onSelect={onSelect} onRetry={onRetry} />
       </div>
 
-      {/* 버튼 위계: 핵심 루프(진화)를 프라이머리로, 저장 2종은 세컨더리, 나머지는 링크 */}
+      {/* 쉐입·길이·파츠를 결과에서 바로 바꿔 다시 만든다 —
+          "길이와 쉐입을 바꿔가며 비교할 수 있어요"라는 약속의 실행 경로 */}
+      {hasAnyDone && (
+        <div className="recut">
+          <p className="recut-head">다른 쉐입·길이로도 볼까요?</p>
+          <OptionsPicker
+            shape={shape}
+            length={length}
+            partsIntensity={partsIntensity}
+            onShape={onShape}
+            onLength={onLength}
+            onPartsIntensity={onPartsIntensity}
+          />
+          {optionsChanged && (
+            <>
+              <button className="btn-fill" onClick={onRegenerate}>
+                이 옵션으로 다시 만들기
+              </button>
+              <p className="assurance">다시 만들면 오늘 횟수에서 1회 차감돼요.</p>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* 버튼 위계: 공유가 이 사용자의 완료 조건이므로 프라이머리 */}
       <div className="actions">
-        <button className="btn-fill" onClick={evolve}>
-          사진 더해 시안 진화시키기
+        <button className="btn-fill" onClick={shareHero} disabled={!collageUrl}>
+          착용샷 공유하기
         </button>
         <div className="actions-row">
-          <button className="btn-outline" onClick={saveHero} disabled={!collageUrl}>
-            착용샷 저장
-          </button>
           <button className="btn-outline" onClick={saveTipSet} disabled={!tipSetUrl}>
             팁셋 저장
           </button>
+          <button className="btn-outline" onClick={evolve}>
+            사진 더해 진화
+          </button>
         </div>
+        <p className="assurance">
+          사진을 길게 눌러도 저장할 수 있어요. 탭을 닫으면 결과가 사라지니 꼭 받아두세요.
+        </p>
         <div className="actions-links">
           <button className="btn-link" onClick={onRegenerate}>
             다시 생성
