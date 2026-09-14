@@ -165,16 +165,21 @@ async function countDesigns(userId: string): Promise<number> {
 }
 
 /**
- * 이 사용자 폴더로 스코프된 서명자를 만든다.
+ * 서명자를 만든다.
  *
- * 토큰 발급(issueSignedToken)만 네트워크 호출이고 목록당 1회다. 개별 URL 서명은
- * 그 토큰으로 하는 HMAC 계산이라 항목이 몇 개든 추가 왕복이 없다.
+ * 위임 토큰의 pathname은 글롭 경로를 받지 않는다("*" 전체 또는 구체 경로만). 항목마다
+ * 토큰을 발급하면 목록 1회에 최대 60번 왕복이므로, 전체 스코프 토큰 1개를 발급해
+ * 개별 URL을 파생시킨다.
+ *
+ * 전체 스코프여도 안전한 이유: **위임 토큰은 서버 밖으로 나가지 않는다.** 클라이언트에
+ * 가는 것은 경로마다 따로 서명된 URL이고, 서명 문자열에 그 경로가 들어 있어 남의 경로로는
+ * 재사용할 수 없다. (검증: scripts/blob-debug.mts)
  */
-async function signerFor(userId: string): Promise<(pathname: string) => Promise<string>> {
+async function signerFor(_userId: string): Promise<(pathname: string) => Promise<string>> {
   const validUntil = Date.now() + SIGNED_TTL_MS;
   try {
     const token = await issueSignedToken({
-      pathname: `designs/${userId}/*`,
+      pathname: '*',
       operations: ['get'],
       validUntil,
     });

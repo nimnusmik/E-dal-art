@@ -6,7 +6,10 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:setup": "tsx scripts/db-setup.mts",
+    "db:verify": "tsx scripts/db-verify.mts",
+    "db:smoke": "tsx scripts/db-smoke.mts"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
