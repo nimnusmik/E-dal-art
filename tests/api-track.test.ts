@@ -5,6 +5,7 @@ const data = new Map<string, number>();
 const fakeStore: CounterStore = {
   async get(key) { return data.has(key) ? String(data.get(key)) : null; },
   async incr(key) { const n = (data.get(key) ?? 0) + 1; data.set(key, n); return n; },
+  async decr(key) { const n = (data.get(key) ?? 0) - 1; data.set(key, n); return n; },
   async expire() {},
 };
 
