@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
-import { getQuota, imageQuotaKey, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
+import { getQuota, imageQuotaKey, ipQuotaKey, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
 import { buildPrompt, buildTipSetPrompt } from '@/lib/prompt';
 import { getTrendKeywords } from '@/config/trends';
 import { generateImage } from '@/lib/provider';
 import { analyzeReferences, moodFromAnalysis } from '@/lib/analyze';
 import { analyzeToBrief } from '@/lib/brief';
 import { generateJudged } from '@/lib/judge';
-import { hasValidInvite, clientIp, dailyLimits } from '@/lib/request';
+import { clientIp, dailyLimits, hasValidInvite, quotaSubject } from '@/lib/request';
 import type { ImageOutcome, ImagePayload } from '@/lib/types';
 import type { GenerateErrorCode, GenerateRequest, NailLength, NailShape } from '@/lib/types';
 
@@ -61,8 +61,9 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const store = getRedis();
   const ip = clientIp(req);
+  const subject = await quotaSubject(req);
   const now = new Date();
-  const { userLimit, totalLimit, imageLimit } = limits();
+  const { userLimit, totalLimit, imageLimit, ipLimit } = limits();
 
   // 이 라우트는 호출 1회에 이미지 3장(팁셋 2장 + 착용샷 1장)까지 생성하므로
   // 전역 이미지 카운터도 3장분 선점한다 — 실제 지출과 카운터를 일치시킨다.
@@ -70,7 +71,8 @@ export async function POST(req: Request): Promise<NextResponse> {
   const held = await reserve(
     store,
     [
-      { key: userQuotaKey(ip, now), limit: userLimit, code: 'RATE_LIMIT_USER' },
+      { key: userQuotaKey(subject, now), limit: userLimit, code: 'RATE_LIMIT_USER' },
+      { key: ipQuotaKey(ip, now), limit: ipLimit, code: 'RATE_LIMIT_USER' },
       { key: totalQuotaKey(now), limit: totalLimit, code: 'RATE_LIMIT_TOTAL' },
       ...Array.from({ length: IMAGES_PER_CALL }, () => ({
         key: imageQuotaKey(now),
@@ -130,7 +132,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     return errorResponse(blocked ? 'REJECTED' : 'GENERATION_FAILED', blocked ? 422 : 502);
   }
 
-  const quota = await getQuota(store, ip, now, userLimit, totalLimit);
+  const quota = await getQuota(store, subject, now, userLimit, totalLimit);
 
   return NextResponse.json({
     hero: { image: heroOutcome.image.data, mimeType: heroOutcome.image.mimeType },
@@ -148,6 +150,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
 export async function GET(req: Request): Promise<NextResponse> {
   const { userLimit, totalLimit } = limits();
-  const quota = await getQuota(getRedis(), clientIp(req), new Date(), userLimit, totalLimit);
+  const quota = await getQuota(getRedis(), await quotaSubject(req), new Date(), userLimit, totalLimit);
   return NextResponse.json({ remaining: quota.userRemaining });
 }

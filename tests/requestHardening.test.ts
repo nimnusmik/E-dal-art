@@ -49,7 +49,7 @@ describe('dailyLimits — 환경변수 오타 방어', () => {
     delete process.env.DAILY_USER_LIMIT;
     delete process.env.DAILY_TOTAL_LIMIT;
     delete process.env.DAILY_IMAGE_LIMIT;
-    expect(dailyLimits()).toEqual({ userLimit: 3, totalLimit: 200, imageLimit: 200 });
+    expect(dailyLimits()).toEqual({ userLimit: 3, totalLimit: 200, imageLimit: 200, ipLimit: 6 });
   });
 
   it('숫자가 아니면 기본값으로 떨어진다 — 오타 하나로 한도가 사라지면 안 된다', () => {

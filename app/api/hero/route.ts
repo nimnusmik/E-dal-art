@@ -4,7 +4,7 @@ import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { buildPrompt } from '@/lib/prompt';
 import { getTrendKeywords } from '@/config/trends';
 import { generateImage } from '@/lib/provider';
-import { hasValidInvite, clientIp, dailyLimits, isNailLength, isNailShape, parseImages, MAX_IMAGE_BASE64_CHARS } from '@/lib/request';
+import { hasValidInvite, clientIp, dailyLimits, isNailLength, isNailShape, parseImages, MAX_IMAGE_BASE64_CHARS, quotaSubject } from '@/lib/request';
 import type { ImagePayload, NailLength, NailShape } from '@/lib/types';
 
 /**
@@ -69,7 +69,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
 
   const store = getRedis();
-  const ip = clientIp(req);
+  const subject = await quotaSubject(req);
   const now = new Date();
   const { userLimit, imageLimit } = dailyLimits();
 
@@ -78,7 +78,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     store,
     [
       {
-        key: scopedQuotaKey('hero', ip, now),
+        key: scopedQuotaKey('hero', subject, now),
         limit: userLimit * HERO_LIMIT_MULTIPLIER,
         code: 'RATE_LIMIT_HERO',
       },

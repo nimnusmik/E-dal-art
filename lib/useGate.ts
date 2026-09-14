@@ -14,9 +14,11 @@ export interface GateState {
   remaining: number | null;
   inviteRequired: boolean;
   hasInvite: boolean;
+  /** 로그인한 계정의 이메일. 비로그인이면 null */
+  email: string | null;
 }
 
-const UNKNOWN: GateState = { remaining: null, inviteRequired: false, hasInvite: true };
+const UNKNOWN: GateState = { remaining: null, inviteRequired: false, hasInvite: true, email: null };
 
 let cached: Promise<GateState> | null = null;
 
@@ -30,6 +32,7 @@ export function fetchGate(): Promise<GateState> {
               remaining: typeof j.remaining === 'number' ? j.remaining : null,
               inviteRequired: j.inviteRequired === true,
               hasInvite: j.hasInvite === true,
+              email: typeof j.email === 'string' ? j.email : null,
             }
           : UNKNOWN,
       )

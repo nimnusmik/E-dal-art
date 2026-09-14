@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import OptionsPicker from '@/components/OptionsPicker';
 import PriceProbe from '@/components/PriceProbe';
+import SaveToLibrary from '@/components/SaveToLibrary';
 import VariantGrid from '@/components/VariantGrid';
 import { drawCollage, extractColors } from '@/lib/collage';
 import { currentIssue } from '@/lib/issue';
@@ -72,6 +73,7 @@ export default function ResultScreen({
   mood,
   craft,
   heroError,
+  signedIn,
   photos,
   remaining,
   shape,
@@ -96,6 +98,8 @@ export default function ResultScreen({
   craft: { difficulty: string; notes: string } | null;
   /** 착용샷 실패 사유 — 사라지지 않는 인라인 안내로 표시한다 */
   heroError: string | null;
+  /** 로그인 상태면 보관함 저장 버튼을 띄운다 */
+  signedIn: boolean;
   photos: TrayPhoto[];
   remaining: number | null;
   shape: NailShape;
@@ -403,8 +407,22 @@ export default function ResultScreen({
             </button>
           )}
         </div>
+        {/* 로그인했으면 파일 저장 말고 계정에 남길 수 있다 — 로그인의 실익이 생기는 지점 */}
+        {signedIn && selected?.tipSet && (
+          <SaveToLibrary
+            image={selected.tipSet.image}
+            mimeType={selected.tipSet.mimeType}
+            title={selected.plan.title}
+            note={selected.plan.note ?? null}
+            shape={shape}
+            length={length}
+            quality={selected.quality}
+            mood={mood}
+          />
+        )}
         <p className="assurance">
-          사진을 길게 눌러도 저장할 수 있어요. 탭을 닫으면 결과가 사라지니 꼭 받아두세요.
+          사진을 길게 눌러도 저장할 수 있어요.{' '}
+          {signedIn ? '보관함에 저장하면 다음에 와도 남아 있어요.' : '탭을 닫으면 결과가 사라지니 꼭 받아두세요.'}
         </p>
         <div className="actions-links">
           <button className="btn-link" onClick={onReset}>

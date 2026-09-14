@@ -46,7 +46,7 @@ const VALID_BODY = {
 };
 
 function heroKey(): string {
-  return 'quota:hero:1.2.3.4:' + kstToday();
+  return 'quota:hero:ip:1.2.3.4:' + kstToday();
 }
 
 beforeEach(() => {

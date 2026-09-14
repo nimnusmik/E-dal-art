@@ -19,16 +19,21 @@ const TTL_BUFFER_SECONDS = 60;
 /** 범위별 일일 카운터 — variant·hero 등 엔드포인트 전용 쿼터 (user/total과 키 공간 분리) */
 export type QuotaScope = 'variant' | 'hero';
 
-export function userQuotaKey(ip: string, now: Date): string {
-  return `quota:user:${ip}:${kstDateKey(now)}`;
+/**
+ * 쿼터 주체 키. subject는 로그인 시 `u:<구글sub>`, 비로그인 시 `ip:<주소>`다
+ * (lib/request.ts quotaSubject). 접두사를 붙이는 이유는 키 공간 충돌 방지 —
+ * 없으면 어떤 계정 식별자가 어떤 IP 문자열과 우연히 같아져 쿼터를 나눠 쓸 수 있다.
+ */
+export function userQuotaKey(subject: string, now: Date): string {
+  return `quota:user:${subject}:${kstDateKey(now)}`;
 }
 
 export function totalQuotaKey(now: Date): string {
   return `quota:total:${kstDateKey(now)}`;
 }
 
-export function scopedQuotaKey(scope: QuotaScope, ip: string, now: Date): string {
-  return `quota:${scope}:${ip}:${kstDateKey(now)}`;
+export function scopedQuotaKey(scope: QuotaScope, subject: string, now: Date): string {
+  return `quota:${scope}:${subject}:${kstDateKey(now)}`;
 }
 
 /**
@@ -43,14 +48,31 @@ export function imageQuotaKey(now: Date): string {
   return `quota:image:${kstDateKey(now)}`;
 }
 
+/**
+ * IP별 일일 상한 — 계정 한도와 **함께** 건다.
+ *
+ * 로그인을 붙였다고 IP 한도를 지우면 안 된다. 구글 계정은 무료로 무제한 생성할 수
+ * 있어서, 계정 한도만 있으면 계정을 갈아끼우는 만큼 이미지가 뽑히고 그게 그대로 카드값이
+ * 된다. 방어는 세 겹이어야 한다:
+ *   1층 계정(userQuotaKey) — 정상 사용자의 과다 사용
+ *   2층 IP(여기) — 계정 갈아끼우기
+ *   3층 전역 이미지(imageQuotaKey) — 1·2층이 다 뚫려도 하루 지출의 절대 상한
+ */
+export function ipQuotaKey(ip: string, now: Date): string {
+  return `quota:ipday:${ip}:${kstDateKey(now)}`;
+}
+
 export async function getQuota(
   store: CounterStore,
-  ip: string,
+  subject: string,
   now: Date,
   userLimit: number,
   totalLimit: number,
 ): Promise<QuotaStatus> {
-  const [u, t] = await Promise.all([store.get(userQuotaKey(ip, now)), store.get(totalQuotaKey(now))]);
+  const [u, t] = await Promise.all([
+    store.get(userQuotaKey(subject, now)),
+    store.get(totalQuotaKey(now)),
+  ]);
   const userUsed = Number(u ?? 0);
   const totalUsed = Number(t ?? 0);
   return {
@@ -65,10 +87,10 @@ export async function getQuota(
 export async function getScopedUsage(
   store: CounterStore,
   scope: QuotaScope,
-  ip: string,
+  subject: string,
   now: Date,
 ): Promise<number> {
-  const v = await store.get(scopedQuotaKey(scope, ip, now));
+  const v = await store.get(scopedQuotaKey(scope, subject, now));
   return Number(v ?? 0);
 }
 

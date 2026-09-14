@@ -160,7 +160,7 @@ describe('POST /api/generate', () => {
   });
 
   it('개인 한도 소진 → 429 RATE_LIMIT_USER, Gemini 호출 안 함', async () => {
-    store.data.set('quota:user:1.2.3.4:' + kstToday(), 3);
+    store.data.set('quota:user:ip:1.2.3.4:' + kstToday(), 3);
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(429);
     expect((await res.json()).error).toBe('RATE_LIMIT_USER');
@@ -178,14 +178,14 @@ describe('POST /api/generate', () => {
     mockCallGemini.mockResolvedValue({ image: null, mood: null, safetyBlocked: true });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(422);
-    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
+    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
   });
 
   it('이미지 없이 응답 → 502 GENERATION_FAILED, 횟수 미차감', async () => {
     mockCallGemini.mockResolvedValue({ image: null, mood: null, safetyBlocked: false });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(502);
-    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
+    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
   });
 
   it('Gemini 예외 → 502 GENERATION_FAILED', async () => {
@@ -197,7 +197,7 @@ describe('POST /api/generate', () => {
 
 describe('GET /api/generate', () => {
   it('남은 횟수 반환', async () => {
-    store.data.set('quota:user:1.2.3.4:' + kstToday(), 1);
+    store.data.set('quota:user:ip:1.2.3.4:' + kstToday(), 1);
     const res = await GET(new Request('http://localhost/api/generate', {
       headers: { 'x-forwarded-for': '1.2.3.4' },
     }));

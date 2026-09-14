@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
-import { getQuota, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
+import { getQuota, ipQuotaKey, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
 import { analyzeToBrief, applyOptions, planVariants } from '@/lib/brief';
-import { clientIp, dailyLimits, hasValidInvite, inviteRequired, isNailLength, isNailShape, parseImages } from '@/lib/request';
+import { clientIp, currentAccountEmail, dailyLimits, hasValidInvite, inviteRequired, isNailLength, isNailShape, parseImages, quotaSubject } from '@/lib/request';
 import type { ImagePayload, NailLength, NailShape, PartsIntensity } from '@/lib/types';
 
 /**
@@ -57,14 +57,17 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const store = getRedis();
   const ip = clientIp(req);
+  const subject = await quotaSubject(req); // 로그인 시 계정, 아니면 IP
   const now = new Date();
-  const { userLimit, totalLimit } = dailyLimits();
+  const { userLimit, totalLimit, ipLimit } = dailyLimits();
 
   // 선점 후 작업 — 조회 후 차감하면 분석에 걸리는 수십 초가 그대로 경쟁 조건 창이 된다
   const held = await reserve(
     store,
     [
-      { key: userQuotaKey(ip, now), limit: userLimit, code: 'RATE_LIMIT_USER' },
+      { key: userQuotaKey(subject, now), limit: userLimit, code: 'RATE_LIMIT_USER' },
+      // 계정 한도만 두면 구글 계정을 갈아끼우는 만큼 뚫린다 — IP 층을 함께 건다
+      { key: ipQuotaKey(ip, now), limit: ipLimit, code: 'RATE_LIMIT_USER' },
       { key: totalQuotaKey(now), limit: totalLimit, code: 'RATE_LIMIT_TOTAL' },
     ],
     now,
@@ -86,7 +89,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
   const plans = await planVariants(brief); // 실패 시 내부 폴백 — 항상 5개
 
-  const quota = await getQuota(store, ip, now, userLimit, totalLimit);
+  const quota = await getQuota(store, subject, now, userLimit, totalLimit);
   return NextResponse.json({ brief, plans, remaining: quota.userRemaining });
 }
 
@@ -97,10 +100,12 @@ export async function POST(req: Request): Promise<NextResponse> {
  */
 export async function GET(req: Request): Promise<NextResponse> {
   const { userLimit, totalLimit } = dailyLimits();
-  const quota = await getQuota(getRedis(), clientIp(req), new Date(), userLimit, totalLimit);
+  const quota = await getQuota(getRedis(), await quotaSubject(req), new Date(), userLimit, totalLimit);
   return NextResponse.json({
     remaining: quota.userRemaining,
     inviteRequired: inviteRequired(),
     hasInvite: hasValidInvite(req),
+    // 로그인 상태를 여기 실어 보내면 SessionProvider 없이도 UI가 계정을 안다
+    email: await currentAccountEmail(),
   });
 }

@@ -4,7 +4,7 @@ import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { applyPlan, buildBriefPrompt, parseBrief, parseVariantPlan } from '@/lib/brief';
 import { judgeImage, verdictDetail } from '@/lib/judge';
 import { generateImage } from '@/lib/provider';
-import { hasValidInvite, clientIp, dailyLimits, parseImages } from '@/lib/request';
+import { hasValidInvite, clientIp, dailyLimits, parseImages, quotaSubject } from '@/lib/request';
 import type { NailBrief } from '@/lib/brief';
 import type { ImagePayload, VariantPlan } from '@/lib/types';
 
@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
 
   const store = getRedis();
-  const ip = clientIp(req);
+  const subject = await quotaSubject(req);
   const now = new Date();
   const { userLimit, imageLimit } = dailyLimits();
 
@@ -73,7 +73,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     store,
     [
       {
-        key: scopedQuotaKey('variant', ip, now),
+        key: scopedQuotaKey('variant', subject, now),
         limit: userLimit * VARIANT_LIMIT_MULTIPLIER,
         code: 'RATE_LIMIT_VARIANT',
       },

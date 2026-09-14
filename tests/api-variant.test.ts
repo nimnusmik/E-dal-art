@@ -91,7 +91,7 @@ const VALID_BODY = {
 };
 
 function variantKey(): string {
-  return 'quota:variant:1.2.3.4:' + kstToday();
+  return 'quota:variant:ip:1.2.3.4:' + kstToday();
 }
 
 beforeEach(() => {

@@ -5,6 +5,8 @@ import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
 import ResultScreen from '@/components/ResultScreen';
+import AccountBar from '@/components/AccountBar';
+import Library from '@/components/Library';
 import Landing from '@/components/landing/Landing';
 import { useIssue } from '@/lib/useIssue';
 import { fileToResizedPayload } from '@/lib/resize';
@@ -90,6 +92,8 @@ export default function Home() {
   const [inviteOn, setInviteOn] = useState(false);
   const [gateOpen, setGateOpen] = useState(true);
   const [inviteInput, setInviteInput] = useState('');
+  /** 로그인한 계정 이메일 — 게이트 조회에 실려 온다(SessionProvider 불필요) */
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [error, setError] = useState<AppError>(null);
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifyDone, setNotifyDone] = useState(false);
@@ -181,6 +185,7 @@ export default function Home() {
       setRemaining(g.remaining);
       setInviteOn(g.inviteRequired);
       setGateOpen(!g.inviteRequired || g.hasInvite);
+      setAccountEmail(g.email);
     });
   }, []);
 
@@ -577,8 +582,11 @@ export default function Home() {
               <p className="remaining">
                 {!gateOpen
                   ? '시안 예시는 코드 없이도 볼 수 있어요'
-                  : `가입 없이 무료${remaining !== null ? ` · 오늘 ${remaining}회 남음` : ''}`}
+                  : `오늘 ${remaining ?? 3}회 남음`}
               </p>
+              <AccountBar email={accountEmail} remaining={remaining} />
+              {/* 보관함은 로그인한 사람에게만 — 비로그인에게는 빈 영역이 될 뿐이다 */}
+              {accountEmail && <Library />}
             </div>
             {toastError}
           </>
@@ -614,6 +622,7 @@ export default function Home() {
           mood={mood}
           craft={craft}
           heroError={heroError}
+          signedIn={accountEmail !== null}
           photos={photos}
           remaining={remaining}
           shape={shape}

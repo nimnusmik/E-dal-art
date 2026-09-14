@@ -80,7 +80,7 @@ describe('POST /api/analyze', () => {
     expect(json.plans).toHaveLength(5);
     expect(json.plans.map((p: { id: string }) => p.id)).toEqual(['v1', 'v2', 'v3', 'v4', 'v5']);
     expect(json.remaining).toBe(2);
-    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBe(1);
+    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(1);
   });
 
   it('partsIntensity=none이면 브리프 partsLine이 파츠 제로 문장으로 교체된다', async () => {
@@ -101,7 +101,7 @@ describe('POST /api/analyze', () => {
   });
 
   it('개인 한도 소진 → 429 RATE_LIMIT_USER, 분석 호출 안 함', async () => {
-    store.data.set('quota:user:1.2.3.4:' + kstToday(), 3);
+    store.data.set('quota:user:ip:1.2.3.4:' + kstToday(), 3);
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(429);
     expect((await res.json()).error).toBe('RATE_LIMIT_USER');
@@ -120,18 +120,18 @@ describe('POST /api/analyze', () => {
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(502);
     expect((await res.json()).error).toBe('ANALYZE_FAILED');
-    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
+    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
   });
 });
 
 describe('GET /api/analyze', () => {
   it('남은 횟수 반환 (차감 없음)', async () => {
-    store.data.set('quota:user:1.2.3.4:' + kstToday(), 1);
+    store.data.set('quota:user:ip:1.2.3.4:' + kstToday(), 1);
     const res = await GET(new Request('http://localhost/api/analyze', {
       headers: { 'x-forwarded-for': '1.2.3.4' },
     }));
     expect((await res.json()).remaining).toBe(2);
-    expect(store.data.get('quota:user:1.2.3.4:' + kstToday())).toBe(1);
+    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(1);
   });
 });
 

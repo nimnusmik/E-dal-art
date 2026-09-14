@@ -1290,3 +1290,171 @@ label.slot:focus-within .slot-add {
   color: var(--text-1);
   word-break: keep-all;
 }
+
+/* ─── 법적 고지 페이지 (처리방침 등) ─────────────────────────── */
+.legal {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--sp-7) var(--sp-5) var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.legal section { display: flex; flex-direction: column; gap: var(--sp-3); }
+
+.legal h2 {
+  font-size: var(--fs-500);
+  font-weight: 700;
+  color: var(--text-1);
+  word-break: keep-all;
+}
+
+.legal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-150);
+  line-height: var(--lh-body);
+}
+.legal-table th,
+.legal-table td {
+  padding: 8px 10px;
+  border: 1px solid var(--line-quiet);
+  text-align: left;
+  vertical-align: top;
+  word-break: keep-all;
+}
+.legal-table th { background: var(--bg-deep); font-weight: 700; }
+
+.legal-link { color: var(--brand); text-decoration: underline; }
+.legal-back { margin-top: var(--sp-4); }
+
+/* 표가 좁은 화면에서 넘치지 않게 — 가로 스크롤 대신 글자를 줄인다 */
+@media (max-width: 480px) {
+  .legal-table { font-size: var(--fs-100); }
+  .legal-table th, .legal-table td { padding: 6px 7px; }
+}
+
+/* ─── 계정 (구글 로그인) ─────────────────────────────────────── */
+.account-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  width: 100%;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line-soft);
+}
+
+.account-bar:not(.is-out) {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.account-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--fs-150);
+  color: var(--text-2);
+  word-break: break-all;
+}
+
+.account-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: var(--r-round);
+  background: var(--success);
+}
+
+.account-pitch { display: flex; flex-direction: column; gap: var(--sp-2); }
+.account-cta { width: 100%; max-width: 280px; }
+.account-consent { color: var(--text-3); }
+
+/* ─── 보관함 ─────────────────────────────────────────────────── */
+.library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: 100%;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-soft);
+}
+
+.library.is-empty { text-align: center; }
+
+.library-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+@media (min-width: 900px) {
+  .library-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+.library-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border-radius: var(--r-media);
+  overflow: hidden;
+  background: var(--paper-card);
+  box-shadow: var(--shadow-card);
+}
+
+.library-card img { width: 100%; display: block; aspect-ratio: 1; object-fit: cover; }
+
+.library-missing {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--bg-deep);
+}
+
+.library-card figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 8px;
+}
+
+.library-title {
+  font-size: var(--fs-150);
+  font-weight: 600;
+  color: var(--ink);
+  word-break: keep-all;
+}
+
+/* 삭제는 되돌릴 수 없으므로 눈에 잘 띄지 않게 두되, 터치 타깃은 44px 확보 */
+.library-del {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-round);
+  background: rgba(22, 24, 29, 0.62);
+  color: #fff;
+  font-size: var(--fs-100);
+  line-height: 1;
+}
+.library-del::after { content: ''; position: absolute; inset: -9px; }
+.library-del:disabled { opacity: 1; background: var(--disabled-bg); color: var(--disabled-fg); }
+
+.library-expired { color: var(--danger); }
+
+.save-library { display: flex; flex-direction: column; gap: var(--sp-2); }
+.save-library .btn-outline { width: 100%; }
+.save-done { text-align: center; color: var(--success); }

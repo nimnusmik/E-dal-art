@@ -15,6 +15,8 @@ export default function SiteFooter() {
         <span className="xp-footer-meta">
           <span suppressHydrationWarning>{issue.koLabel}</span>
           <a href="#faq">자주 묻는 질문</a>
+          {/* 처리방침은 어느 화면에서든 닿을 수 있어야 한다 */}
+          <a href="/privacy">개인정보 처리방침</a>
         </span>
       </div>
     </footer>

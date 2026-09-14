@@ -35,6 +35,50 @@ export function clientIp(req: Request): string {
 }
 
 /**
+ * 쿼터를 셀 "주체".
+ *
+ * 로그인했으면 계정, 아니면 IP. 접두사(`u:` / `ip:`)를 붙여 두 키 공간이 절대 섞이지
+ * 않게 한다 — 없으면 어떤 구글 sub 값이 어떤 IP 문자열과 같아질 수 있고, 그 순간
+ * 남의 쿼터를 나눠 쓰게 된다.
+ *
+ * 라우트는 이 함수만 부르므로, 계정 기준으로 바꿀 때 4개 라우트가 아니라 여기 한 곳만 고친다.
+ */
+export async function quotaSubject(req: Request): Promise<string> {
+  const accountId = await currentAccountId();
+  return accountId ? `u:${accountId}` : `ip:${clientIp(req)}`;
+}
+
+/** 로그인한 계정의 이메일. 표시용이므로 실패 시 null */
+export async function currentAccountEmail(): Promise<string | null> {
+  try {
+    const { auth } = await import('@/auth');
+    const session = await auth();
+    return session?.user?.email || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 로그인한 계정의 구글 sub. 비로그인이거나 인증 설정이 없으면 null.
+ *
+ * auth()는 환경변수(AUTH_SECRET·구글 클라이언트)가 없으면 던질 수 있는데, 그때 생성
+ * 라우트 전체가 500이 되면 안 된다 — 로그인은 편의 기능이고 생성은 핵심 기능이다.
+ * 실패하면 비로그인으로 간주하고 IP 기준으로 떨어진다.
+ */
+async function currentAccountId(): Promise<string | null> {
+  try {
+    // 동적 import — 인증을 쓰지 않는 코드 경로(그리고 테스트 환경)가 next-auth를
+    // 모듈 그래프에 끌어들이지 않게 한다
+    const { auth } = await import('@/auth');
+    const session = await auth();
+    return session?.user?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 초대 코드 게이트.
  *
  * 이미지 생성은 무료 티어가 없어 호출 1건이 곧 실비다. 수요 검증이 끝나기 전까지는
@@ -81,11 +125,23 @@ function envLimit(name: string, fallback: number): number {
  * 비례하기 때문(세션 1건 = 변주 5장 + 착용샷). 장당 원가를 55~70원으로 보면
  * 기본값 200장 ≈ 하루 최대 1.1만~1.4만 원. 트래픽을 늘릴 때 이 숫자부터 올린다.
  */
-export function dailyLimits(): { userLimit: number; totalLimit: number; imageLimit: number } {
+export function dailyLimits(): {
+  userLimit: number;
+  totalLimit: number;
+  imageLimit: number;
+  ipLimit: number;
+} {
+  const userLimit = envLimit('DAILY_USER_LIMIT', 3);
   return {
-    userLimit: envLimit('DAILY_USER_LIMIT', 3),
+    userLimit,
     totalLimit: envLimit('DAILY_TOTAL_LIMIT', 200),
     imageLimit: envLimit('DAILY_IMAGE_LIMIT', 200),
+    /**
+     * IP당 세션 상한. 계정 한도보다 넉넉하게 두는 이유는 공유 IP(카페·회사·모바일 CGNAT)
+     * 때문이다 — 너무 빡빡하면 무고한 사용자가 서로의 한도를 잡아먹는다.
+     * 기본값은 계정 한도의 2배.
+     */
+    ipLimit: envLimit('DAILY_IP_LIMIT', userLimit * 2),
   };
 }
 
