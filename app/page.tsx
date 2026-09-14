@@ -73,6 +73,8 @@ export default function Home() {
   const [error, setError] = useState<AppError>(null);
   const [notifyEmail, setNotifyEmail] = useState('');
   const [notifyDone, setNotifyDone] = useState(false);
+  // 새로고침으로 되살린 결과 — 브리프·원본 사진이 없어 착용샷·재생성이 불가능하다
+  const [restored, setRestored] = useState(false);
   // 진화(evolve)·실패 복귀로 start에 돌아올 때 툴 섹션으로 즉시 앵커하기 위한 플래그
   const anchorToolRef = useRef(false);
   // 세션 토큰 — 리셋/재생성 이후 도착하는 이전 세션 응답을 무시
@@ -125,6 +127,7 @@ export default function Home() {
     setShape(snap.shape as NailShape);
     setLength(snap.length as NailLength);
     setPartsIntensity(snap.partsIntensity as PartsIntensity);
+    setRestored(true);
     setPhase('result');
   }, []);
 
@@ -233,6 +236,7 @@ export default function Home() {
     imagesRef.current = images;
     briefRef.current = null;
     clearSnapshot();
+    setRestored(false); // 새로 만드는 순간 복구본이 아니다
     setSlots([]);
     setSelectedId(null);
     setHeroMap({});
@@ -445,9 +449,11 @@ export default function Home() {
                   e.target.value = '';
                 }}
               />
+              {/* 잔여를 숨기면 "아껴 쓰려다 아예 안 누르는" 역효과가 난다.
+                  보이면 희소성이 행동을 밀어준다 — 알 수 있을 때는 항상 보여준다. */}
               <p className="remaining">
                 가입 없이 무료
-                {remaining !== null && remaining <= 10 ? ` · 오늘 ${remaining}회 남음` : ''}
+                {remaining !== null ? ` · 오늘 ${remaining}회 남음` : ''}
               </p>
             </div>
             {toastError}
@@ -496,8 +502,10 @@ export default function Home() {
             setPhase('start');
           }}
           onRegenerate={generate}
+          restored={restored}
           onReset={() => {
             clearSnapshot();
+            setRestored(false);
             setPhotos([]);
             setSlots([]);
             setSelectedId(null);

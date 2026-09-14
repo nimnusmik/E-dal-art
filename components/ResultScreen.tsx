@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import OptionsPicker from '@/components/OptionsPicker';
+import PriceProbe from '@/components/PriceProbe';
 import VariantGrid from '@/components/VariantGrid';
 import { drawCollage, extractColors } from '@/lib/collage';
 import { currentIssue } from '@/lib/issue';
@@ -77,6 +78,7 @@ export default function ResultScreen({
   onEvolve,
   onRegenerate,
   onReset,
+  restored = false,
 }: {
   slots: VariantSlot[];
   selectedId: string | null;
@@ -96,6 +98,11 @@ export default function ResultScreen({
   onEvolve: () => void;
   onRegenerate: () => void;
   onReset: () => void;
+  /**
+   * 새로고침으로 되살린 결과인지. 복구본은 브리프·원본 사진이 없어 착용샷·재생성을
+   * 할 수 없다 — 버튼을 남겨두면 눌러도 아무 일이 없는 "조용한 고장"이 된다.
+   */
+  restored?: boolean;
 }) {
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
@@ -222,7 +229,7 @@ export default function ResultScreen({
       {/* 착용샷 — 시안당 1회 온디맨드 생성, 결과는 캐시 */}
       {selected && tipSetUrl && (
         <div className="hero-block">
-          {!hero && (
+          {!hero && !restored && (
             <button className="btn-fill" onClick={() => onHero(selected.plan.id)}>
               이 시안 착용샷 보기
             </button>
@@ -263,7 +270,7 @@ export default function ResultScreen({
 
       {/* 쉐입·길이·파츠를 결과에서 바로 바꿔 다시 만든다 —
           "길이와 쉐입을 바꿔가며 비교할 수 있어요"라는 약속의 실행 경로 */}
-      {hasAnyDone && (
+      {hasAnyDone && !restored && (
         <div className="recut">
           <p className="recut-head">다른 쉐입·길이로도 볼까요?</p>
           <OptionsPicker
@@ -285,35 +292,55 @@ export default function ResultScreen({
         </div>
       )}
 
+      {/* 복구본이라 무엇이 되고 무엇이 안 되는지 먼저 밝힌다 */}
+      {restored && (
+        <p className="assurance restored-note">
+          새로고침 전 시안을 되살렸어요. 저장은 되지만 착용샷·다시 만들기는 사진을 다시
+          올려야 해요.
+        </p>
+      )}
+
       {/* 버튼 위계: 공유가 이 사용자의 완료 조건이므로 프라이머리 */}
       <div className="actions">
-        <button className="btn-fill" onClick={shareHero} disabled={!collageUrl}>
-          착용샷 공유하기
-        </button>
-        <div className="actions-row">
-          <button className="btn-outline" onClick={saveTipSet} disabled={!tipSetUrl}>
+        {/* 복구본은 착용샷이 없어 콜라주도 없다 — 팁셋 저장을 프라이머리로 올린다 */}
+        {restored ? (
+          <button className="btn-fill" onClick={saveTipSet} disabled={!tipSetUrl}>
             팁셋 저장
           </button>
-          <button className="btn-outline" onClick={evolve}>
-            사진 더해 진화
-          </button>
-        </div>
+        ) : (
+          <>
+            <button className="btn-fill" onClick={shareHero} disabled={!collageUrl}>
+              착용샷 공유하기
+            </button>
+            <div className="actions-row">
+              <button className="btn-outline" onClick={saveTipSet} disabled={!tipSetUrl}>
+                팁셋 저장
+              </button>
+              <button className="btn-outline" onClick={evolve}>
+                사진 더해 진화
+              </button>
+            </div>
+          </>
+        )}
         <p className="assurance">
           사진을 길게 눌러도 저장할 수 있어요. 탭을 닫으면 결과가 사라지니 꼭 받아두세요.
         </p>
+        <PriceProbe />
         <div className="actions-links">
-          <button className="btn-link" onClick={onRegenerate}>
-            다시 생성
-          </button>
-          <span aria-hidden>·</span>
+          {!restored && (
+            <>
+              <button className="btn-link" onClick={onRegenerate}>
+                다시 생성
+              </button>
+              <span aria-hidden>·</span>
+            </>
+          )}
           <button className="btn-link" onClick={onReset}>
             새로 시작
           </button>
         </div>
       </div>
-      {remaining !== null && remaining <= 10 && (
-        <p className="remaining">오늘 {remaining}회 남음</p>
-      )}
+      {remaining !== null && <p className="remaining">오늘 {remaining}회 남음</p>}
     </>
   );
 }
