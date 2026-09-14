@@ -73,6 +73,35 @@ async function analyzeOnce(images: ImagePayload[]): Promise<NailBrief | null> {
   }
 }
 
+/**
+ * 자유 텍스트 필드 상한.
+ *
+ * /api/variant는 클라이언트가 보낸 brief·plan을 그대로 생성 프롬프트에 꽂는다. 상한이
+ * 없으면 사진 한 장 없이도 임의 길이·임의 내용의 프롬프트로 이미지 생성기를 직접 부를 수
+ * 있고(사실상 "무료 범용 이미지 생성 API"), 수 MB짜리 문자열로 토큰 비용을 부풀릴 수도 있다.
+ *
+ * 거부가 아니라 **잘라내기**로 처리한다 — 이 함수는 LLM 출력 파싱에도 쓰이므로, 모델이
+ * 조금 길게 답했다고 분석 전체를 502로 실패시키면 정상 사용자가 다친다.
+ */
+const FIELD_MAX = {
+  line: 400, // 정상 브리프 한 줄은 200자 안쪽
+  listItem: 60, // keywords·colors 항목
+  listLength: 8,
+  letteringWord: 16,
+} as const;
+
+/** 개행·제어문자는 프롬프트의 줄 구조를 깨뜨리므로 공백으로 접는다 */
+function clampLine(value: string, max: number = FIELD_MAX.line): string {
+  return value.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
+}
+
+function clampList(values: string[], max: number = FIELD_MAX.listItem): string[] {
+  return values
+    .slice(0, FIELD_MAX.listLength)
+    .map((v) => clampLine(v, max))
+    .filter((v) => v.length > 0);
+}
+
 /** JSON 텍스트 → NailBrief. 스키마 위반 시 null */
 export function parseBrief(text: string): NailBrief | null {
   let parsed: unknown;
@@ -98,22 +127,24 @@ export function parseBrief(text: string): NailBrief | null {
   if (!isStrArr(b.keywords) || b.keywords.length === 0) return null;
   if (!isStrArr(b.colors) || b.colors.length === 0) return null;
   if (!isStr(b.difficulty) || !DIFFS.has(b.difficulty)) return null;
-  const letteringWord = isStr(b.letteringWord) && b.letteringWord.length > 0 ? b.letteringWord : null;
+  const lettering = isStr(b.letteringWord) ? clampLine(b.letteringWord, FIELD_MAX.letteringWord) : '';
+  const patternLines = clampList(b.patternLines, FIELD_MAX.line);
+  if (patternLines.length === 0) return null; // 전부 공백이었으면 무효
   return {
     shape: b.shape as NailBrief['shape'],
     length: b.length as NailBrief['length'],
-    baseLine: b.baseLine as string,
-    structureLine: b.structureLine as string,
-    paletteLine: b.paletteLine as string,
-    patternLines: b.patternLines,
-    textureLine: b.textureLine as string,
-    partsLine: b.partsLine as string,
-    letteringWord,
-    moodLine: b.moodLine as string,
-    keywords: b.keywords,
-    colors: b.colors,
+    baseLine: clampLine(b.baseLine as string),
+    structureLine: clampLine(b.structureLine as string),
+    paletteLine: clampLine(b.paletteLine as string),
+    patternLines,
+    textureLine: clampLine(b.textureLine as string),
+    partsLine: clampLine(b.partsLine as string),
+    letteringWord: lettering.length > 0 ? lettering : null,
+    moodLine: clampLine(b.moodLine as string),
+    keywords: clampList(b.keywords),
+    colors: clampList(b.colors),
     difficulty: b.difficulty as NailBrief['difficulty'],
-    feasibilityNotes: b.feasibilityNotes as string,
+    feasibilityNotes: clampLine(b.feasibilityNotes as string),
   };
 }
 
@@ -323,17 +354,20 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
   if (typeof p.partsLine !== 'string' || p.partsLine.length === 0) return null;
   if (p.letteringWord !== null && p.letteringWord !== undefined && typeof p.letteringWord !== 'string') return null;
   if (p.paletteLine !== undefined && typeof p.paletteLine !== 'string') return null;
-  const letteringWord =
-    typeof p.letteringWord === 'string' && p.letteringWord.length > 0 ? p.letteringWord : null;
+  const lettering =
+    typeof p.letteringWord === 'string' ? clampLine(p.letteringWord, FIELD_MAX.letteringWord) : '';
+  const patternLines = clampList(p.patternLines as string[], FIELD_MAX.line);
+  if (patternLines.length === 0) return null;
+  const partsLine = clampLine(p.partsLine);
+  if (partsLine.length === 0) return null;
+  const paletteLine = typeof p.paletteLine === 'string' ? clampLine(p.paletteLine) : '';
   return {
-    id: p.id,
-    title: p.title,
-    patternLines: p.patternLines as string[],
-    partsLine: p.partsLine,
-    letteringWord,
-    ...(typeof p.paletteLine === 'string' && p.paletteLine.length > 0
-      ? { paletteLine: p.paletteLine }
-      : {}),
+    id: clampLine(p.id, FIELD_MAX.listItem),
+    title: clampLine(p.title, FIELD_MAX.listItem),
+    patternLines,
+    partsLine,
+    letteringWord: lettering.length > 0 ? lettering : null,
+    ...(paletteLine.length > 0 ? { paletteLine } : {}),
   };
 }
 
