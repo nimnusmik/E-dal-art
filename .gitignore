@@ -10,3 +10,9 @@ next-env.d.ts
 # AI 생성 결과물 (용량 큼, 로컬 보관용)
 ref/results/
 ref/hand-after-check.png
+
+# 감사 스크린샷·실측 후보·시안 변천사 (용량 큼, 로컬 보관용)
+.audit/
+변천사/
+ref/nail-candidates/
+ref/withpic/
