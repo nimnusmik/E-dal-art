@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { SERVICES } from './content';
-import { useReveal } from './useReveal';
+import { useRevealEach } from './useReveal';
 
 /**
  * 이용 흐름 5행.
@@ -12,7 +12,8 @@ import { useReveal } from './useReveal';
  * 색은 무지개 5색이 아니라 단일 색조 명도 계단(--step-1..5)으로 진행 방향을 만든다.
  */
 export default function Services() {
-  const ref = useReveal<HTMLUListElement>();
+  // 행 단위 리빌 — 스크롤이 각 행에 닿을 때마다 하나씩 나타난다
+  const ref = useRevealEach<HTMLUListElement>();
   return (
     <section className="xp-paper xp-services" aria-label="이용 흐름">
       <div className="xp-head">
