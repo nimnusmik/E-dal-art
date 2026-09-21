@@ -93,7 +93,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     ...body.images,
     { data: body.tipSet.image, mimeType: body.tipSet.mimeType },
   ];
-  const prompt = buildPrompt(body.shape, body.length, getTrendKeywords(), body.images.length, true, null);
+  const prompt = buildPrompt(body.shape, body.length, getTrendKeywords(), body.images.length, true);
 
   let outcome;
   try {
