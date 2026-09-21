@@ -1,63 +1,35 @@
-/* ─── 랜딩 전용 스타일 (XP 초원 스킨) ────────────────────────── */
+/* ─── 랜딩 전용 스타일 (모노크롬+블루 스킨, 2026-09-20 개편) ──── */
 /* 섹션 순서: TopBar → Hero → Stats → Gallery → Services → Tool
    → Testimonials → FAQ → FooterCta */
 
-/* 초원 배경 공용 — 히어로·갤러리·풋터 CTA가 함께 쓴다 */
+/* 구 초원 섹션 공용 — 히어로·푸터 CTA는 다크(#020109), 갤러리·씬은 흰 지면.
+   클래스명은 마크업 호환을 위해 유지한다. */
 .xp-meadow {
   position: relative;
-  background-color: var(--meadow); /* 사진 로드 실패·지연 시 흰 글씨가 사라지지 않도록 */
-  background-image: url('/landing/meadow.jpg');
-  background-size: cover;
-  background-position: center 62%;
+  background-color: var(--paper);
   isolation: isolate;
 }
-
-/* 모바일은 390px 화면에 2000px 원본을 깔 필요가 없다 — 1170px 전용본(45KB) */
-@media (max-width: 767px) {
-  .xp-meadow { background-image: url('/landing/meadow-mobile.jpg'); }
+.xp-hero.xp-meadow,
+.xp-footer-cta.xp-meadow {
+  background-color: var(--dark-surface);
 }
 
-/**
- * 배경 위 텍스트 대비 — 글자가 놓이는 **섹션 상단**만 덮는다.
- *
- * 두 번의 실패를 거쳤다:
- *  1) 섹션 전체를 알파 0.5로 덮기 → 대비는 붙지만 잔디와 갤러리 시안까지 탁해졌다.
- *  2) 카피 블록 뒤에 원형 스크림 → 사진 위에 검은 원 얼룩으로 드러났다.
- * 결론: 방향성 있는 선형 그라디언트만 얼룩 없이 자연스럽다. 알파 0.38은
- * 하늘색(rgb(58,192,220)) 위 흰 글씨를 약 4.5:1까지 올린다(합성 후 rgb(41,129,153)).
- * 55%에서 완전히 투명해지므로 잔디·시안 카드의 채도는 손대지 않는다.
- */
-.xp-meadow::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(
-    180deg,
-    rgba(18, 34, 58, 0.4) 0%,
-    rgba(18, 34, 58, 0.34) 28%,
-    rgba(18, 34, 58, 0.1) 46%,
-    rgba(18, 34, 58, 0) 55%
-  );
-  pointer-events: none;
-}
-
-/* 초대형 흰 디스플레이 타이포 — 참조의 헤드라인 처리.
-   행간 0.94는 라틴 전용 값이다. 한글은 정사각 프레임을 상하로 꽉 채우고
-   Black Han Sans는 초헤비체라 프레임 여백이 최소여서, 38px에 line box 35.72px면
-   글자 위아래로 각 1.14px밖에 남지 않아 받침과 다음 줄 초성이 붙었다. */
+/* 초대형 라이트 디스플레이 타이포 — 추출 브랜드의 Inter Display 300 처리.
+   기본 잉크색: 다크 섹션(히어로·푸터 CTA)에서만 흰색으로 뒤집는다. */
 .xp-display {
   font-family: var(--font-display);
-  color: #fff;
+  font-weight: var(--fw-display);
+  color: var(--ink);
   line-height: var(--lh-display);
   /* 한글은 음절 단위로 인식하므로 자간을 줄이면 낱자가 아니라 음절 경계가 무너진다 */
-  letter-spacing: -0.005em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   word-break: keep-all;
-  text-shadow:
-    0 2px 0 rgba(16, 26, 44, 0.28),
-    0 14px 38px rgba(16, 26, 44, 0.4);
 }
+.xp-hero .xp-display,
+.xp-footer-cta .xp-display { color: #fff; }
+
+/* 섹션 헤더 자리의 .xp-display는 일반 헤더와 같은 크기 스케일을 갖는다 */
+.xp-head .xp-display { font-size: clamp(30px, 5.2vw, 56px); }
 
 /* 파스텔 필 배지 */
 .xp-pill {
@@ -90,9 +62,7 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .xp-paper {
   position: relative;
   background-color: var(--paper);
-  /* radius(20px)와 도트 그리드 단위를 맞춰 우연이 아닌 관계로 만든다 */
-  background-image: radial-gradient(var(--line-soft) 1.2px, transparent 1.2px);
-  background-size: 20px 20px;
+  /* 도트 그리드는 모노크롬 개편으로 제거 — 흰 지면은 비워 둔다 */
   padding: var(--space-section) clamp(20px, 5vw, 64px) 0;
 }
 
@@ -113,9 +83,10 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
    여기서 재정의하면 특이도로 이겨버려 .xp-display가 무력화된다 */
 .xp-head h2:not(.xp-display) {
   font-family: var(--font-display);
+  font-weight: var(--fw-display);
   font-size: clamp(28px, 4.4vw, 46px);
   line-height: var(--lh-head);
-  letter-spacing: -0.005em;
+  letter-spacing: -0.01em;
   color: var(--ink);
   word-break: keep-all;
 }
@@ -170,7 +141,7 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* 첫 화면에서는 히어로 사진을 가리지 않게 투명하게 두고, 스크롤한 뒤에만
    지면을 깐다 — 이때부터는 본문 글자와 겹치기 때문에 배경이 필요하다 */
 .xp-topbar.is-solid {
-  background: rgba(244, 243, 239, 0.86);
+  background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom-color: var(--line-soft);
@@ -200,11 +171,15 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 
 .xp-topnav { display: flex; align-items: center; gap: 8px; }
 
-/* 상단 CTA는 브랜드 색 — 페이지 어디서나 같은 행동 색을 학습하게 한다 */
+/* 상단 CTA — 다크 히어로 위(투명 바)에서는 흰 필, 스크롤 후 흰 바에서는 잉크 필 */
 .xp-topnav .xp-cta-top {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: var(--shadow-cta);
+}
+.xp-topbar.is-solid .xp-cta-top {
   background: var(--brand);
   color: #fff;
-  box-shadow: var(--shadow-cta);
 }
 
 @media (max-width: 520px) {
@@ -311,11 +286,9 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   max-width: 40ch;
   font-size: clamp(19px, 2vw, 22px);
   line-height: 1.65;
-  font-weight: 700;
-  color: #fff;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85); /* 다크 지면 위 — 그림자·스크림 불필요 */
   word-break: keep-all;
-  /* 그림자는 대비 계산에 산입되지 않는다 — 글자 경계를 또렷하게 하는 보조 장치 */
-  text-shadow: 0 1px 10px rgba(14, 26, 44, 0.5);
 }
 
 /* 모든 primary CTA는 --brand 하나. 배경 밝기에 따라 색을 바꾸지 않는다 */
@@ -333,6 +306,25 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   transition: background 0.2s ease, transform 0.15s ease;
 }
 .xp-cta:active { transform: scale(0.98); }
+
+/* 다크 섹션 위 CTA — 잉크 필이 지면에 묻히므로 흰 필로 반전한다 */
+.xp-hero .xp-cta,
+.xp-footer-cta .xp-cta {
+  background: #fff;
+  color: var(--ink);
+}
+.xp-hero .xp-cta:hover,
+.xp-footer-cta .xp-cta:hover { background: #e8e8e8; }
+
+/* 다크 섹션 위 배지 필 — 추출 브랜드의 유리 필(흰 16% 알파) */
+.xp-hero .xp-pill,
+.xp-footer-cta .xp-pill {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
 
 @media (hover: hover) {
   .xp-cta:hover { background: var(--brand-hover); }
@@ -362,15 +354,13 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   gap: 6px;
   padding: 7px 14px;
   border-radius: var(--r-pill);
-  background: rgba(16, 26, 44, 0.5);
+  background: rgba(255, 255, 255, 0.16); /* 다크 히어로 위 유리 필 */
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   font-size: var(--fs-100);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.18em;
-  text-transform: uppercase;
   color: #fff;
-  text-shadow: none;
 }
 
 /* ─── 통계 카드 ──────────────────────────────────────────────── */
@@ -445,43 +435,18 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* ─── 갤러리 (폴라로이드) ────────────────────────────────────── */
 .xp-gallery { padding: var(--space-section) clamp(20px, 5vw, 64px); }
 
-/* 사진 위 헤드 국소 스크림.
-   섹션 스크림(.xp-meadow::before)은 55%에서 완전 투명해지는데, 갤러리는 폴라로이드가
-   길어 본문 단락이 옅어진 구간에 걸친다. 글자 마스크 실측 결과 본문이 최악 2.78:1로
-   1.4.3 미달이었다(주석에는 4.27~4.49로 기록돼 있었으나 중앙값만 본 수치).
-   text-shadow는 WCAG 대비 계산에 산입되지 않으므로 배경을 실제로 어둡게 한다. */
-.xp-head-on-photo {
-  position: relative;
-  isolation: isolate;
-}
-.xp-head-on-photo::before {
-  content: '';
-  position: absolute;
-  inset: -24px -16px;
-  z-index: -1;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(18, 34, 58, 0.55) 0%,
-    rgba(18, 34, 58, 0.42) 60%,
-    rgba(18, 34, 58, 0) 100%
-  );
-  pointer-events: none;
-}
-
-/* :not(.xp-display)를 함께 써 특이도를 위 .xp-head h2:not(.xp-display)(0,2,1)와
-   맞춘다 — 없으면 (0,1,1)이라 기본 규칙의 color: var(--ink)에 져서 사진 위에
-   어두운 글씨가 그대로 남는다 */
+/* 구 "사진 위 헤드" — 배경이 흰 지면이 되면서 스크림·흰 글씨·그림자 전부 불필요.
+   클래스는 마크업 호환으로 남기고 크기만 소유한다. */
 .xp-head-on-photo h2:not(.xp-display) {
-  color: #fff;
+  color: var(--ink);
   font-size: clamp(30px, 5.2vw, 56px);
 }
 
 .xp-head-on-photo p {
-  color: #fff;
+  color: var(--text-2);
   font-size: clamp(19px, 2vw, 21px);
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.6;
-  text-shadow: 0 1px 10px rgba(16, 26, 44, 0.5);
 }
 
 .xp-polaroids {
@@ -836,33 +801,7 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   padding: var(--space-section) clamp(20px, 5vw, 64px) 0;
 }
 
-/* 공용 .xp-meadow::before는 섹션 상단만 어둡게 해 46%에서 투명해진다.
-   풋터 바는 그 아래(밝은 잔디 위)에 놓이므로, 이 섹션에만 하단 그라데이션을
-   덧대 흰 글씨 대비를 확보한다 */
-/* 풋터 CTA는 초대형 h2가 섹션의 24~38% 지점에 놓인다 — 공용 그라디언트(46%에서
-   0.10까지 떨어짐)로는 그 구간을 못 받쳐 최명부 2.45:1이었다. 히어로와 같은
-   커버리지로 늘린다. 잔디 하단은 그대로 밝다. */
-.xp-footer-cta::before {
-  background: linear-gradient(
-    180deg,
-    rgba(18, 34, 58, 0.46) 0%,
-    rgba(18, 34, 58, 0.44) 44%,
-    rgba(18, 34, 58, 0.16) 62%,
-    rgba(18, 34, 58, 0) 78%
-  );
-}
-
-/* 하단 잔디 위 대비 보조. 섹션 전체를 덮지 않는다 — h2는 상단 그라디언트가,
-   풋터 바는 자기 자신의 판(.xp-footer-bar)이 각각 대비를 책임진다 */
-.xp-footer-cta::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0;
-  height: 44%;
-  z-index: -1;
-  background: linear-gradient(0deg, rgba(16, 26, 44, 0.4) 0%, rgba(16, 26, 44, 0) 100%);
-  pointer-events: none;
-}
+/* 다크 단색 지면이라 스크림·그라디언트 불필요 (초원 시절 장치 제거) */
 
 .xp-footer-inner {
   display: flex;
@@ -874,14 +813,13 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 
 .xp-footer-title { font-size: clamp(40px, 8vw, 88px); }
 
-/* 게이트가 닫혀 있을 때의 두 번째 제안 — 초원 사진 위라 흰색 + 밑줄로 링크임을 밝힌다 */
+/* 게이트가 닫혀 있을 때의 두 번째 제안 — 다크 지면 위 흰 밑줄 링크 */
 .xp-footer-alt {
   color: #fff;
-  font-weight: 700;
+  font-weight: 500;
   font-size: var(--fs-300);
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-shadow: 0 1px 8px rgba(16, 26, 44, 0.6);
 }
 
 /**

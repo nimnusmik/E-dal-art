@@ -1,25 +1,24 @@
-/* ─── XP 초원 디자인 토큰 ────────────────────────────────────── */
+/* ─── 모노크롬+블루 디자인 토큰 (see-for-yourself.com 추출 브랜드 매핑) ──
+   화이트 지면 · 딥블랙(#020109) 다크 섹션 · 프라이머리 액센트 #0099ff ·
+   행동 색은 잉크 블랙(흑백 필 버튼) — 2026-09-20 무드 개편 */
 :root {
-  --paper: #f4f3ef;         /* 종이 지면 */
-  --paper-card: #ffffff;    /* 카드 흰색 */
-  --bg-deep: #eceae4;       /* 인풋/캡션 바닥 */
+  --paper: #ffffff;         /* 흰 지면 */
+  --paper-card: #ffffff;    /* 카드 흰색 — 지면과 같아 그림자·보더가 경계를 만든다 */
+  --bg-deep: #f4f4f4;       /* 인풋/캡션 바닥 */
 
-  /* 텍스트 4단 — 이전엔 ink/muted 2단뿐이어서 카드 안 위계가 이진 대비였다.
-     --muted(#6f7480)는 카드 흰 배경 위 4.68:1이지만 --paper 지면 위에서는 4.22:1로
-     AA 미달이었다. #63687a는 지면 4.50 / 카드 4.99로 양쪽 모두 통과한다. */
-  --text-1: #16181d;        /* 헤딩 */
-  --text-2: #3a3f4a;        /* 본문 — 한글은 순검정보다 이 단계가 편하다 */
-  --text-3: #63687a;        /* 보조 */
-  --text-4: rgba(22, 24, 29, 0.62); /* 메타·번호 (파스텔 위 4.5:1 확보) */
+  /* 텍스트 4단 — 추출 브랜드의 뉴트럴 계열 */
+  --text-1: #020109;        /* 헤딩 */
+  --text-2: #262626;        /* 본문 */
+  --text-3: #666666;        /* 보조 — 흰 지면 위 5.7:1 */
+  --text-4: rgba(2, 1, 9, 0.62); /* 메타·번호 */
 
   --ink: var(--text-1);     /* 잉크 블랙 (하위 호환) */
   --muted: var(--text-3);   /* 보조 텍스트 (하위 호환) */
 
   /* 인풋·옵션 pill·아웃라인 버튼의 테두리.
-     0.28일 때 실측 1.83:1로 1.4.11(3:1) 미달이었다(주석은 충족이라 적혀 있었으나 오기).
      미선택 pill은 배경이 투명해 테두리가 유일한 경계라, 안 보이면 버튼의 존재 자체가 사라진다.
-     0.50 → paper 3.30 / card 3.39 / deep 3.24 */
-  --line: rgba(22, 24, 29, 0.50);
+     0.50은 흰 지면 위 3:1(1.4.11) 확보 */
+  --line: rgba(2, 1, 9, 0.50);
 
   /* 시맨틱 상태색 — 이전엔 상태색이 :root에 하나도 없어서 "검수 결과"라는 의미론이
      브랜드 파랑(--accent)과 중립 회색에 얹혀 있었다. 파란 배지는 "합격"이 아니라
@@ -29,14 +28,14 @@
   --danger: #8f2028;
   --danger-bg: #fdf0f1;
   --danger-line: rgba(176, 42, 55, 0.6);
-  --line-quiet: rgba(22, 24, 29, 0.12); /* 순수 장식 구분선 */
-  --line-soft: rgba(22, 24, 29, 0.06);
+  --line-quiet: rgba(2, 1, 9, 0.12); /* 순수 장식 구분선 */
+  --line-soft: rgba(2, 1, 9, 0.06);
 
-  /* 그림자 광원 통일 — 이전엔 검정 계열이 5종(ink/26,24,21/20,18,30/16,26,44/18,34,58)이었다 */
-  --shadow-rgb: 22, 24, 29;
-  --shadow-card: 0 1px 2px rgba(var(--shadow-rgb), 0.05), 0 14px 34px rgba(var(--shadow-rgb), 0.09);
+  /* 그림자 광원 통일 */
+  --shadow-rgb: 2, 1, 9;
+  --shadow-card: 0 1px 2px rgba(var(--shadow-rgb), 0.05), 0 14px 34px rgba(var(--shadow-rgb), 0.08);
   --shadow-lift: 0 8px 18px rgba(var(--shadow-rgb), 0.10), 0 28px 60px rgba(var(--shadow-rgb), 0.16);
-  --shadow-cta: 0 6px 16px rgba(31, 111, 208, 0.28);
+  --shadow-cta: 0 6px 16px rgba(2, 1, 9, 0.22);
 
   /* radius 5단 — 단마다 역할을 고정한다. 이전엔 999px/50%가 전체의 72%라
      "알약 = 누를 수 있음" 신호가 인플레이션돼 어포던스가 죽었다. */
@@ -59,7 +58,7 @@
   --sp-6: 32px;
   --sp-7: 48px;
   --sp-8: 64px;
-  --space-section: clamp(88px, 12vh, 148px);
+  --space-section: clamp(96px, 14vh, 160px); /* 추출 스페이싱 상단 스텝 80/120/160 */
 
   /* 컨테이너 3단 — 이전엔 섹션마다 눈대중 max-width가 6종(560/640/880/900/940/980)이라
      스크롤 내리면 콘텐츠 폭이 좌우로 계속 흔들렸다 */
@@ -86,34 +85,36 @@
   --lh-head: 1.22;
   --lh-body: 1.7;
 
-  /* 파스텔 5색 — 필 배지·카드 블롭에 사용 (순차 프로세스에는 쓰지 않는다) */
-  --pastel-pink: #ffd8e2;
-  --pastel-blue: #cfe3ff;
-  --pastel-yellow: #ffe9a6;
-  --pastel-green: #cdf0d6;
-  --pastel-purple: #e3d9ff;
+  /* 배지·블롭 5슬롯 — 모노크롬 체계라 전부 동일한 뉴트럴로 수렴시킨다.
+     (추출 브랜드의 rgba(199,199,199,.098) / rgba(217,217,217,.118) 계열) */
+  --pastel-pink: #f2f2f2;
+  --pastel-blue: #e5f4ff;   /* 유일한 유채색 슬롯 — 프라이머리 블루의 최저 명도 */
+  --pastel-yellow: #f2f2f2;
+  --pastel-green: #f2f2f2;
+  --pastel-purple: #f2f2f2;
 
-  /* 프로세스 5단계 — 무지개 배열은 "순서"라는 정보를 파괴한다. 단일 색조 명도 계단 */
-  --step-1: #eaf2fd;
-  --step-2: #d9e8fc;
-  --step-3: #c8defa;
-  --step-4: #b7d4f8;
-  --step-5: #a6caf6;
+  /* 프로세스 5단계 — #0099ff 단일 색조 명도 계단 */
+  --step-1: #e5f4ff;
+  --step-2: #cceaff;
+  --step-3: #b3e0ff;
+  --step-4: #99d6ff;
+  --step-5: #80ccff;
 
-  --meadow: #498b06;        /* 실질 브랜드 초록 — meadow.jpg 최하단 픽셀 행 실측 평균 */
-  --sky: #5aa9e6;           /* 하늘 파랑 — 액센트 */
-  --brand: #1f6fd0;         /* 유일한 행동 색 — 모든 primary CTA */
-  --brand-hover: #1a5eb3;
+  --dark-surface: #020109;  /* 다크 섹션 지면 — 히어로·툴·푸터 CTA */
+  --meadow: var(--dark-surface); /* 하위 호환 — 옛 초원 섹션의 배경 폴백 */
+  --sky: #0099ff;           /* 프라이머리 액센트 — 다크 위 하이라이트·포커스 */
+  --brand: #020109;         /* 유일한 행동 색 — 흑백 필 CTA (흰 지면 위 21:1) */
+  --brand-hover: #262626;
   --accent: var(--brand);   /* 하위 호환 */
   --disabled-bg: #dfe3ea;   /* 비활성 배경 — opacity 감쇠 금지 */
   --disabled-fg: #5b6070;   /* on --disabled-bg = 4.9:1 */
 
-  /* 디스플레이 = 초대형 헤비 타이포 (라틴 Archivo Black + 한글 Black Han Sans).
-     실제 패밀리명은 next/font가 주입하는 변수(--font-archivo/--font-bhs)에서 온다 */
-  --font-display: var(--font-archivo), var(--font-bhs), 'Pretendard Variable', sans-serif;
+  /* 디스플레이 = 초대형 라이트 타이포 (추출 브랜드: Inter Display 300).
+     한글 대응은 Pretendard 300 — Pretendard 라틴이 Inter 기반이라 같은 계열이다 */
+  --font-display: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
+  --fw-display: 300;
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
-  /* 라틴 액센트 — 한글이 섞이면 Black Han Sans로 떨어져 --font-display와 무게가 맞는다 */
-  --font-latin: var(--font-archivo), var(--font-bhs), 'Pretendard Variable', sans-serif;
+  --font-latin: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -144,10 +145,11 @@ html { scroll-padding-top: 78px; }
   outline-offset: 3px;
   border-radius: inherit;
 }
-/* 초원 사진 위 요소는 배경 밝기를 예측할 수 없으므로 흰 링 + 잉크 그림자로 이중화 */
-.xp-meadow :focus-visible {
+/* 다크 섹션 위 요소는 흰 링 — 잉크 링이 지면에 묻힌다 (밝은 구 meadow 섹션은 기본 링) */
+.xp-hero :focus-visible,
+.xp-footer-cta :focus-visible {
   outline-color: #fff;
-  box-shadow: 0 0 0 6px rgba(16, 26, 44, 0.55);
+  box-shadow: 0 0 0 6px rgba(2, 1, 9, 0.55);
 }
 
 /* ─── 본문 건너뛰기 링크 (2.4.1 Bypass Blocks) ───────────────── */
