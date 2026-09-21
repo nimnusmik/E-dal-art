@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { FAQS } from './content';
-import HeroHand from '@/components/story/HeroHand';
+import Hero from '@/components/story/Hero';
 import TopBar from './TopBar';
 import Stats from './Stats';
 import Gallery from './Gallery';
@@ -42,7 +42,7 @@ export default function Landing({ toolSlot }: { toolSlot: ReactNode }) {
       </a>
       <TopBar />
       <main id="main-content">
-        <HeroHand />
+        <Hero />
         <ToolSection>{toolSlot}</ToolSection>
         <Gallery />
         <PriceSection />

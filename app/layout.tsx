@@ -54,15 +54,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
-        {/* LCP 후보 — 히어로 손 이미지. (초원 배경 preload는 무드 개편으로 제거) */}
-        <link rel="preload" as="image" href="/hero/hand.webp" fetchPriority="high" />
-        {/* 모션 저감 사용자에게는 완성컷이 첫 화면 이미지가 되므로 미리 받는다 */}
-        <link
-          rel="preload"
-          as="image"
-          href="/hero/hand-after.webp"
-          media="(prefers-reduced-motion: reduce)"
-        />
+        {/* 히어로 변환 스트립의 시안 4종이 LCP 후보 — 가장 큰 첫 장만 미리 받는다 */}
+        <link rel="preload" as="image" href="/gallery/pastel-french.jpg" fetchPriority="high" />
       </head>
       <body>{children}</body>
     </html>

@@ -187,56 +187,17 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 }
 
 /* ─── 히어로 ─────────────────────────────────────────────────── */
+/* 다크 단색 히어로 — 초대형 타이포 + 변환 스트립이 첫 화면을 채운다 */
 .xp-hero {
   position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(96px, 14vh, 148px) 24px 64px;
+  justify-content: center;
+  gap: clamp(32px, 5vh, 56px);
+  padding: clamp(80px, 11vh, 120px) 24px 88px;
   overflow: clip;
-  /* 히어로는 손 무대 때문에 섹션이 뷰포트보다 훨씬 길다. cover로 깔면 사진이
-     세로에 맞춰 확대돼 지평선이 첫 화면 밖으로 밀려나므로, 폭 기준으로 깔아
-     지평선을 첫 화면 안에 두고 사진이 끝나는 아래쪽은 잔디색으로 이어 붙인다 */
-  background-size: 100% auto;
-  background-position: center top;
-  background-repeat: no-repeat;
-  /* --meadow(#498b06)는 meadow.jpg 최하단 픽셀 행의 실측 평균 RGB(sharp로 추출) —
-     추정치가 아니라 이음매가 안 보이도록 사진과 정확히 이어지는 값이다 */
-  background-color: var(--meadow);
-}
-
-/* 색은 맞췄지만 사진의 잔디 질감이 평면 색으로 뚝 끊기는 경계선은 남는다.
-   meadow.jpg 원본 비율(2000×1269)과 정확히 같은 높이의 박스를 사진 위에 겹쳐
-   사진이 끝나는 마지막 구간에서만 배경색으로 서서히 흡수시켜 이음매를 지운다.
-   z-index 0은 .xp-meadow::before(-1)보다 위, 카피·손 무대(1)보다 아래에 둔다 */
-.xp-hero::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  z-index: 0;
-  aspect-ratio: 2000 / 1269;
-  background: linear-gradient(to bottom, transparent 85%, var(--meadow) 100%);
-  pointer-events: none;
-}
-
-/* 히어로는 손 무대 때문에 섹션이 1300px+ 라 공용 % 그라디언트가 카피 구간을 못 덮는다.
-   섹션 길이와 무관하게 **첫 화면 높이** 기준으로 깔아, 카피가 놓인 하늘 구간만
-   덮고 지평선 아래(잔디·손)는 원래 밝기로 남긴다. */
-.xp-hero::before {
-  inset: 0 0 auto;
-  height: 100dvh;
-  /* 평탄 구간을 카피 하단(첫 화면의 약 45%)까지 유지한 뒤 지평선 근처에서 빠르게
-     사라진다 — 잔디·손·영감 카드는 원래 밝기 그대로 남는다 */
-  background: linear-gradient(
-    180deg,
-    rgba(18, 34, 58, 0.44) 0%,
-    rgba(18, 34, 58, 0.42) 46%,
-    rgba(18, 34, 58, 0.16) 64%,
-    rgba(18, 34, 58, 0) 80%
-  );
 }
 
 @media (max-width: 767px) {
@@ -275,7 +236,88 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 
 .xp-hero-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 
-.xp-hero-title { font-size: clamp(40px, 7.4vw, 80px); }
+/* 추출 브랜드의 초대형 디스플레이 스텝 — "이달의 네일이 돼요"가 한 줄로 남는 상한 */
+.xp-hero-title { font-size: clamp(44px, 7vw, 96px); letter-spacing: -0.02em; }
+
+/* ─── 변환 스트립: 영감 사진 → 시안 ─────────────────────────── */
+.hero-flow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 3.5vw, 48px);
+  flex-wrap: wrap;
+  max-width: var(--w-wide);
+}
+.hero-flow-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.hero-flow-in,
+.hero-flow-out {
+  display: flex;
+  gap: 10px;
+}
+.hero-flow-in img {
+  width: clamp(64px, 7vw, 96px);
+  height: clamp(64px, 7vw, 96px);
+  object-fit: cover;
+  border-radius: var(--r-media);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.hero-flow-out img {
+  width: clamp(96px, 11vw, 150px);
+  height: clamp(96px, 11vw, 150px);
+  object-fit: cover;
+  border-radius: var(--r-media);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.hero-flow-cap {
+  font-size: var(--fs-150);
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+.hero-flow-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* 캡션 줄 높이만큼 위로 — 화살표가 이미지 행의 세로 중심에 오게 */
+  margin-bottom: 22px;
+}
+.hero-flow-arrow-line {
+  position: relative;
+  width: clamp(48px, 6vw, 96px);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+}
+.hero-flow-arrow-line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -3.5px;
+  border: 4px solid transparent;
+  border-left-color: rgba(255, 255, 255, 0.4);
+  border-right-width: 0;
+}
+.hero-flow-arrow-label {
+  font-size: var(--fs-150);
+  letter-spacing: 0.02em;
+  color: var(--sky); /* 프라이머리 블루 — 변환(제품이 하는 일)에만 쓰는 액센트 */
+  white-space: nowrap;
+}
+
+/* 좁은 폭: 위(입력)→아래(출력)로 쌓고 화살표를 세로로 */
+@media (max-width: 700px) {
+  .hero-flow { flex-direction: column; gap: 18px; }
+  .hero-flow-arrow { margin-bottom: 0; flex-direction: row; }
+  .hero-flow-arrow-line { transform: rotate(90deg); width: 32px; }
+  .hero-flow-out { flex-wrap: wrap; justify-content: center; }
+}
 
 /* 히어로 유일한 설명 문장. 대비는 .xp-hero::before의 상단 그라디언트가 만들므로
    흰 글씨를 그대로 쓴다 — 흰 판을 깔면 읽히긴 하지만 사진 위 타이포 인상이 사라진다. */
