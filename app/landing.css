@@ -185,15 +185,11 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* 다크 단색 히어로 — 초대형 타이포 + 변환 스트립이 첫 화면을 채운다 */
 .xp-hero {
   position: relative;
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: clamp(32px, 5vh, 56px);
-  /* 상단은 떠 있는 내비 필 + 숨쉴 공간, 하단은 패널이 접힘선까지 닿게 0 */
+  /* 상단은 떠 있는 내비 필 + 숨쉴 공간. 하단 0 — 스크롤 스테이지가 접힘선까지 */
   padding: clamp(120px, 16vh, 176px) 24px 0;
-  overflow: clip;
 }
 
 /* 진입 모션 — 카피 페이드업 → 패널 스태거. 모션 저감 시 전부 끈다 */
@@ -243,6 +239,170 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* 추출 브랜드의 초대형 디스플레이 스텝 — "이달의 네일이 돼요"가 한 줄로 남는 상한 */
 .xp-hero-title { font-size: clamp(44px, 7vw, 96px); letter-spacing: -0.02em; }
 
+/* ─── 스크롤 스토리: 스테이지 고정 + 폰 3단계 진화 ───────────
+   0 빈 드롭존 → 1 영감 사진 투입·변주 중 → 2 시안 완성.
+   wrap 높이(240dvh)에서 100dvh를 뺀 구간이 스크롤 진행도가 된다. */
+.hero-scroll-wrap {
+  width: auto;
+  align-self: stretch;
+  /* 풀블리드 — 100vw 대신 히어로 좌우 패딩을 되무르는 음수 마진(스크롤바 안전) */
+  margin-inline: -24px;
+  margin-top: clamp(40px, 7vh, 72px);
+  height: 240dvh;
+}
+.hero-stage-sticky {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.xp-hero-scrollhint {
+  font-size: var(--fs-150);
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+
+/* 폰 목업 — 패널 행 가운데 위에 떠 있다. 장식이므로 포인터는 통과시킨다 */
+.hero-phone {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  width: clamp(240px, 22vw, 300px);
+  aspect-ratio: 9 / 18.5;
+  padding: 10px;
+  border-radius: 48px;
+  background: #101018;
+  border: 1px solid rgba(2, 1, 9, 0.55);
+  box-shadow: 0 44px 110px rgba(2, 1, 9, 0.4);
+  pointer-events: none;
+}
+.hero-phone-island {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 82px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: #000;
+  z-index: 2;
+}
+.hero-phone-screen {
+  height: 100%;
+  border-radius: 38px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 48px 16px 24px;
+  overflow: hidden;
+}
+
+/* 드롭존 — 상태에 따라 비어 있다가 사진이 스며든다 */
+.phone-drop {
+  position: relative;
+  margin-top: auto;
+  width: 74%;
+  aspect-ratio: 1;
+  border-radius: 24px;
+  border: 2px dashed rgba(2, 1, 9, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.45s ease;
+}
+.phone-drop-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px;
+  text-align: center;
+  font-size: var(--fs-200);
+  font-weight: 500;
+  color: var(--text-3);
+  transition: opacity 0.35s ease;
+}
+.phone-drop-img {
+  width: 86%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 16px;
+  opacity: 0;
+  transform: scale(0.9) translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.phone-drop-check {
+  position: absolute;
+  right: -12px;
+  top: -12px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-round);
+  background: var(--sky);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* 상태 전이 */
+.hero-phone[data-state='1'] .phone-drop { border-color: rgba(0, 153, 255, 0.55); }
+.hero-phone[data-state='2'] .phone-drop { border-color: var(--sky); }
+.hero-phone[data-state='1'] .phone-drop-img,
+.hero-phone[data-state='2'] .phone-drop-img { opacity: 1; transform: none; }
+.hero-phone[data-state='1'] .phone-drop-hint,
+.hero-phone[data-state='2'] .phone-drop-hint { opacity: 0; }
+.hero-phone[data-state='2'] .phone-drop-check { opacity: 1; transform: none; }
+
+/* 상태 문구 — 같은 자리에서 크로스페이드 */
+.phone-status {
+  position: relative;
+  width: 100%;
+  height: 42px;
+  margin-top: auto;
+  margin-bottom: 4px;
+}
+.phone-status-line {
+  position: absolute;
+  inset: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  background: var(--bg-deep);
+  font-size: var(--fs-200);
+  font-weight: 600;
+  color: var(--text-2);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.phone-status-line[data-for='1'] { color: var(--sky); }
+.hero-phone[data-state='0'] .phone-status-line[data-for='0'],
+.hero-phone[data-state='1'] .phone-status-line[data-for='1'],
+.hero-phone[data-state='2'] .phone-status-line[data-for='2'] { opacity: 1; }
+
+@keyframes status-pulse { 50% { opacity: 0.55; } }
+.hero-phone[data-state='1'] .phone-status-line[data-for='1'] {
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-phone .phone-status-line { animation: none; }
+}
+
 /* ─── 히어로 패널 행: 입력(영감 사진) + 이달의 시안 무드 ─────────
    레퍼런스의 카테고리 패널 번역 — 뷰포트 폭을 채우는 등폭 패널,
    라벨 좌상단 · 오브젝트 중앙 · ⊕ 우하단. */
@@ -250,12 +410,8 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 2px;
-  /* 풀블리드: 100vw는 스크롤바 폭만큼 가로 오버플로를 만들므로(겹침·빡빡함의 원인)
-     히어로의 좌우 패딩(24px)을 되무르는 음수 마진으로 처리한다 */
-  width: auto;
-  align-self: stretch;
-  margin-inline: -24px;
-  margin-top: clamp(40px, 7vh, 88px);
+  width: 100%;
+  margin: 0;
 }
 .hero-panel {
   position: relative;

@@ -17,9 +17,9 @@ export default function FooterCta() {
           Ready?
         </span>
         <h2 className="xp-display xp-footer-title">
-          이달의 네일을
+          Meet this month's nails
           <br />
-          먼저 만나요
+          before anyone else
         </h2>
         <a className="xp-cta" href="#tool">
           {gated ? '초대 코드로 시작하기' : '무료로 시안 만들기'}

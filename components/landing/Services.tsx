@@ -18,9 +18,9 @@ export default function Services() {
       <div className="xp-head">
         <span className="xp-pill t-purple" aria-hidden>Process</span>
         <h2>
-          시안이 만들어지는
+          Five steps,
           <br />
-          다섯 단계
+          one monthly set
         </h2>
       </div>
       {/* list-style:none이 붙은 ul은 Safari/VoiceOver에서 리스트 의미를 잃는다 */}

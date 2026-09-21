@@ -108,10 +108,10 @@ export interface GalleryCut {
  * 출처와 판정 근거는 `public/gallery/SOURCES.md` 참조.
  */
 export const GALLERY: GalleryCut[] = [
-  { src: '/gallery/pastel-french.jpg', title: '파스텔 프렌치', meta: '민트·레몬 · 진주 체인', tilt: -4 },
-  { src: '/gallery/sugar-dot.jpg', title: '슈가 도트', meta: '버건디 프렌치 · 레터링', tilt: 3 },
-  { src: '/gallery/blue-brown.jpg', title: '블루 브라운', meta: '지브라 · 마블 스월', tilt: -2 },
-  { src: '/gallery/lilac-swirl.jpg', title: '라일락 스월', meta: '톤온톤 양각 · 레터링', tilt: 5 },
+  { src: '/gallery/pastel-french.jpg', title: 'Pastel French', meta: '민트·레몬 · 진주 체인', tilt: -4 },
+  { src: '/gallery/sugar-dot.jpg', title: 'Sugar Dot', meta: '버건디 프렌치 · 레터링', tilt: 3 },
+  { src: '/gallery/blue-brown.jpg', title: 'Blue Brown', meta: '지브라 · 마블 스월', tilt: -2 },
+  { src: '/gallery/lilac-swirl.jpg', title: 'Lilac Swirl', meta: '톤온톤 양각 · 레터링', tilt: 5 },
 ];
 
 export interface SceneCard {

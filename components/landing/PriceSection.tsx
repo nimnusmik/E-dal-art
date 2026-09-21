@@ -16,7 +16,7 @@ export default function PriceSection() {
         <span className="xp-pill t-purple" aria-hidden>
           Subscribe
         </span>
-        <h2>매달 이달의 아트를 받아볼까요?</h2>
+        <h2>A new set, every month</h2>
       </div>
       <div className="xp-price-inner">
         <PriceProbe />
