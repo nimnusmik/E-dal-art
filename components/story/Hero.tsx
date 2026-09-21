@@ -43,32 +43,48 @@ export default function Hero() {
         </a>
       </div>
 
-      {/* 입력 → 출력 스트립. 스크린리더에는 흐름을 문장으로 전달한다 */}
-      <div className="hero-flow" role="img" aria-label="영감 사진 세 장이 이달의 네일 시안 네 종으로 바뀌는 과정">
-        <div className="hero-flow-group">
-          <ul className="hero-flow-in" role="list" aria-hidden>
-            {HERO_INSPO.slice(0, 3).map((cut) => (
-              <li key={cut.src}>
-                <img src={cut.src} alt="" width={96} height={96} loading="eager" decoding="async" />
-              </li>
-            ))}
-          </ul>
-          <span className="hero-flow-cap" aria-hidden>영감 사진 1–3장</span>
+      {/* 히어로 오브젝트: 폰 목업(앱의 결정적 순간) + 네일 손.
+          스크린 안에서 영감 사진 → 시안 5종이 뽑히는 장면을 그대로 보여준다 */}
+      <div
+        className="hero-stage"
+        role="img"
+        aria-label="휴대폰 화면에서 영감 사진 세 장이 이달의 네일 시안으로 바뀌고, 네일을 올린 손이 그 옆에 놓인 장면"
+      >
+        <div className="hero-phone" aria-hidden>
+          <span className="hero-phone-island" />
+          <div className="hero-phone-screen">
+            <div className="phone-appbar">
+              <strong>이달아 ✳</strong>
+              <span suppressHydrationWarning>{issue.koShort ?? issue.koLabel}</span>
+            </div>
+            <span className="phone-label">영감 사진</span>
+            <ul className="phone-inspo" role="list">
+              {HERO_INSPO.slice(0, 3).map((cut) => (
+                <li key={cut.src}>
+                  <img src={cut.src} alt="" width={96} height={96} loading="eager" decoding="async" />
+                </li>
+              ))}
+            </ul>
+            <span className="phone-arrow">↓ AI 5종 변주</span>
+            <span className="phone-label">이달의 시안</span>
+            <ul className="phone-grid" role="list">
+              {GALLERY.map((g) => (
+                <li key={g.src}>
+                  <img src={g.src} alt="" width={150} height={150} loading="eager" decoding="async" />
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <div className="hero-flow-arrow" aria-hidden>
-          <span className="hero-flow-arrow-line" />
-          <span className="hero-flow-arrow-label">AI 5종 변주</span>
-        </div>
-        <div className="hero-flow-group">
-          <ul className="hero-flow-out" role="list" aria-hidden>
-            {GALLERY.map((g) => (
-              <li key={g.src}>
-                <img src={g.src} alt="" width={150} height={150} loading="eager" decoding="async" />
-              </li>
-            ))}
-          </ul>
-          <span className="hero-flow-cap" aria-hidden>이달의 시안 — 실제 검수 통과작</span>
-        </div>
+        <img
+          className="hero-hand"
+          src="/hero/hand-after.webp"
+          alt=""
+          width={500}
+          height={898}
+          loading="eager"
+          decoding="async"
+        />
       </div>
 
     </section>
