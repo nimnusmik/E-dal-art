@@ -9,8 +9,16 @@
   background-color: var(--paper);
   isolation: isolate;
 }
+/* 페이지의 마지막 전환 — 흰 지면이 검정으로 흘러내리며 끝난다 (끊김 없는 이음) */
 .xp-footer-cta.xp-meadow {
-  background-color: var(--dark-surface);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #b9b9c2 16%,
+    #3a3a45 30%,
+    #05040c 46%,
+    var(--dark-surface) 100%
+  );
 }
 
 /* 초대형 라이트 디스플레이 타이포 — 추출 브랜드의 Inter Display 300 처리.
@@ -879,6 +887,8 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 }
 
 /* ─── 사용 장면 카드 ─────────────────────────────────────────── */
+.xp-scenes { padding: var(--space-section) clamp(20px, 5vw, 64px); }
+
 .xp-scene-stack {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -981,9 +991,10 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .xp-footer-cta {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 76vh;
-  padding: var(--space-section) clamp(20px, 5vw, 64px) 0;
+  justify-content: center;
+  min-height: 92vh;
+  /* 상단 여백을 크게 — 콘텐츠(흰 텍스트)가 그라데이션의 어두운 구간(46%+)에 앉게 한다 */
+  padding: clamp(260px, 38vh, 420px) clamp(20px, 5vw, 64px) clamp(96px, 14vh, 160px);
 }
 
 /* 다크 단색 지면이라 스크림·그라디언트 불필요 (초원 시절 장치 제거) */
