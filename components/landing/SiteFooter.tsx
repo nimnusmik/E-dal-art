@@ -18,7 +18,7 @@ export default function SiteFooter() {
           {/* 처리방침은 어느 화면에서든 닿을 수 있어야 한다 */}
           <a href="/privacy">개인정보 처리방침</a>
           {/* 결제 의사를 묻는 페이지에 문의 채널이 없으면 신뢰가 깎인다 */}
-          <a href="mailto:gvaidevelop@gmail.com">문의</a>
+          <a href="mailto:kimsunmin0227@gmail.com">문의</a>
         </span>
       </div>
     </footer>
