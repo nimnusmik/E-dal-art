@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react';
  * 캡처에서는 콘텐츠가 그대로 보인다. 애니메이션이 콘텐츠 가시성의 전제조건이 되면
  * 실패 방향이 "빈 페이지"가 되므로 방향을 뒤집는다.
  */
-function markReady(): boolean {
+export function markReady(): boolean {
   if (typeof window === 'undefined') return false;
   if (typeof IntersectionObserver === 'undefined') return false;
   document.documentElement.classList.add('js-reveal-ready');

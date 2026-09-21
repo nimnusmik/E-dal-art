@@ -772,6 +772,30 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .xp-lightbox-close:hover { background: var(--brand-hover); }
 
 /* ─── 서비스 (이용 흐름) ─────────────────────────────────────── */
+/* 핀 고정 스크롤: 섹션이 화면에 멈춘 채 행이 한 칸씩 내려온다 */
+.svc-scroll-wrap { height: 320dvh; }
+.svc-sticky {
+  position: sticky;
+  top: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+/* 고정 화면 안에서는 헤드 여백을 줄여 5행이 한 화면에 들어오게 한다 */
+.svc-sticky .xp-head { margin-bottom: clamp(24px, 4vh, 44px); }
+
+/* 행 등장 — 숨김은 js-reveal-ready 이후에만 (no-JS·인쇄는 전부 보임) */
+.js-reveal-ready .xp-service-row {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.js-reveal-ready .xp-service-row.is-shown { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .js-reveal-ready .xp-service-row { opacity: 1; transform: none; transition: none; }
+}
+
 .xp-service-list {
   display: flex;
   flex-direction: column;
