@@ -40,19 +40,22 @@ export default function TopBar() {
   }, []);
 
   return (
+    // 레퍼런스식 "떠 있는 다크 필" 내비 — 바 전체가 아니라 가운데 필 하나가 뜬다
     <header className={`xp-topbar${hidden ? ' is-hidden' : ''}${solid ? ' is-solid' : ''}`}>
-      <a className="xp-logo" href="#top">
-        이달아<span aria-hidden>✳</span>
-      </a>
-      <nav className="xp-topnav" aria-label="주요 메뉴">
-        <span className="xp-pill t-blue xp-issue-pill" suppressHydrationWarning>
-          {issue.koLabel}
-        </span>
-        {/* 게이트 상태에 따라 정직한 문구 — 히어로 CTA와 같은 규칙 */}
-        <a className="xp-pill xp-cta-top" href="#tool">
-          {gate.inviteRequired && !gate.hasInvite ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
+      <div className="xp-topbar-pill">
+        <a className="xp-logo" href="#top">
+          이달아<span aria-hidden>✳</span>
         </a>
-      </nav>
+        <nav className="xp-topnav" aria-label="주요 메뉴">
+          <span className="xp-topnav-issue xp-issue-pill" suppressHydrationWarning>
+            {issue.koLabel}
+          </span>
+          {/* 게이트 상태에 따라 정직한 문구 — 히어로 CTA와 같은 규칙 */}
+          <a className="xp-pill xp-cta-top" href="#tool">
+            {gate.inviteRequired && !gate.hasInvite ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
+          </a>
+        </nav>
+      </div>
     </header>
   );
 }

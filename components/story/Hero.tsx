@@ -6,12 +6,10 @@ import { GALLERY } from '@/components/landing/content';
 import { HERO_INSPO } from './heroInspo';
 
 /**
- * 다크 히어로 — 초대형 라이트 타이포 + "영감 사진 → 시안" 변환 스트립.
- *
- * 손 모핑 무대(HeroHand)를 대체한다: 제품의 핵심 서사(사진을 넣으면 네일 시안이
- * 나온다)를 착용샷이 아니라 입력→출력 자체로 보여준다. 재료는 전부 기존 에셋 —
- * 왼쪽은 영감 컷(heroInspo), 오른쪽은 실제 검수 통과 시안(GALLERY)이라
- * "이런 게 나와요"라는 주장이 히어로에서부터 참이다.
+ * 라이트 히어로 — 레퍼런스(see-for-yourself.com)의 구성 번역:
+ * 초대형 검정 타이포 + 뷰포트를 채우는 카테고리 패널 행.
+ * 패널 = 이달의 시안 무드들(실제 검수 통과작) + 맨 앞의 입력(영감 사진) 패널.
+ * 각 패널의 ⊕는 툴로 앵커 — "이 무드로 만들러 가기"라는 하나의 행동으로 수렴한다.
  */
 export default function Hero() {
   const issue = useIssue();
@@ -43,50 +41,39 @@ export default function Hero() {
         </a>
       </div>
 
-      {/* 히어로 오브젝트: 폰 목업(앱의 결정적 순간) + 네일 손.
-          스크린 안에서 영감 사진 → 시안 5종이 뽑히는 장면을 그대로 보여준다 */}
-      <div
-        className="hero-stage"
-        role="img"
-        aria-label="휴대폰 화면에서 영감 사진 세 장이 이달의 네일 시안으로 바뀌고, 네일을 올린 손이 그 옆에 놓인 장면"
-      >
-        <div className="hero-phone" aria-hidden>
-          <span className="hero-phone-island" />
-          <div className="hero-phone-screen">
-            <div className="phone-appbar">
-              <strong>이달아 ✳</strong>
-              <span suppressHydrationWarning>{issue.koShort ?? issue.koLabel}</span>
-            </div>
-            <span className="phone-label">영감 사진</span>
-            <ul className="phone-inspo" role="list">
-              {HERO_INSPO.slice(0, 3).map((cut) => (
-                <li key={cut.src}>
-                  <img src={cut.src} alt="" width={96} height={96} loading="eager" decoding="async" />
-                </li>
-              ))}
-            </ul>
-            <span className="phone-arrow">↓ AI 5종 변주</span>
-            <span className="phone-label">이달의 시안</span>
-            <ul className="phone-grid" role="list">
-              {GALLERY.map((g) => (
-                <li key={g.src}>
-                  <img src={g.src} alt="" width={150} height={150} loading="eager" decoding="async" />
-                </li>
-              ))}
-            </ul>
+      {/* 카테고리 패널 행 — 맨 앞은 입력(영감 사진), 나머지는 이달의 시안 무드 */}
+      <ul className="hero-panels" role="list">
+        <li className="hero-panel hero-panel-input">
+          <span className="hero-panel-label">영감 사진</span>
+          <div className="hero-panel-stack" aria-hidden>
+            {HERO_INSPO.slice(0, 3).map((cut) => (
+              <img key={cut.src} src={cut.src} alt="" width={96} height={96} loading="eager" decoding="async" />
+            ))}
           </div>
-        </div>
-        <img
-          className="hero-hand"
-          src="/hero/hand-after.webp"
-          alt=""
-          width={500}
-          height={898}
-          loading="eager"
-          decoding="async"
-        />
-      </div>
-
+          <span className="hero-panel-meta">스크린샷·옷·하늘, 1–3장</span>
+          <a className="hero-panel-plus" href="#tool" aria-label="영감 사진 올리러 가기">
+            <span aria-hidden>+</span>
+          </a>
+        </li>
+        {GALLERY.map((g) => (
+          <li className="hero-panel" key={g.src}>
+            <span className="hero-panel-label">{g.title}</span>
+            <img
+              className="hero-panel-img"
+              src={g.src}
+              alt={`이달의 시안 — ${g.title}`}
+              width={320}
+              height={320}
+              loading="eager"
+              decoding="async"
+            />
+            <span className="hero-panel-meta">{g.meta}</span>
+            <a className="hero-panel-plus" href="#tool" aria-label={`${g.title} 무드로 시안 만들러 가기`}>
+              <span aria-hidden>+</span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

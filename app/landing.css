@@ -9,7 +9,6 @@
   background-color: var(--paper);
   isolation: isolate;
 }
-.xp-hero.xp-meadow,
 .xp-footer-cta.xp-meadow {
   background-color: var(--dark-surface);
 }
@@ -25,7 +24,6 @@
   letter-spacing: -0.01em;
   word-break: keep-all;
 }
-.xp-hero .xp-display,
 .xp-footer-cta .xp-display { color: #fff; }
 
 /* 섹션 헤더 자리의 .xp-display는 일반 헤더와 같은 크기 스케일을 갖는다 */
@@ -69,13 +67,13 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* 지면 구간의 마지막 섹션만 하단 여백을 갖는다 */
 .xp-paper.is-band-end { padding-bottom: var(--space-section); }
 
-/* 섹션 공통 헤더 */
+/* 섹션 공통 헤더 — 여백을 넉넉히 (개편에서 밀도 완화) */
 .xp-head {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  margin: 0 auto clamp(40px, 6vh, 68px);
+  gap: 18px;
+  margin: 0 auto clamp(56px, 9vh, 96px);
   text-align: center;
 }
 
@@ -118,69 +116,66 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   .xp-cta { transition: none; }
 }
 
-/* ─── 상단 바 ────────────────────────────────────────────────── */
-/* 이전엔 pointer-events:none으로 클릭만 통과시키고 시각적 가림은 방치했다.
-   390px에서 알약 2개가 폭의 44%를 덮어 본문 글자가 잘렸다("손 착용샷 합성" →
-   "착용샷 합성"). 실제 배경을 주고 body에 오프셋을 확보한다. */
+/* ─── 상단 바: 떠 있는 다크 필 (레퍼런스 내비 번역) ─────────── */
 .xp-topbar {
   position: fixed;
-  top: 0;
+  top: 14px;
   left: 0;
   right: 0;
   z-index: 40;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px clamp(16px, 4vw, 44px);
-  transition: transform 0.25s ease, background 0.2s ease, border-color 0.2s ease;
-  background: transparent;
-  border-bottom: 1px solid transparent;
+  justify-content: center;
+  padding: 0 16px;
+  transition: transform 0.25s ease;
+  pointer-events: none; /* 필 바깥은 클릭 통과 */
 }
-
-/* 첫 화면에서는 히어로 사진을 가리지 않게 투명하게 두고, 스크롤한 뒤에만
-   지면을 깐다 — 이때부터는 본문 글자와 겹치기 때문에 배경이 필요하다 */
-.xp-topbar.is-solid {
-  background: rgba(255, 255, 255, 0.86);
+.xp-topbar-pill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2vw, 22px);
+  padding: 8px 8px 8px 20px;
+  border-radius: var(--r-pill);
+  background: rgba(2, 1, 9, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom-color: var(--line-soft);
+  box-shadow: 0 12px 40px rgba(2, 1, 9, 0.28);
 }
 
-/* 아래로 스크롤할 때는 숨기고 위로 올릴 때 복귀 — 390px에서 7.3% 회수는 크다 */
-.xp-topbar.is-hidden { transform: translateY(-105%); }
+/* 아래로 스크롤할 때는 숨기고 위로 올릴 때 복귀 */
+.xp-topbar.is-hidden { transform: translateY(calc(-100% - 14px)); }
+/* is-solid 시각 변화는 필 자체가 항상 지면을 갖고 있어 불필요 — 상태만 유지 */
 
 .xp-logo {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 11px 16px;   /* 34px → 40px 높이 */
-  border-radius: var(--r-pill);
-  background: var(--paper-card);
-  box-shadow: var(--shadow-card);
   font-family: var(--font-display);
-  font-size: var(--fs-200);
+  font-weight: 600;
+  font-size: var(--fs-300);
   letter-spacing: 0.02em;
-  color: var(--ink);
+  color: #fff;
   position: relative;
 }
 /* 보이는 크기는 유지하고 탭 영역만 44px 이상으로 */
-.xp-logo::after { content: ''; position: absolute; inset: -4px; }
+.xp-logo::after { content: ''; position: absolute; inset: -8px; }
+.xp-logo span { color: var(--sky); font-size: var(--fs-100); }
 
-.xp-logo span { color: var(--brand); font-size: var(--fs-100); }
+.xp-topnav { display: flex; align-items: center; gap: 12px; }
 
-.xp-topnav { display: flex; align-items: center; gap: 8px; }
+.xp-topnav-issue {
+  font-size: var(--fs-150);
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
 
-/* 상단 CTA — 다크 히어로 위(투명 바)에서는 흰 필, 스크롤 후 흰 바에서는 잉크 필 */
+/* 필 안의 CTA — 흰 필 + 잉크 텍스트 */
 .xp-topnav .xp-cta-top {
   background: #fff;
   color: var(--ink);
-  box-shadow: var(--shadow-cta);
+  box-shadow: none;
 }
-.xp-topbar.is-solid .xp-cta-top {
-  background: var(--brand);
-  color: #fff;
-}
+.xp-topnav .xp-cta-top:hover { background: #e8e8e8; }
 
 @media (max-width: 520px) {
   .xp-topnav .xp-issue-pill { display: none; }
@@ -196,32 +191,41 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   align-items: center;
   justify-content: center;
   gap: clamp(32px, 5vh, 56px);
-  padding: clamp(80px, 11vh, 120px) 24px 88px;
+  /* 상단은 떠 있는 내비 필 + 숨쉴 공간, 하단은 패널이 접힘선까지 닿게 0 */
+  padding: clamp(120px, 16vh, 176px) 24px 0;
   overflow: clip;
 }
 
-@media (max-width: 767px) {
-  /* 모바일 히어로는 손 무대 때문에 섹션 실제 높이가 1300px+ 인데, 사진을
-     78vh(약 633px)로만 깔면 그 아래 절반 이상이 배경색 단색이 되어 사진과
-     단색의 경계선이 그대로 드러난다. 대신 사진을 섹션보다 훨씬 크게 깔고
-     하단 기준(center bottom)으로 정렬하면 사진이 섹션 전체를 덮어 이음매가
-     사라지고, 위로 넘쳐 잘리는 만큼 지평선이 첫 화면 안으로 끌려 올라온다 */
-  .xp-hero {
-    background-size: auto 170%;
-    background-position: center bottom;
-    /* 구슬 궤도(heroMorph.ts의 orbitR 0.5~0.54)가 손 실루엣 밖으로 나가므로,
-       overflow:clip 경계에 잘리지 않도록 좌우 여백을 넉넉히 확보한다.
-       globals.css에 두면 landing.css의 padding shorthand에 밀려 무효가 된다 */
-    padding-left: 40px;
-    padding-right: 40px;
-  }
+/* 진입 모션 — 카피 페이드업 → 패널 스태거. 모션 저감 시 전부 끈다 */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+.xp-hero-copy > * { animation: rise-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+.xp-hero-copy > :nth-child(1) { animation-delay: 0.05s; }
+.xp-hero-copy > :nth-child(2) { animation-delay: 0.14s; }
+.xp-hero-copy > :nth-child(3) { animation-delay: 0.23s; }
+.xp-hero-copy > :nth-child(4) { animation-delay: 0.32s; }
+.hero-panel { animation: rise-in 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+.hero-panel:nth-child(1) { animation-delay: 0.35s; }
+.hero-panel:nth-child(2) { animation-delay: 0.43s; }
+.hero-panel:nth-child(3) { animation-delay: 0.51s; }
+.hero-panel:nth-child(4) { animation-delay: 0.59s; }
+.hero-panel:nth-child(5) { animation-delay: 0.67s; }
 
-  /* 사진이 섹션을 완전히 덮으므로 데스크톱용 이음매 그라데이션은 더 이상
-     필요 없고, 모바일에서는 초록 위 어색한 띠로 보이므로 꺼둔다 */
-  .xp-hero::after {
-    display: none;
+/* 스크롤 진입 모션 — 섹션 헤드가 뷰포트에 들어올 때 떠오른다 (지원 브라우저 한정) */
+@supports (animation-timeline: view()) {
+  .xp-head {
+    animation: rise-in both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .xp-hero-copy > *, .hero-panel, .xp-head { animation: none; }
+}
+
 
 .xp-hero-copy {
   position: relative;
@@ -239,140 +243,114 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* 추출 브랜드의 초대형 디스플레이 스텝 — "이달의 네일이 돼요"가 한 줄로 남는 상한 */
 .xp-hero-title { font-size: clamp(44px, 7vw, 96px); letter-spacing: -0.02em; }
 
-/* ─── 히어로 오브젝트: 폰 목업 + 네일 손 ─────────────────────── */
-.hero-stage {
+/* ─── 히어로 패널 행: 입력(영감 사진) + 이달의 시안 무드 ─────────
+   레퍼런스의 카테고리 패널 번역 — 뷰포트 폭을 채우는 등폭 패널,
+   라벨 좌상단 · 오브젝트 중앙 · ⊕ 우하단. */
+.hero-panels {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
+  /* 풀블리드: 100vw는 스크롤바 폭만큼 가로 오버플로를 만들므로(겹침·빡빡함의 원인)
+     히어로의 좌우 패딩(24px)을 되무르는 음수 마진으로 처리한다 */
+  width: auto;
+  align-self: stretch;
+  margin-inline: -24px;
+  margin-top: clamp(40px, 7vh, 88px);
+}
+.hero-panel {
   position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  /* 손이 오른쪽으로 삐져나오는 만큼 시각 중심을 유지하기 위한 보정 */
-  padding-right: clamp(80px, 12vw, 180px);
-}
-/* 오브젝트 뒤 은은한 블루 글로우 — 다크 지면에서 무대를 분리한다 */
-.hero-stage::before {
-  content: '';
-  position: absolute;
-  inset: -12% -20%;
-  z-index: -1;
-  background: radial-gradient(ellipse at 50% 55%, rgba(0, 153, 255, 0.16) 0%, transparent 62%);
-  pointer-events: none;
-}
-
-.hero-phone {
-  position: relative;
-  z-index: 2;
-  width: clamp(270px, 25vw, 330px);
-  padding: 12px;
-  border-radius: 52px;
-  background: #16161e;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(255, 255, 255, 0.04);
-}
-.hero-phone-island {
-  position: absolute;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 86px;
-  height: 24px;
-  border-radius: var(--r-pill);
-  background: #000;
-  z-index: 3;
-}
-.hero-phone-screen {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  border-radius: 40px;
-  background: #0a0a12;
-  padding: 58px 18px 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  aspect-ratio: 4 / 5;
+  /* 상하단 고정 요소(라벨·메타·⊕)와 오브젝트가 겹치지 않는 안전 패딩 */
+  padding: clamp(48px, 4.5vw, 64px) clamp(14px, 1.6vw, 24px) clamp(56px, 5vw, 72px);
+  background: var(--bg-deep);
   overflow: hidden;
+  transition: background 0.25s ease;
 }
-.phone-appbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  color: #fff;
-  font-size: var(--fs-200);
-}
-.phone-appbar span { color: rgba(255, 255, 255, 0.55); font-size: var(--fs-100); }
-.phone-label {
-  margin-top: 4px;
-  font-size: var(--fs-100);
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.55);
-}
-.phone-inspo {
-  display: flex;
-  gap: 8px;
-}
-.phone-inspo img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-.phone-inspo li { flex: 1; min-width: 0; }
-.phone-arrow {
-  align-self: center;
-  padding: 2px 0;
-  font-size: var(--fs-150);
-  font-weight: 500;
-  color: var(--sky); /* 변환(제품이 하는 일)에만 쓰는 블루 액센트 */
-}
-.phone-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-.phone-grid img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* 네일 손 — 폰 오른쪽 모서리에 살짝 겹쳐 "쥐기 직전" 구도.
-   키아웃된 webp라 다크 지면에 그대로 얹힌다. 폰(z:2)보다 앞(z:3). */
-.hero-hand {
+.hero-panel:hover { background: #ececec; }
+.hero-panel-img { transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.hero-panel:hover .hero-panel-img { transform: scale(1.04); }
+.hero-panel-label {
   position: absolute;
-  z-index: 3;
-  bottom: clamp(-90px, -6vw, -40px);
-  left: 50%;
-  margin-left: clamp(0px, 1vw, 14px);
-  width: clamp(240px, 24vw, 330px);
-  height: auto;
-  transform: rotate(14deg);
-  filter: drop-shadow(-18px 24px 40px rgba(0, 0, 0, 0.55));
-  pointer-events: none;
+  top: clamp(14px, 1.6vw, 22px);
+  left: clamp(14px, 1.6vw, 22px);
+  font-size: clamp(15px, 1.4vw, 20px);
+  font-weight: 600;
+  color: var(--ink);
 }
+.hero-panel-img {
+  width: min(78%, 260px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--r-media);
+  box-shadow: var(--shadow-card);
+}
+.hero-panel-meta {
+  position: absolute;
+  bottom: clamp(14px, 1.6vw, 22px);
+  left: clamp(14px, 1.6vw, 22px);
+  right: 64px;
+  font-size: var(--fs-150);
+  color: var(--text-3);
+}
+/* 입력 패널 — 영감 컷 3장을 살짝 부채꼴로 겹쳐 "재료 더미"로 보여준다 */
+.hero-panel-stack {
+  position: relative;
+  width: min(78%, 260px);
+  aspect-ratio: 1;
+}
+.hero-panel-stack img {
+  position: absolute;
+  width: 62%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--r-media);
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-card);
+}
+.hero-panel-stack img:nth-child(1) { top: 4%; left: 0; transform: rotate(-7deg); }
+.hero-panel-stack img:nth-child(2) { top: 12%; right: 0; transform: rotate(6deg); }
+.hero-panel-stack img:nth-child(3) { bottom: 2%; left: 18%; transform: rotate(-2deg); }
+.hero-panel-plus {
+  position: absolute;
+  right: clamp(12px, 1.4vw, 20px);
+  bottom: clamp(12px, 1.4vw, 20px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-round);
+  background: var(--ink);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 300;
+  line-height: 1;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.hero-panel-plus:hover { background: var(--brand-hover); transform: scale(1.06); }
 
-@media (max-width: 700px) {
-  .hero-stage { padding-right: 48px; }
-  .hero-hand {
-    width: 190px;
-    margin-left: 28px;
-    bottom: -56px;
+/* 좁은 폭: 가로 스크롤 스냅 — 레퍼런스의 "Scroll to Explore" 대응 */
+@media (max-width: 900px) {
+  .hero-panels {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .hero-panel {
+    flex: 0 0 min(72vw, 300px);
+    scroll-snap-align: center;
   }
 }
 
-/* 히어로 유일한 설명 문장. 대비는 .xp-hero::before의 상단 그라디언트가 만들므로
-   흰 글씨를 그대로 쓴다 — 흰 판을 깔면 읽히긴 하지만 사진 위 타이포 인상이 사라진다. */
-/* 19px/700은 WCAG 대형 텍스트(14pt bold = 18.66px) 기준을 넘으므로 요구 대비가
-   4.5:1 → 3:1로 내려간다. 사진을 더 어둡게 하는 대신 글자를 키워 대비 요건을
-   맞추는 쪽을 택했다 — 한글 가독성도 같이 올라간다. 실측 3.4~3.7:1로 통과. */
-.xp-hero-sub {
-  max-width: 40ch;
-  font-size: clamp(19px, 2vw, 22px);
-  line-height: 1.65;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.85); /* 다크 지면 위 — 그림자·스크림 불필요 */
-  word-break: keep-all;
-}
-
-/* 모든 primary CTA는 --brand 하나. 배경 밝기에 따라 색을 바꾸지 않는다 */
+/* ─── 통계 카드 ──────────────────────────────────────────────── */
+/* 모든 primary CTA는 --brand 하나. 배경 밝기에 따라 색을 바꾸지 않는다
+   (다크 섹션만 흰 필로 반전 — 아래 .xp-footer-cta 규칙) */
 .xp-cta {
   display: inline-block;
   margin-top: 4px;
@@ -386,19 +364,12 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   box-shadow: var(--shadow-lift);
   transition: background 0.2s ease, transform 0.15s ease;
 }
+.xp-cta:hover { background: var(--brand-hover); }
 .xp-cta:active { transform: scale(0.98); }
 
-/* 다크 섹션 위 CTA — 잉크 필이 지면에 묻히므로 흰 필로 반전한다 */
-.xp-hero .xp-cta,
-.xp-footer-cta .xp-cta {
-  background: #fff;
-  color: var(--ink);
-}
-.xp-hero .xp-cta:hover,
+/* 다크 섹션(푸터 CTA) 위 반전 — 잉크 필이 지면에 묻힌다 */
+.xp-footer-cta .xp-cta { background: #fff; color: var(--ink); }
 .xp-footer-cta .xp-cta:hover { background: #e8e8e8; }
-
-/* 다크 섹션 위 배지 필 — 추출 브랜드의 유리 필(흰 16% 알파) */
-.xp-hero .xp-pill,
 .xp-footer-cta .xp-pill {
   background: rgba(255, 255, 255, 0.16);
   color: #fff;
@@ -407,44 +378,12 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   -webkit-backdrop-filter: blur(6px);
 }
 
-@media (hover: hover) {
-  .xp-cta:hover { background: var(--brand-hover); }
+/* 라이트 히어로의 배지 필 — 흰 지면 위 뉴트럴 판 */
+.xp-hero .xp-pill {
+  background: var(--bg-deep);
+  box-shadow: none;
 }
 
-/* 손 무대는 히어로 카피 아래 — .hand-stage 자체 규칙은 globals.css가 소유.
-   z-index:1은 .xp-meadow::before(배경 오버레이, z-index:-1) 위로 올리기 위한 것일 뿐,
-   구슬의 앞뒤(0/3) 순서는 이 무대 안에서만 비교되므로 영향받지 않는다. */
-.xp-hero .hand-stage { position: relative; z-index: 1; margin-top: clamp(16px, 3vh, 40px); }
-
-/* 배지 부유(bob) 모션은 제거했다 — 정보 전달 0이고 첫 화면에서 시선만 분산시켰다.
-   .xp-float 클래스는 마크업 호환을 위해 남겨두되 아무 효과가 없다. */
-
-.xp-hero-cue {
-  position: absolute;
-  /* 기준이 뷰포트가 아니라 .xp-hero(높이 1300px대)라, bottom으로 두면 첫 화면
-     한참 아래에 찍혀 스크롤 유도 기능을 못 한다. 첫 화면 하단에 맞춘다 */
-  top: calc(100dvh - 40px);
-  bottom: auto;
-  /* 이 지점은 손 무대(.hand-stage, z-index:1)와 겹친다 — 명시적으로 위에 둬야
-     손 이미지에 가려지지 않는다 */
-  z-index: 2;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.16); /* 다크 히어로 위 유리 필 */
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  font-size: var(--fs-100);
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  color: #fff;
-}
-
-/* ─── 통계 카드 ──────────────────────────────────────────────── */
 .xp-cta-sm { padding: 14px 26px; min-height: 46px; font-size: var(--fs-200); }
 
 .xp-stat-grid {
