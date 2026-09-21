@@ -38,7 +38,7 @@ export default function Landing({ toolSlot }: { toolSlot: ReactNode }) {
     <div className="xp-landing">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSONLD }} />
       <a className="skip-link" href="#main-content">
-        본문으로 바로 가기
+        Skip to content
       </a>
       <TopBar />
       <main id="main-content">

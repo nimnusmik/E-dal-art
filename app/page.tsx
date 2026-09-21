@@ -349,7 +349,7 @@ export default function Home() {
         setGateOpen(false);
         setPhase('start');
         anchorToolRef.current = true;
-        showInline('초대 코드가 맞지 않아요. 다시 확인해주세요');
+        showInline("That code doesn't look right — please try again");
         return;
       }
       if (json.error === 'RATE_LIMIT_USER') { setPhase('blocked-user'); return; }
@@ -477,20 +477,20 @@ export default function Home() {
             <div className="xp-tool-copy">
               <div className="xp-tool-head">
                 <span className="xp-pill t-yellow" suppressHydrationWarning>
-                  {issue.koShort}
+                  {issue.monthLabel}
                 </span>
                 {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
                 <h2>
-                  영감 사진을 올리면,
+                  Drop your inspiration,
                   <br />
-                  이달의 시안이 나와요
+                  get this month&apos;s set
                 </h2>
               </div>
               {/* 이전 문구("사진을 더할수록 진화해요")는 상한만 말해 3장을 다 올려야
                   하는 것으로 읽혔다 — 최소 1장으로 시작할 수 있음을 먼저 말한다 */}
-              <p className="sub">사진 한 장으로 시작해도 돼요. 최대 3장까지 더할 수 있어요.</p>
+              <p className="sub">Start with one photo — add up to three.</p>
               <p className="assurance">
-                올린 사진은 시안을 만드는 동안에만 쓰고 이달아 서버에 저장하지 않아요.
+                Photos are used only while creating and never stored on our servers.
               </p>
             </div>
             <div className="xp-tool-form">
@@ -510,10 +510,10 @@ export default function Home() {
                   }}
                 >
                   <label className="invite-label" htmlFor="invite-code">
-                    지금은 초대받은 분만 시안을 만들 수 있어요
+                    Creating is invite-only right now
                   </label>
                   <p className="assurance">
-                    코드가 없어도 아래 시안 예시는 모두 실제로 만들어 검수를 통과한 결과물이에요.
+                    No code? Every example below is a real, quality-checked result.
                   </p>
                   <div className="notify-row">
                     <input
@@ -522,17 +522,17 @@ export default function Home() {
                       type="text"
                       required
                       autoComplete="off"
-                      placeholder="초대 코드"
+                      placeholder="Invite code"
                       value={inviteInput}
                       onChange={(e) => setInviteInput(e.target.value)}
                     />
                     <button className="btn-fill" type="submit">
-                      확인
+                      Enter
                     </button>
                   </div>
                   {/* 초대 없는 방문자(대다수)의 유일한 다음 행동 — 닫힌 문 앞에 탈출구를 둔다 */}
                   <a className="invite-alt" href="#subscribe">
-                    초대가 없다면 — 열릴 때 알림 받기 ↓
+                    No invite? Get notified when it opens ↓
                   </a>
                 </form>
               ) : (
@@ -563,7 +563,7 @@ export default function Home() {
                   className="cta"
                   onClick={hasPhotos ? generate : () => fileInputRef.current?.click()}
                 >
-                  {hasPhotos ? '무료로 시안 만들기' : '사진 골라서 시작하기'}
+                  {hasPhotos ? 'Create my set' : 'Pick a photo to start'}
                 </button>
               )}
               <input
@@ -585,8 +585,8 @@ export default function Home() {
               {/* 게이트가 닫혀 있으면 "무료 · N회 남음"은 지킬 수 없는 약속이다 */}
               <p className="remaining">
                 {!gateOpen
-                  ? '시안 예시는 코드 없이도 볼 수 있어요'
-                  : `오늘 ${remaining ?? 3}회 남음`}
+                  ? 'Examples are open — no code needed'
+                  : `${remaining ?? 3} of 3 runs left today`}
               </p>
               <AccountBar email={accountEmail} remaining={remaining} />
               {/* 보관함은 로그인한 사람에게만 — 비로그인에게는 빈 영역이 될 뿐이다 */}

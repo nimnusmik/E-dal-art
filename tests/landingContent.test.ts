@@ -74,11 +74,11 @@ describe('랜딩 콘텐츠', () => {
     }
   });
 
-  it('가격·횟수·사진 보관은 FAQ에서 반드시 답한다', () => {
+  it('가격·횟수·사진 보관은 FAQ에서 반드시 답한다 (2026-09-20 영어화)', () => {
     const joined = FAQS.map((f) => `${f.q} ${f.a}`).join('\n');
-    expect(joined).toMatch(/무료/);
-    expect(joined).toMatch(/3회/);
-    expect(joined).toMatch(/저장하지 않아요/);
+    expect(joined).toMatch(/free/i);
+    expect(joined).toMatch(/Three a day/i);
+    expect(joined).toMatch(/never stored/i);
   });
 
   it('카피에 "내 손" 표현을 쓰지 않는다 (사용자 손 사진 입력이 없다)', () => {
@@ -88,7 +88,8 @@ describe('랜딩 콘텐츠', () => {
       ...SCENES.map((s) => `${s.quote} ${s.body}`),
       ...FAQS.map((f) => f.q),
     ].join('\n');
-    expect(joined).not.toMatch(/내 손/);
+    // 영어 카피에서도 같은 규칙 — 착용샷 손은 사용자 손이 아니다
+    expect(joined).not.toMatch(/내 손|your own hand(?!s? photo is in the works)/);
   });
 
   it('통계 카드 톤은 파스텔 5색 중 하나다', () => {

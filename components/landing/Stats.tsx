@@ -19,7 +19,7 @@ export default function Stats() {
           <br />
           to your fingertips
         </h2>
-        <p>스크랩은 남의 손이에요. 이달아는 색과 구조를 다시 짜서 손에 올린 모습까지 만들어요.</p>
+        <p>Saved scraps are someone else&apos;s hands. idala re-styles the color and structure — all the way to a try-on.</p>
       </div>
       <div className="xp-stat-grid" ref={ref}>
         {STATS.map((s, i) => (

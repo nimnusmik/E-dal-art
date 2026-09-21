@@ -29,11 +29,11 @@ export default function Gallery() {
   }, [zoomed]);
 
   return (
-    <section className="xp-meadow xp-gallery" aria-label="시안 예시">
+    <section className="xp-meadow xp-gallery" aria-label="Example sets">
       <div className="xp-head xp-head-on-photo">
         <span className="xp-pill t-yellow" aria-hidden>Looks</span>
         <h2 className="xp-display">Looks of the month</h2>
-        <p>실제로 만들어 검수를 통과한 시안이에요. 영감 사진은 섞지 않았어요.</p>
+        <p>Real sets that passed our quality check — no inspiration photos mixed in.</p>
       </div>
       <ul className="xp-polaroids" role="list" ref={ref}>
         {GALLERY.map((g, i) => (
@@ -45,14 +45,14 @@ export default function Gallery() {
             <button
               type="button"
               className="xp-polaroid-btn"
-              aria-label={`크게 보기 — ${g.title}`}
+              aria-label={`View larger — ${g.title}`}
               onClick={() => setZoomed(g)}
             >
               <figure
                 className="xp-polaroid"
                 style={{ '--tilt': `${g.tilt}deg` } as CSSProperties}
               >
-                <img src={g.src} alt={`시안 예시 — ${g.title}`} width={320} height={320} loading="lazy" decoding="async" />
+                <img src={g.src} alt={`Example set — ${g.title}`} width={320} height={320} loading="lazy" decoding="async" />
                 <figcaption>
                   <strong>{g.title}</strong>
                   <span>{g.meta}</span>
@@ -68,17 +68,17 @@ export default function Gallery() {
         onClose={() => setZoomed(null)}
         /* 백드롭 클릭 = 닫기. 다이얼로그 안쪽 클릭은 target이 자식 요소라 걸러진다 */
         onClick={(e) => { if (e.target === dialogRef.current) setZoomed(null); }}
-        aria-label={zoomed ? `시안 크게 보기 — ${zoomed.title}` : '시안 크게 보기'}
+        aria-label={zoomed ? `View larger — ${zoomed.title}` : 'View larger'}
       >
         {zoomed && (
           <figure className="xp-lightbox-body">
-            <img src={zoomed.src} alt={`시안 예시 — ${zoomed.title}`} />
+            <img src={zoomed.src} alt={`Example set — ${zoomed.title}`} />
             <figcaption>
               <strong>{zoomed.title}</strong>
               <span>{zoomed.meta}</span>
             </figcaption>
             <button type="button" className="xp-lightbox-close" onClick={() => setZoomed(null)}>
-              닫기
+              Close
             </button>
           </figure>
         )}

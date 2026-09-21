@@ -60,12 +60,10 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .xp-paper {
   position: relative;
   background-color: var(--paper);
-  /* 도트 그리드는 모노크롬 개편으로 제거 — 흰 지면은 비워 둔다 */
-  padding: var(--space-section) clamp(20px, 5vw, 64px) 0;
+  /* 상·하 대칭 패딩 — 상단 전용이던 시절 Services 마지막 카드가 다음 섹션
+     머리에 붙는 겹침이 있었다. 인접 섹션 사이가 넓어지는 건 감수한다(여유 우선). */
+  padding: var(--space-section) clamp(20px, 5vw, 64px);
 }
-
-/* 지면 구간의 마지막 섹션만 하단 여백을 갖는다 */
-.xp-paper.is-band-end { padding-bottom: var(--space-section); }
 
 /* 섹션 공통 헤더 — 여백을 넉넉히 (개편에서 밀도 완화) */
 .xp-head {
@@ -331,15 +329,26 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   color: var(--text-3);
   transition: opacity 0.35s ease;
 }
-.phone-drop-img {
-  width: 86%;
+/* 영감 사진 3장 부채꼴 — 제품 상한(최대 3장)과 일치. 상태 1부터 순차로 스며든다 */
+.phone-drop-stack {
+  position: absolute;
+  inset: 8%;
+}
+.phone-drop-stack img {
+  position: absolute;
+  width: 58%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 12px;
+  border: 2px solid #fff;
+  box-shadow: var(--shadow-card);
   opacity: 0;
-  transform: scale(0.9) translateY(8px);
-  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform: scale(0.85) translateY(12px);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+.phone-drop-stack img:nth-child(1) { top: 2%; left: 0; rotate: -7deg; }
+.phone-drop-stack img:nth-child(2) { top: 10%; right: 0; rotate: 6deg; transition-delay: 0.12s; }
+.phone-drop-stack img:nth-child(3) { bottom: 2%; left: 20%; rotate: -2deg; transition-delay: 0.24s; }
 .phone-drop-check {
   position: absolute;
   right: -12px;
@@ -362,8 +371,8 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 /* 상태 전이 */
 .hero-phone[data-state='1'] .phone-drop { border-color: rgba(0, 153, 255, 0.55); }
 .hero-phone[data-state='2'] .phone-drop { border-color: var(--sky); }
-.hero-phone[data-state='1'] .phone-drop-img,
-.hero-phone[data-state='2'] .phone-drop-img { opacity: 1; transform: none; }
+.hero-phone[data-state='1'] .phone-drop-stack img,
+.hero-phone[data-state='2'] .phone-drop-stack img { opacity: 1; transform: none; }
 .hero-phone[data-state='1'] .phone-drop-hint,
 .hero-phone[data-state='2'] .phone-drop-hint { opacity: 0; }
 .hero-phone[data-state='2'] .phone-drop-check { opacity: 1; transform: none; }
@@ -408,7 +417,7 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
    라벨 좌상단 · 오브젝트 중앙 · ⊕ 우하단. */
 .hero-panels {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2px;
   width: 100%;
   margin: 0;

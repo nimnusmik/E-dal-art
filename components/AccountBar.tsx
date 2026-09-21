@@ -27,7 +27,7 @@ export default function AccountBar({
           {email}
         </span>
         <button className="btn-link" onClick={() => void signOut({ redirectTo: '/' })}>
-          로그아웃
+          Sign out
         </button>
       </div>
     );
@@ -37,22 +37,21 @@ export default function AccountBar({
     <div className="account-bar is-out">
       <div className="account-pitch">
         <button className="btn-outline account-cta" onClick={() => void signIn('google')}>
-          구글로 로그인
+          Sign in with Google
         </button>
         <p className="assurance">
-          로그인하면 오늘 남은 횟수
-          {remaining !== null ? `(${remaining}회)` : ''}가 기기나 네트워크가 바뀌어도
-          따라와요. 로그인하지 않아도 그대로 쓸 수 있어요.
+          Sign in and your remaining runs
+          {remaining !== null ? ` (${remaining})` : ''} follow you across devices.
+          You can keep using idala without signing in.
         </p>
       </div>
       {/* 동의 고지 — 이메일을 받기 시작하는 순간 필요한 최소 절차 */}
       <p className="assurance account-consent">
-        로그인하면{' '}
+        Signing in means you agree to the{' '}
         <a className="legal-link" href="/privacy" target="_blank" rel="noopener noreferrer">
-          개인정보 처리방침
+          privacy policy
         </a>
-        에 동의하는 것으로 봅니다. 구글 계정의 이메일만 받고 이름·프로필 사진은 받지
-        않아요. 만 14세 이상만 이용할 수 있어요.
+        . We only receive your Google account email — no name, no profile photo. 14+ only.
       </p>
     </div>
   );

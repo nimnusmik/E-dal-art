@@ -54,14 +54,14 @@ export default function Hero() {
   const state = usePhoneState(wrapRef);
 
   return (
-    <section className="xp-hero xp-meadow" id="top" aria-label="이달아 — 이달의 네일 아트">
+    <section className="xp-hero xp-meadow" id="top" aria-label="idala — nail sets of the month">
       <div className="xp-hero-copy">
         <div className="xp-hero-pills" aria-hidden>
           <span className="xp-pill" suppressHydrationWarning>
             {issue.monthLabel}
           </span>
           <span className="xp-pill">
-            {gated ? '초대받은 분만 · 예시는 자유롭게' : '가입 없이 · 하루 3회 무료'}
+            {gated ? 'Invite-only · examples are open' : 'No sign-up · 3 free runs a day'}
           </span>
         </div>
         {/* 디스플레이 레이어는 영어, 설득 문장은 한국어 — 이중 레이어 카피 체계 */}
@@ -71,11 +71,10 @@ export default function Hero() {
           this month&apos;s nails
         </h1>
         <p className="xp-hero-sub">
-          영감 사진을 올리면 AI가 다섯 갈래 시안을 만들어요. 마음에 든 시안은 손에 올린 모습까지
-          미리 볼 수 있어요.
+          Upload an inspiration photo and AI styles five nail sets. Preview your favorite on a hand before you commit.
         </p>
         <a className="xp-cta" href="#tool">
-          {gated ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
+          {gated ? 'Start with an invite code' : 'Create for free'}
         </a>
         <span className="xp-hero-scrollhint" aria-hidden>
           Scroll to create ↓
@@ -87,22 +86,11 @@ export default function Hero() {
         className="hero-scroll-wrap"
         ref={wrapRef}
         role="img"
-        aria-label="휴대폰에 영감 사진을 올리면 AI가 변주해 이달의 네일 시안이 완성되는 과정. 뒤에는 이달의 시안 무드 네 종이 놓여 있다"
+        aria-label="Inspiration photos drop into a phone, AI styles them, and the monthly nail set is ready — four finished mood sets stand behind"
       >
         <div className="hero-stage-sticky">
+          {/* 패널은 전부 완성본(검수 통과 시안) — 입력은 폰이 전담한다 */}
           <ul className="hero-panels" aria-hidden>
-            <li className="hero-panel hero-panel-input">
-              <span className="hero-panel-label">Inspiration</span>
-              <div className="hero-panel-stack">
-                {HERO_INSPO.slice(0, 3).map((cut) => (
-                  <img key={cut.src} src={cut.src} alt="" width={96} height={96} loading="eager" decoding="async" />
-                ))}
-              </div>
-              <span className="hero-panel-meta">스크린샷·옷·하늘, 1–3장</span>
-              <a className="hero-panel-plus" href="#tool" tabIndex={-1} aria-hidden>
-                <span>+</span>
-              </a>
-            </li>
             {GALLERY.map((g) => (
               <li className="hero-panel" key={g.src}>
                 <span className="hero-panel-label">{g.title}</span>
@@ -127,16 +115,21 @@ export default function Hero() {
             <span className="hero-phone-island" />
             <div className="hero-phone-screen">
               <div className="phone-drop">
-                <img
-                  className="phone-drop-img"
-                  src="/hero/insp/dreamy.webp"
-                  alt=""
-                  width={200}
-                  height={200}
-                  loading="eager"
-                  decoding="async"
-                />
-                <span className="phone-drop-hint">Drop your inspo photo</span>
+                {/* 영감 사진 3장이 부채꼴로 스며든다 — 제품 상한(최대 3장)과 일치 */}
+                <div className="phone-drop-stack">
+                  {HERO_INSPO.slice(0, 3).map((cut) => (
+                    <img
+                      key={cut.src}
+                      src={cut.src}
+                      alt=""
+                      width={140}
+                      height={140}
+                      loading="eager"
+                      decoding="async"
+                    />
+                  ))}
+                </div>
+                <span className="phone-drop-hint">Drop your inspo photos</span>
                 <span className="phone-drop-check">✓</span>
               </div>
               <div className="phone-status">

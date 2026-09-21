@@ -13,7 +13,7 @@ import { useReveal } from './useReveal';
 export default function Faq() {
   const ref = useReveal<HTMLUListElement>(0.1);
   return (
-    <section className="xp-paper xp-faq is-band-end" id="faq" aria-label="자주 묻는 질문">
+    <section className="xp-paper xp-faq is-band-end" id="faq" aria-label="FAQ">
       <div className="xp-head">
         <span className="xp-pill t-green" aria-hidden>FAQ</span>
         <h2>Before you start</h2>

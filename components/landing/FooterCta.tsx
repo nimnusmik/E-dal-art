@@ -11,7 +11,7 @@ export default function FooterCta() {
   const gate = useGate();
   const gated = gate.inviteRequired && !gate.hasInvite;
   return (
-    <section className="xp-meadow xp-footer-cta" aria-label="시안 만들러 가기">
+    <section className="xp-meadow xp-footer-cta" aria-label="Go create a set">
       <div className="xp-footer-inner">
         <span className="xp-pill t-blue" aria-hidden>
           Ready?
@@ -22,11 +22,11 @@ export default function FooterCta() {
           before anyone else
         </h2>
         <a className="xp-cta" href="#tool">
-          {gated ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
+          {gated ? 'Start with an invite code' : 'Create for free'}
         </a>
         {gated && (
           <a className="xp-footer-alt" href="#subscribe">
-            초대가 없다면 — 열릴 때 알림 받기
+            No invite? Get notified when it opens
           </a>
         )}
       </div>

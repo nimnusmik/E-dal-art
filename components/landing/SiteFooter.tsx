@@ -11,14 +11,14 @@ export default function SiteFooter() {
   return (
     <footer className="xp-footer-shell">
       <div className="xp-footer-bar">
-        <span>이달아 — AI가 만드는 이달의 네일</span>
+        <span>idala — AI nail sets, monthly</span>
         <span className="xp-footer-meta">
-          <span suppressHydrationWarning>{issue.koLabel}</span>
-          <a href="#faq">자주 묻는 질문</a>
+          <span suppressHydrationWarning>{issue.monthLabel}</span>
+          <a href="#faq">FAQ</a>
           {/* 처리방침은 어느 화면에서든 닿을 수 있어야 한다 */}
-          <a href="/privacy">개인정보 처리방침</a>
+          <a href="/privacy">Privacy</a>
           {/* 결제 의사를 묻는 페이지에 문의 채널이 없으면 신뢰가 깎인다 */}
-          <a href="mailto:kimsunmin0227@gmail.com">문의</a>
+          <a href="mailto:kimsunmin0227@gmail.com">Contact</a>
         </span>
       </div>
     </footer>
