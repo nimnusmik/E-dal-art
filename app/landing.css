@@ -556,6 +556,63 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   .xp-polaroid { transform: rotate(0deg); }
 }
 
+/* 폴라로이드를 감싸는 확대 버튼 — 시각은 figure가 전담하므로 버튼 크롬은 지운다 */
+.xp-polaroid-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  cursor: zoom-in;
+}
+
+/* ─── 시안 확대 보기 (네이티브 dialog) ───────────────────────── */
+.xp-lightbox {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  max-width: min(92vw, 640px);
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(16, 26, 44, 0.35);
+}
+.xp-lightbox::backdrop {
+  background: rgba(16, 26, 44, 0.62);
+  backdrop-filter: blur(3px);
+}
+.xp-lightbox-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 18px;
+}
+.xp-lightbox-body img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+.xp-lightbox-body figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.xp-lightbox-body figcaption strong { font-size: var(--fs-400); }
+.xp-lightbox-body figcaption span { font-size: var(--fs-200); color: var(--text-3); }
+.xp-lightbox-close {
+  align-self: flex-end;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.xp-lightbox-close:hover { background: var(--brand-hover); }
+
 /* ─── 서비스 (이용 흐름) ─────────────────────────────────────── */
 .xp-service-list {
   display: flex;

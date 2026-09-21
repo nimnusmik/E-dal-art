@@ -55,7 +55,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#5aa9e6',
+  // 히어로 상단 하늘 실측 평균(#00b0fd) — 모바일 브라우저 크롬이 첫 화면과 이어진다
+  themeColor: '#00b0fd',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

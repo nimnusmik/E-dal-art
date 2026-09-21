@@ -29,7 +29,11 @@ const CHECK = resolve(ROOT, 'ref/hand-after-check.png');
 
 for (const line of readFileSync(resolve(ROOT, '.env.local'), 'utf8').split('\n')) {
   const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m && !(m[1] in process.env)) process.env[m[1]] = m[2];
+  if (!m || m[1] in process.env) continue;
+  // vercel env pull 형식은 값을 큰따옴표로 감싼다 — 따옴표째 넣으면
+  // IMAGE_PROVIDER='"seedream"'이 되어 공급자 판정과 API 키가 전부 깨진다.
+  const v = m[2].trim();
+  process.env[m[1]] = v.startsWith('"') && v.endsWith('"') ? v.slice(1, -1) : v;
 }
 delete process.env.GEMINI_MOCK;
 delete process.env.SEEDREAM_MOCK;
@@ -45,7 +49,9 @@ const PROMPT = [
   'Do NOT smooth, retouch, plastify, or re-render the skin in any way.',
   'This must remain a real photograph of a real human hand — not a 3D render,',
   'not a mannequin, not a doll, not CGI, not an airbrushed beauty-filter skin.',
-  "Only change: apply this month's K-nail trend design to the five fingernails —",
+  // 2026-09-20 게이트 반려(엄지·검지 맨손톱) 수정 — 다섯 손톱 전수를 명시적으로 열거
+  "Only change: apply this month's K-nail trend design to ALL FIVE fingernails —",
+  'the thumb, index, middle, ring, AND pinky nails must every one be painted; no nail left bare —',
   'glazed glossy sheen, soft chrome shimmer, subtle aurora film gradient in muted pastel tones.',
   'Nails keep their natural short length and stay naturally attached to the fingers.',
   'Banned: 3D food charms (donut, candy, cake, fruit), ribbon bows, dangling charms,',
