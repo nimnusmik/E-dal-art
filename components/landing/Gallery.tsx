@@ -15,7 +15,7 @@ export default function Gallery() {
   return (
     <section className="xp-meadow xp-gallery" aria-label="시안 예시">
       <div className="xp-head xp-head-on-photo">
-        <span className="xp-pill t-yellow">Looks</span>
+        <span className="xp-pill t-yellow" aria-hidden>Looks</span>
         <h2 className="xp-display">이런 시안이 나와요</h2>
         <p>실제로 만들어 검수를 통과한 시안이에요. 영감 사진은 섞지 않았어요.</p>
       </div>

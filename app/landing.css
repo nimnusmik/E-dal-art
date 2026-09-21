@@ -551,6 +551,11 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   .xp-polaroid, .xp-polaroid:hover { transition: none; }
 }
 
+/* 1열로 쌓이는 좁은 폭에서는 기울기가 리듬이 아니라 흐트러짐으로 읽힌다 — 반듯하게 */
+@media (max-width: 520px) {
+  .xp-polaroid { transform: rotate(0deg); }
+}
+
 /* ─── 서비스 (이용 흐름) ─────────────────────────────────────── */
 .xp-service-list {
   display: flex;
@@ -811,6 +816,16 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 }
 
 .xp-footer-title { font-size: clamp(40px, 8vw, 88px); }
+
+/* 게이트가 닫혀 있을 때의 두 번째 제안 — 초원 사진 위라 흰색 + 밑줄로 링크임을 밝힌다 */
+.xp-footer-alt {
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--fs-300);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-shadow: 0 1px 8px rgba(16, 26, 44, 0.6);
+}
 
 /**
  * 풋터 바는 <main> 밖 별도 <footer>가 소유한다 (contentinfo 랜드마크).

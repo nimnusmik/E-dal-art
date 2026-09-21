@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useGate } from '@/lib/useGate';
 import { useIssue } from '@/lib/useIssue';
 
 /**
@@ -10,6 +11,7 @@ import { useIssue } from '@/lib/useIssue';
  */
 export default function TopBar() {
   const issue = useIssue();
+  const gate = useGate();
   const [hidden, setHidden] = useState(false);
   const [solid, setSolid] = useState(false);
 
@@ -46,8 +48,9 @@ export default function TopBar() {
         <span className="xp-pill t-blue xp-issue-pill" suppressHydrationWarning>
           {issue.koLabel}
         </span>
+        {/* 게이트 상태에 따라 정직한 문구 — 히어로 CTA와 같은 규칙 */}
         <a className="xp-pill xp-cta-top" href="#tool">
-          무료로 시안 만들기
+          {gate.inviteRequired && !gate.hasInvite ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
         </a>
       </nav>
     </header>

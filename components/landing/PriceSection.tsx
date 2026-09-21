@@ -9,10 +9,13 @@ import PriceProbe from '@/components/PriceProbe';
  * 본 직후에 묻는다.
  */
 export default function PriceSection() {
+  // id="subscribe" — 게이트 카드·푸터 CTA의 "알림 받기" 탈출구가 여기로 앵커한다
   return (
-    <section className="xp-paper xp-price" aria-label="구독 알림">
+    <section className="xp-paper xp-price" id="subscribe" aria-label="구독 알림">
       <div className="xp-head">
-        <span className="xp-pill t-purple">Subscribe</span>
+        <span className="xp-pill t-purple" aria-hidden>
+          Subscribe
+        </span>
         <h2>매달 이달의 아트를 받아볼까요?</h2>
       </div>
       <div className="xp-price-inner">

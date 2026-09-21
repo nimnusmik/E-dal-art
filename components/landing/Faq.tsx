@@ -15,7 +15,7 @@ export default function Faq() {
   return (
     <section className="xp-paper xp-faq is-band-end" id="faq" aria-label="자주 묻는 질문">
       <div className="xp-head">
-        <span className="xp-pill t-green">FAQ</span>
+        <span className="xp-pill t-green" aria-hidden>FAQ</span>
         <h2>시작하기 전에</h2>
       </div>
       <ul className="xp-faq-list" role="list" ref={ref}>

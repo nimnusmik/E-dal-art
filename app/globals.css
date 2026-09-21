@@ -108,11 +108,12 @@
   --disabled-bg: #dfe3ea;   /* 비활성 배경 — opacity 감쇠 금지 */
   --disabled-fg: #5b6070;   /* on --disabled-bg = 4.9:1 */
 
-  /* 디스플레이 = 초대형 헤비 타이포 (라틴 Archivo Black + 한글 Black Han Sans) */
-  --font-display: 'Archivo Black', 'Black Han Sans', 'Pretendard Variable', sans-serif;
+  /* 디스플레이 = 초대형 헤비 타이포 (라틴 Archivo Black + 한글 Black Han Sans).
+     실제 패밀리명은 next/font가 주입하는 변수(--font-archivo/--font-bhs)에서 온다 */
+  --font-display: var(--font-archivo), var(--font-bhs), 'Pretendard Variable', sans-serif;
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
   /* 라틴 액센트 — 한글이 섞이면 Black Han Sans로 떨어져 --font-display와 무게가 맞는다 */
-  --font-latin: 'Archivo Black', 'Black Han Sans', 'Pretendard Variable', sans-serif;
+  --font-latin: var(--font-archivo), var(--font-bhs), 'Pretendard Variable', sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1289,6 +1290,16 @@ label.slot:focus-within .slot-add {
   font-weight: 700;
   color: var(--text-1);
   word-break: keep-all;
+}
+
+/* 게이트 탈출구 — 초대 없는 방문자를 구독 알림(#subscribe)으로 보낸다 */
+.invite-alt {
+  align-self: flex-start;
+  font-size: var(--fs-200);
+  font-weight: 700;
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ─── 법적 고지 페이지 (처리방침 등) ─────────────────────────── */

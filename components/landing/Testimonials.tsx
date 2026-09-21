@@ -16,7 +16,7 @@ export default function Testimonials() {
     // 감성 콘텐츠라, 여기서 리듬을 끊으면 paper–사진–paper가 된다.
     <section className="xp-meadow xp-scenes" aria-label="이렇게 쓰여요">
       <div className="xp-head xp-head-on-photo">
-        <span className="xp-pill t-pink">Scenes</span>
+        <span className="xp-pill t-pink" aria-hidden>Scenes</span>
         <h2>이렇게 쓰여요</h2>
         <p>아직 출시 전이라 실제 후기 대신, 이달아가 그리는 사용 장면을 적었어요.</p>
       </div>

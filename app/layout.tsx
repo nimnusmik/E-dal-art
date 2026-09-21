@@ -1,8 +1,31 @@
 import type { Metadata, Viewport } from 'next';
+import { Archivo_Black, Black_Han_Sans } from 'next/font/google';
 import './globals.css';
 import './landing.css';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+/* 디스플레이 폰트 2종은 next/font 셀프호스팅 — 렌더 블로킹 외부 CSS 요청을 없앤다.
+   Pretendard는 동적 서브셋 CDN이 셀프호스팅보다 유리해 그대로 둔다. */
+const archivoBlack = Archivo_Black({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-archivo',
+});
+const blackHanSans = Black_Han_Sans({
+  weight: '400',
+  // 한글 글리프는 unicode-range 분할로 포함된다 — preload는 라틴만
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-bhs',
+});
+
+// NEXT_PUBLIC_SITE_URL이 빠져도 프로덕션 OG가 localhost로 떨어지지 않게
+// Vercel이 주입하는 프로덕션 도메인을 2차 폴백으로 쓴다.
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : 'http://localhost:3000');
 const TITLE = '이달아 — 이달의 네일 아트';
 const DESCRIPTION = '영감 사진을 올리면, 이달의 네일 아트 시안이 나와요';
 const OG_DESCRIPTION = '영감 사진 한 장으로 이달의 네일 시안 5종을 만들어요. 실제로 만들어 검수를 통과한 시안 예시를 볼 수 있어요.';
@@ -37,19 +60,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className={`${archivoBlack.variable} ${blackHanSans.variable}`}>
       <head>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-        />
-        {/* 초대형 디스플레이 — 라틴(Archivo Black) + 한글(Black Han Sans) */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Black+Han+Sans&display=swap"
         />
         {/* LCP 후보. CSS background-image라 브라우저가 landing.css를 파싱하고 해당 요소가
             레이아웃될 때까지 발견조차 못 한다 — 조건 없이 미리 받아 발견 시점을 HTML

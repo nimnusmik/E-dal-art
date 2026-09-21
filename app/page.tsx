@@ -530,6 +530,10 @@ export default function Home() {
                       확인
                     </button>
                   </div>
+                  {/* 초대 없는 방문자(대다수)의 유일한 다음 행동 — 닫힌 문 앞에 탈출구를 둔다 */}
+                  <a className="invite-alt" href="#subscribe">
+                    초대가 없다면 — 열릴 때 알림 받기 ↓
+                  </a>
                 </form>
               ) : (
                 <>

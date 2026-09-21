@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { FAQS } from './content';
 import HeroHand from '@/components/story/HeroHand';
 import TopBar from './TopBar';
 import Stats from './Stats';
@@ -21,9 +22,21 @@ import SiteFooter from './SiteFooter';
  *  2) 툴을 히어로 직후로 올린다. AI 이미지 툴의 전환 패턴은 "설득 후 사용"이 아니라
  *     "사용 중 설득"이다 — 이전 순서에서는 유일한 전환 지점이 스크롤 59% 지점에 있었다.
  */
+/** FAQ 리치 결과용 구조화 데이터 — content.ts FAQS가 단일 소스라 화면과 어긋날 수 없다 */
+const FAQ_JSONLD = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((f) => ({
+    '@type': 'Question',
+    name: f.q,
+    acceptedAnswer: { '@type': 'Answer', text: f.a },
+  })),
+});
+
 export default function Landing({ toolSlot }: { toolSlot: ReactNode }) {
   return (
     <div className="xp-landing">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSONLD }} />
       <a className="skip-link" href="#main-content">
         본문으로 바로 가기
       </a>

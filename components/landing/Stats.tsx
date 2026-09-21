@@ -10,7 +10,7 @@ export default function Stats() {
   return (
     <section className="xp-paper xp-stats" aria-label="이달아가 만드는 것">
       <div className="xp-head">
-        <span className="xp-pill t-blue">About</span>
+        <span className="xp-pill t-blue" aria-hidden>About</span>
         {/* 이전 헤드라인("기억에 남는 시안을 만들어요")은 어떤 제품이든 할 수 있는
             말이라 정보량이 0이었고, 본문은 히어로 부제를 리라이팅한 반복이었다.
             대신 사용자의 현재 대안(핀터레스트 스크랩)을 지목한다. */}

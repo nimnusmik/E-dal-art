@@ -44,6 +44,10 @@ export default function PriceProbe(): React.ReactElement {
       <p className="assurance">
         번호·가격·예약 문구까지 붙은 세트와 인스타 게시물을 매달 25일에 보내드려요.
       </p>
+      {/* "무료"(FAQ·통계 카드)와 이 가격이 한 페이지에 있으면 경계를 말해줘야 한다 */}
+      <p className="assurance">
+        시안 만들기는 계속 무료예요. 구독은 완성된 세트를 받아보는 선택이에요.
+      </p>
       {opened ? (
         <form
           className="notify-form"

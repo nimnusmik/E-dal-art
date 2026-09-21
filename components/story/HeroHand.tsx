@@ -193,8 +193,9 @@ export default function HeroHand() {
           영감 사진을 올리면 AI가 다섯 갈래 시안을 만들어요. 마음에 든 시안은 손에 올린 모습까지
           미리 볼 수 있어요.
         </p>
+        {/* 게이트가 닫혀 있으면 "무료로"는 문 앞에서 깨지는 약속이다 — 상태에 맞춰 말한다 */}
         <a className="xp-cta" href="#tool">
-          무료로 시안 만들기
+          {gate.inviteRequired && !gate.hasInvite ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
         </a>
       </div>
       {/* ↓↓↓ 이 무대는 heroMorph 타임라인과 1:1로 묶여 있다 — 구조 변경 금지 ↓↓↓ */}
@@ -263,7 +264,7 @@ export default function HeroHand() {
       </div>
       {/* ↑↑↑ 무대 끝 ↑↑↑ */}
       <div className="xp-hero-cue" aria-hidden>
-        Scroll <span>↓</span>
+        아래로 <span>↓</span>
       </div>
     </section>
   );

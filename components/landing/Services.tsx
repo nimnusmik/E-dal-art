@@ -16,7 +16,7 @@ export default function Services() {
   return (
     <section className="xp-paper xp-services" aria-label="이용 흐름">
       <div className="xp-head">
-        <span className="xp-pill t-purple">Process</span>
+        <span className="xp-pill t-purple" aria-hidden>Process</span>
         <h2>
           시안이 만들어지는
           <br />
