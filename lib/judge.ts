@@ -5,6 +5,7 @@ import { buildBriefPrompt } from './brief';
 import { generateImage } from './provider';
 import type { NailCore } from './core';
 import type { PhotoTake } from './photoTake';
+import { isMock } from './mock';
 
 /**
  * 3단계: vision 검수기 — 생성 결과를 브리프 대비 채점한다.
@@ -121,7 +122,7 @@ export async function judgeImage(image: ImagePayload, brief: NailBrief): Promise
 }
 
 async function judgeOnce(image: ImagePayload, brief: NailBrief): Promise<NailJudgement | null> {
-  if (process.env.GEMINI_MOCK === '1') return mockJudgement();
+  if (isMock()) return mockJudgement();
   try {
     const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -458,7 +459,7 @@ async function judgeOnceForCore(
   core: NailCore,
   photoTake: PhotoTake,
 ): Promise<CoreJudgement | null> {
-  if (process.env.GEMINI_MOCK === '1') return mockCoreJudgement();
+  if (isMock()) return mockCoreJudgement();
   try {
     const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });

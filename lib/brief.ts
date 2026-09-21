@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import type { ImagePayload, NailLength, NailShape, PartsIntensity, VariantPlan } from './types';
 import type { NailCore } from './core';
+import { isMock } from './mock';
 
 /**
  * 1단계 분석 v2 — 영감 사진 → "구조 문법 브리프".
@@ -55,7 +56,7 @@ export async function analyzeToBrief(images: ImagePayload[]): Promise<NailBrief 
 }
 
 async function analyzeOnce(images: ImagePayload[]): Promise<NailBrief | null> {
-  if (process.env.GEMINI_MOCK === '1') return mockBrief();
+  if (isMock()) return mockBrief();
   try {
     const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -313,7 +314,7 @@ const BRIEF_SCHEMA = {
   ],
 };
 
-/** 로컬 개발용 목 브리프 (GEMINI_MOCK=1) */
+/** 로컬 개발용 목 브리프 (IMAGE_MOCK=1) */
 async function mockBrief(): Promise<NailBrief> {
   await new Promise((r) => setTimeout(r, 300));
   return {
@@ -436,7 +437,7 @@ export function fallbackPlans(brief: NailBrief): VariantPlan[] {
  * 스키마 위반·어휘 위반·호출 실패 시 fallbackPlans로 폴백 — LLM 없이도 항상 5개 반환.
  */
 export async function planVariants(brief: NailBrief): Promise<VariantPlan[]> {
-  if (process.env.GEMINI_MOCK === '1') {
+  if (isMock()) {
     await new Promise((r) => setTimeout(r, 200));
     return fallbackPlans(brief);
   }
