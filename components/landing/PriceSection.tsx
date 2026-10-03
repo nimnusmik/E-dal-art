@@ -1,25 +1,50 @@
-import PriceProbe from '@/components/PriceProbe';
+'use client';
+
+import { useAccess } from '@/lib/useAccess';
 
 /**
- * 랜딩의 구독 수요 측정 지점.
+ * 가격 섹션 — 갤러리 바로 뒤.
  *
- * 결과 화면에도 같은 장치가 있지만, 초대 게이트가 켜져 있는 동안에는 대부분의 방문자가
- * 결과 화면에 도달하지 못한다. 검증 게이트(방문 대비 가격 클릭률 3%)를 재려면 측정
- * 장치가 누구나 닿는 곳에도 있어야 한다 — 갤러리 바로 뒤에 두어, 실제 검수 통과작을
- * 본 직후에 묻는다.
+ * 예전에는 가짜 가격 버튼(수요 측정용)이 있었다. 이제 실제 Stripe 결제로
+ * 바뀌었으므로 진짜 가격을 보여준다. 얼리버드(선착순 100명 ₩4,900)가
+ * 살아 있으면 그 가격을, 아니면 정가 ₩9,900을.
  */
 export default function PriceSection() {
-  // id="subscribe" — 게이트 카드·푸터 CTA의 "알림 받기" 탈출구가 여기로 앵커한다
+  const access = useAccess();
+  const earlyBird = access.earlyBirdLeft !== null && access.earlyBirdLeft > 0;
+  const fmt = (n: number) => `₩${n.toLocaleString('ko-KR')}`;
+
   return (
-    <section className="xp-paper xp-price" id="subscribe" aria-label="구독 알림">
+    <section className="xp-paper xp-price" id="pricing" aria-label="Pricing">
       <div className="xp-head">
         <span className="xp-pill t-purple" aria-hidden>
-          Subscribe
+          Pricing
         </span>
-        <h2>매달 이달의 아트를 받아볼까요?</h2>
+        <h2>One pass, yours forever</h2>
       </div>
       <div className="xp-price-inner">
-        <PriceProbe />
+        <div className="xp-price-card">
+          {earlyBird ? (
+            <>
+              <p className="xp-price-flag">Early bird · {access.earlyBirdLeft} of 100 left</p>
+              <p className="xp-price-now">{fmt(access.priceEarly)}</p>
+              <p className="xp-price-was">
+                <s>{fmt(access.priceRegular)}</s>
+              </p>
+            </>
+          ) : (
+            <p className="xp-price-now">{fmt(access.priceRegular)}</p>
+          )}
+          <ul className="xp-price-list">
+            <li>Lifetime access — pay once, never again</li>
+            <li>3 runs a day, refilled at midnight KST</li>
+            <li>Failed runs don&apos;t count</li>
+            <li>Secure checkout via Stripe</li>
+          </ul>
+          <a className="xp-cta" href="#tool">
+            {access.paid ? 'Create my set' : 'Get the pass'}
+          </a>
+        </div>
       </div>
     </section>
   );

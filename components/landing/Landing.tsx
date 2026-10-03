@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { FAQS } from './content';
-import HeroHand from '@/components/story/HeroHand';
+import Hero from '@/components/story/Hero';
 import TopBar from './TopBar';
 import Stats from './Stats';
 import Gallery from './Gallery';
@@ -38,11 +38,11 @@ export default function Landing({ toolSlot }: { toolSlot: ReactNode }) {
     <div className="xp-landing">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: FAQ_JSONLD }} />
       <a className="skip-link" href="#main-content">
-        본문으로 바로 가기
+        Skip to content
       </a>
       <TopBar />
       <main id="main-content">
-        <HeroHand />
+        <Hero />
         <ToolSection>{toolSlot}</ToolSection>
         <Gallery />
         <PriceSection />

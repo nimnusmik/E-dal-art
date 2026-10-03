@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import type { Material } from './core';
 import type { ImagePayload } from './types';
+import { isMock } from './mock';
 
 /**
  * 📷 사진에서만 뽑는 것 — 팔레트·모티프·무드 (스펙 4절 소유권 분리).
@@ -152,7 +153,7 @@ export async function extractPhotoTake(images: ImagePayload[]): Promise<PhotoTak
 }
 
 async function extractOnce(images: ImagePayload[]): Promise<PhotoTake | null> {
-  if (process.env.GEMINI_MOCK === '1') return mockPhotoTake();
+  if (isMock()) return mockPhotoTake();
   try {
     const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -243,7 +244,7 @@ const PHOTO_TAKE_SCHEMA = {
   required: ['palette', 'motifs', 'moodKo', 'moodEn', 'tone', 'fidelityAnchors'],
 };
 
-/** 로컬 개발용 목 (GEMINI_MOCK=1) — 실제 호출·과금 없이 전체 흐름 확인 */
+/** 로컬 개발용 목 (IMAGE_MOCK=1) — 실제 호출·과금 없이 전체 흐름 확인 */
 async function mockPhotoTake(): Promise<PhotoTake> {
   await new Promise((r) => setTimeout(r, 300));
   return {

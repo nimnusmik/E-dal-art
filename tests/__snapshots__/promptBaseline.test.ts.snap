@@ -1,8 +1,8 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`기존 코케트 프롬프트 (회귀 가드) > 프롬프트 문자열이 스냅샷과 일치한다 1`] = `
-"You are a top Korean nail artist presenting a design set inspired by the attached reference photo.
-Create ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual medium almond nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.
+"You are a top Korean nail artist presenting a design set. The attached photos are mood references only: borrow their motifs, palette and mood, and render everything as real nail art in the brief below — never as printed stickers of the artwork.
+Create ONE real, unedited phone photo taken by a nail salon owner of a finished press-on set she made by hand: ten individual medium almond nail tips mounted in two rows of five on a clear acrylic display stand on a white tabletop, lit by soft natural window daylight from one side, with real soft shadows, faint reflections on the acrylic, and a slightly shallow depth of field.
 
 DESIGN BRIEF — follow every line exactly:
 - Base of every tip: sheer milky nude with a glass-like high-gloss gel finish.
@@ -13,8 +13,14 @@ DESIGN BRIEF — follow every line exactly:
 
 - PARTS RULE: Exactly one tip carries a single small pearl on its french boundary line. Every other tip is painted gel only — no metal, no gems, no pearls.
 - Exactly one tip carries a single short cursive black script word "Sugar" — written once, on one tip only.
+- SET QUALITY: each tip carries ONE bold, clearly readable idea that owns its composition (a large sculpted or metal centerpiece, a spiral or lattice of raised chrome line work, a framed cameo motif, bold retro stripes) — confident and graphic, never a scatter of tiny bits. All ten ideas differ.
+- SET COHESION: the same two or three base colors and one metal tone repeat across all ten tips, so ten different designs read as one curated set.
+- Raised line work is smooth, even and slightly proud of the surface, like piped chrome gel.
 - METAL PART PHYSICS: every metal part is a FLAT embossed metal stud lying flush ON the nail surface, sealed under a layer of clear gel — glued down like a sticker with slight thickness. Each stud is a SOLID CAST shape with a clean closed outline, exactly the motif silhouette and nothing more. The stud stays fully inside the nail's outline.
 - Mood: kawaii coquette Y2K — sweet, airy, wearable.
-- Every element is hand-paintable by a human artist with gel: slight hand-made micro-variations, natural gel edge highlights, clean crisp edges.
-- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame."
+- Every element is buildable by hand: gel painting, 3D sculpting gel or acrylic, pearls and flat-back rhinestones sealed under clear gel.
+- Real handmade character: each tip is its own unique design; painted lines vary slightly in thickness, sculpted pieces differ a little in size and angle, pearls and rhinestones sit at slightly irregular positions, gel shows natural thickness at the edges. The photo reads as a genuine salon photo — natural color, real texture, no CGI gloss.
+- Exactly ten tips, two rows of five, following the per-tip list in order.
+- Keep it original: no recognizable characters or mascots.
+- The tips on their stand are the only subject: simple tabletop, no text overlays, no watermarks."
 `;

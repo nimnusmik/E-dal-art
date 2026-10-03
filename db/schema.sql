@@ -24,7 +24,12 @@ create table if not exists users (
   created_at    timestamptz not null default now(),
   last_seen_at  timestamptz not null default now(),
   -- 매달 발송 동의. 필수 동의와 분리된 별도 항목이다(정보통신망법)
-  marketing_ok  boolean     not null default false
+  marketing_ok  boolean     not null default false,
+  -- 이용권(Stripe). 설계 규칙 1 그대로 — 카드번호 같은 것은 절대 들어오지 않고
+  -- PG사 참조 ID와 결제 시각만 둔다. 탈퇴하면 행이 통째로 지워져 기록도 함께 파기된다.
+  stripe_customer_id text,
+  stripe_session_id  text,
+  paid_at       timestamptz
 );
 
 create index if not exists users_email_idx on users (email);

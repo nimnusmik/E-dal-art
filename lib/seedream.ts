@@ -1,4 +1,5 @@
 import type { ImageOutcome, ImagePayload } from './types';
+import { isMock } from './mock';
 
 const DEFAULT_BASE_URL = 'https://ark.ap-southeast.bytepluses.com/api/v3';
 const DEFAULT_MODEL = 'seedream-4-0';
@@ -37,7 +38,7 @@ export function parseSeedreamResponse(json: SeedreamResponse): ImageOutcome {
   return { image: null, mood: null, safetyBlocked: false };
 }
 
-/** 로컬 개발용 목 응답 (SEEDREAM_MOCK=1). 실제 호출·과금 없이 흐름 확인 */
+/** 로컬 개발용 목 응답 (IMAGE_MOCK=1). 실제 호출·과금 없이 흐름 확인 */
 async function mockSeedream(): Promise<ImageOutcome> {
   const { readFile } = await import('node:fs/promises');
   const path = await import('node:path');
@@ -52,7 +53,7 @@ async function mockSeedream(): Promise<ImageOutcome> {
 
 /** 서버 전용. 영감 사진 1~3장 + 지시문 → 네일 이미지 (무드는 클라이언트에서 색상 추출) */
 export async function callSeedream(images: ImagePayload[], prompt: string): Promise<ImageOutcome> {
-  if (process.env.SEEDREAM_MOCK === '1') return mockSeedream();
+  if (isMock()) return mockSeedream();
   const base = process.env.SEEDREAM_BASE_URL ?? DEFAULT_BASE_URL;
   const model = process.env.SEEDREAM_MODEL ?? DEFAULT_MODEL;
   const res = await fetch(`${base}/images/generations`, {

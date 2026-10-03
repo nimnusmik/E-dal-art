@@ -3,7 +3,7 @@
 import type { VariantSlot } from '@/app/page';
 
 /**
- * 시안 5종 그리드 — 생성 화면(스트리밍)과 결과 화면(선택)이 공유.
+ * 시안 3종 그리드 — 생성 화면(스트리밍)과 결과 화면(선택)이 공유.
  * pending: 스켈레톤 / done: 이미지 카드(선택 가능) / error: 슬롯 단위 재시도 / stopped: 한도 안내
  */
 export default function VariantGrid({
@@ -21,7 +21,7 @@ export default function VariantGrid({
     // 카드에 role="listitem"을 직접 붙이면 button의 암묵 역할이 덮여
     // "버튼"으로 낭독되지 않고 aria-pressed(선택 상태)도 무효가 된다.
     // 목록 시맨틱은 li가 갖고, 버튼은 버튼으로 둔다.
-    <ul className="variant-grid" aria-label="시안 5종">
+    <ul className="variant-grid" aria-label="시안 3종">
       {slots.map((slot, i) => {
         const no = String(i + 1).padStart(2, '0');
 
@@ -42,7 +42,7 @@ export default function VariantGrid({
                   <span className="variant-title">
                     시안 {no} — {slot.plan.title}
                   </span>
-                  {/* 무엇이 다른 시안인지 한 줄로 — 이름만 있으면 무작위 단어 5개로 읽힌다 */}
+                  {/* 무엇이 다른 시안인지 한 줄로 — 이름만 있으면 무작위 단어 3개로 읽힌다 */}
                   {note && <span className="variant-note">{note}</span>}
                   {slot.quality?.pass === false && (
                     <span className="variant-badge warn">아쉬운 컷</span>

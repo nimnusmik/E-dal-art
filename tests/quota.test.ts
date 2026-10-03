@@ -6,6 +6,7 @@ import {
   recordMetric,
   reserve,
   scopedQuotaKey,
+  sweepStalePending,
   totalQuotaKey,
   userQuotaKey,
   type CounterStore,
@@ -162,5 +163,93 @@ describe('recordMetric', () => {
     expect(f.map.get('metric:save:20260707')).toBe(2);
     expect(f.map.get('metric:price:20260707')).toBe(1);
     expect(f.ttls.size).toBe(0);
+  });
+});
+
+describe('reserve — 크래시 복구 pending 마커', () => {
+  // set/del/scan까지 구현한 스토어 — 실제 Upstash와 같은 능력
+  function trackingStore() {
+    const base = fakeStore();
+    const kv = new Map<string, string>();
+    const store: CounterStore = {
+      ...base.store,
+      // 실제 Redis와 달리 fake는 카운터(map)와 마커(kv)를 나눠 들고 있다 —
+      // get이 kv를 못 보면 마커가 전부 "깨진 것"으로 보여 테스트가 거짓말을 한다
+      async get(key: string) {
+        if (kv.has(key)) return kv.get(key) ?? null;
+        return base.store.get(key);
+      },
+      async set(key: string, value: string) {
+        kv.set(key, value);
+      },
+      async del(key: string) {
+        kv.delete(key);
+      },
+      async scan(_cursor: string | number, opts?: { match?: string; count?: number }) {
+        const prefix = (opts?.match ?? '').replace(/\*$/, '');
+        const keys = [...kv.keys()].filter((k) => k.startsWith(prefix));
+        return [0, keys] as [number, string[]];
+      },
+    };
+    return { store, kv, map: base.map };
+  }
+
+  it('trackPending이면 마커가 남고, commit()이 지운다 (카운터는 유지)', async () => {
+    const f = trackingStore();
+    const held = await reserve(f.store, [{ key: 'quota:variant:x:20260707', limit: 10, code: 'X' }], NOW, {
+      trackPending: true,
+    });
+    expect(held.ok).toBe(true);
+    expect(f.kv.size).toBe(1);
+    if (!held.ok) return;
+    await held.commit();
+    expect(f.kv.size).toBe(0);
+    expect(f.map.get('quota:variant:x:20260707')).toBe(1); // 성공분은 차감 유지
+  });
+
+  it('release()는 카운터를 되돌리고 마커도 지운다', async () => {
+    const f = trackingStore();
+    const held = await reserve(f.store, [{ key: 'quota:variant:x:20260707', limit: 10, code: 'X' }], NOW, {
+      trackPending: true,
+    });
+    expect(held.ok).toBe(true);
+    if (!held.ok) return;
+    await held.release();
+    expect(f.kv.size).toBe(0);
+    expect(f.map.get('quota:variant:x:20260707')).toBe(0);
+  });
+
+  it('set/del이 없는 스토어에서는 조용히 건너뛴다 (구형 fake 호환)', async () => {
+    const f = fakeStore();
+    const held = await reserve(f.store, [{ key: 'k', limit: 10, code: 'X' }], NOW, { trackPending: true });
+    expect(held.ok).toBe(true);
+    expect(f.map.get('k')).toBe(1);
+  });
+
+  it('sweepStalePending: 10분 넘은 마커만 환불한다', async () => {
+    const f = trackingStore();
+    const now = Date.now();
+    f.kv.set(
+      'quota:pending:quota:variant:x:20260707:old',
+      JSON.stringify({ key: 'quota:variant:x:20260707', takenAt: now - 700_000 }),
+    );
+    f.kv.set(
+      'quota:pending:quota:variant:x:20260707:new',
+      JSON.stringify({ key: 'quota:variant:x:20260707', takenAt: now - 60_000 }),
+    );
+    f.map.set('quota:variant:x:20260707', 2);
+    const swept = await sweepStalePending(f.store);
+    expect(swept).toBe(1);
+    expect(f.map.get('quota:variant:x:20260707')).toBe(1); // 오래된 1건만 환불
+    expect(f.kv.has('quota:pending:quota:variant:x:20260707:old')).toBe(false);
+    expect(f.kv.has('quota:pending:quota:variant:x:20260707:new')).toBe(true); // 살아 있는 요청은 유지
+  });
+
+  it('sweepStalePending: 깨진 마커는 치운다', async () => {
+    const f = trackingStore();
+    f.kv.set('quota:pending:broken', 'not-json{{{');
+    const swept = await sweepStalePending(f.store);
+    expect(swept).toBe(0);
+    expect(f.kv.has('quota:pending:broken')).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import { buildBriefPrompt } from './brief';
 import { generateImage } from './provider';
 import type { NailCore } from './core';
 import type { PhotoTake } from './photoTake';
+import { isMock } from './mock';
 
 /**
  * 3단계: vision 검수기 — 생성 결과를 브리프 대비 채점한다.
@@ -51,7 +52,14 @@ export interface JudgedImage {
 /** 브리프에서 기대 파츠 팁 수 범위를 추정 — partsLine의 명시 숫자 기반, 허용 오차 ±1 */
 export function expectedMetalTips(brief: NailBrief): { min: number; max: number } {
   const line = brief.partsLine.toLowerCase();
-  if (/zero metal|no metal|painted gel only[^.]*$/.test(line) && !/carries|carry/.test(line)) {
+  // 명시 개수("exactly N")가 있으면 그것을 우선한다 — 뒤에 무파츠 문구가 와도 마찬가지.
+  // ('painted gel only.'처럼 마침표로 끝나는 문장에서도 0-파츠로 읽히지 않게)
+  const hasExplicitCount = /exactly (one|two|three|four|five|\d+)/.test(line);
+  // 'carry/caries' 단독이 아니라 파츠 명사와 결합될 때만 "파츠 있음"으로 본다.
+  // ('all tips carry painted art only' 같은 무파츠 문장의 carry에 속지 않기 위함)
+  const mentionsParts =
+    /carr(?:y|ies)\b[^.]{0,80}\b(studs?|pearls?|gems?|metal|rhinestones?|beads?|3d)\b/.test(line);
+  if (!hasExplicitCount && !mentionsParts && /zero metal|no metal|painted gel only\b/.test(line)) {
     return { min: 0, max: 0 };
   }
   const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
@@ -121,7 +129,7 @@ export async function judgeImage(image: ImagePayload, brief: NailBrief): Promise
 }
 
 async function judgeOnce(image: ImagePayload, brief: NailBrief): Promise<NailJudgement | null> {
-  if (process.env.GEMINI_MOCK === '1') return mockJudgement();
+  if (isMock()) return mockJudgement();
   try {
     const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -458,7 +466,7 @@ async function judgeOnceForCore(
   core: NailCore,
   photoTake: PhotoTake,
 ): Promise<CoreJudgement | null> {
-  if (process.env.GEMINI_MOCK === '1') return mockCoreJudgement();
+  if (isMock()) return mockCoreJudgement();
   try {
     const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });

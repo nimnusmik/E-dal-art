@@ -11,8 +11,8 @@ import Landing from '@/components/landing/Landing';
 import { useIssue } from '@/lib/useIssue';
 import { fileToResizedPayload } from '@/lib/resize';
 import { clearSnapshot, loadSnapshot, saveSnapshot } from '@/lib/resume';
-import { clearInvite, inviteHeaders, setInvite } from '@/lib/invite';
-import { fetchGate } from '@/lib/useGate';
+import { fetchAccess, resetAccessCache } from '@/lib/useAccess';
+import Paywall from '@/components/Paywall';
 import type { NailBrief } from '@/lib/brief';
 import type { QualityReport } from '@/lib/judge';
 import type { Mood, NailLength, NailShape, PartsIntensity, VariantPlan } from '@/lib/types';
@@ -85,14 +85,16 @@ export default function Home() {
   const [heroError, setHeroError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   /**
-   * 초대 게이트 상태. 이미지 생성은 무료 티어가 없어 호출 1건이 곧 실비이므로,
-   * 수요 검증이 끝나기 전까지는 초대받은 사람만 생성한다(지출을 구조적으로 0에 가깝게).
-   * gateOpen=false면 툴 카드가 생성 CTA 대신 코드 입력을 보여준다.
+   * 이용권 상태. 생성 1건이 곧 실비이므로 이용권을 산 계정만 생성한다.
+   * paid=false면 툴 카드가 업로드 대신 페이월을 보여준다 — 사진을 다 올리게 한 뒤
+   * "사실 못 만들어요"라고 하는 건 최악의 순서다.
    */
-  const [inviteOn, setInviteOn] = useState(false);
-  const [gateOpen, setGateOpen] = useState(true);
-  const [inviteInput, setInviteInput] = useState('');
-  /** 로그인한 계정 이메일 — 게이트 조회에 실려 온다(SessionProvider 불필요) */
+  const [paid, setPaid] = useState(false);
+  /** 얼리버드 남은 수량 (null이면 모름 — 그때는 얼리버드가를 보여주지 않는다) */
+  const [earlyBirdLeft, setEarlyBirdLeft] = useState<number | null>(null);
+  const [priceRegular, setPriceRegular] = useState(9900);
+  const [priceEarly, setPriceEarly] = useState(4900);
+  /** 로그인한 계정 이메일 — 접근 조회에 실려 온다(SessionProvider 불필요) */
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [error, setError] = useState<AppError>(null);
   const [notifyEmail, setNotifyEmail] = useState('');
@@ -103,8 +105,8 @@ export default function Home() {
   const anchorToolRef = useRef(false);
   // 세션 토큰 — 리셋/재생성 이후 도착하는 이전 세션 응답을 무시
   const sessionRef = useRef(0);
-  // analyze가 준 브리프·전송 이미지 — variant 재시도와 hero 호출에 재사용
-  const briefRef = useRef<NailBrief | null>(null);
+  // analyze가 준 브리프·variant 세션 토큰·전송 이미지 — variant 재시도와 hero 호출에 재사용
+  const briefRef = useRef<{ brief: NailBrief; variantToken: string | null } | null>(null);
   const imagesRef = useRef<{ data: string; mimeType: string }[]>([]);
   /**
    * 지금 보고 있는 시안을 만들 때 쓴 옵션.
@@ -121,6 +123,8 @@ export default function Home() {
   const abortRef = useRef<AbortController | null>(null);
   // 파일 선택 트리거 — 사진 0장에서도 CTA가 활성이어야 하므로 버튼이 이 input을 연다
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 착용샷 중복 호출 가드 — state는 비동기라 더블탭이 둘 다 통과하므로 ref 집합으로 선점한다
+  const heroInflight = useRef(new Set<string>());
 
   const showInline = useCallback((text: string) => setError({ text, kind: 'inline' }), []);
   const showToast = useCallback((text: string) => setError({ text, kind: 'toast' }), []);
@@ -179,13 +183,15 @@ export default function Home() {
     return () => clearTimeout(t);
   }, [error]);
 
-  // 시작 화면 잔여 횟수 (GET /api/analyze — 조회만, 차감 없음)
+  // 시작 화면 접근 상태 (GET /api/access — 조회만, 차감 없음)
   useEffect(() => {
-    void fetchGate().then((g) => {
-      setRemaining(g.remaining);
-      setInviteOn(g.inviteRequired);
-      setGateOpen(!g.inviteRequired || g.hasInvite);
-      setAccountEmail(g.email);
+    void fetchAccess().then((a) => {
+      setRemaining(a.remaining);
+      setPaid(a.paid);
+      setAccountEmail(a.email);
+      setEarlyBirdLeft(a.earlyBirdLeft);
+      setPriceRegular(a.priceRegular);
+      setPriceEarly(a.priceEarly);
     });
   }, []);
 
@@ -254,14 +260,21 @@ export default function Home() {
   /** variant 1건 생성 — 개별 then으로 완성순 렌더 (Promise.all 대기 금지) */
   const fetchVariant = useCallback(
     async (plan: VariantPlan, session: number) => {
-      const brief = briefRef.current;
-      if (!brief) return;
+      const sessionData = briefRef.current;
+      if (!sessionData) return;
       try {
+        // variant는 maxDuration 120초 — 모바일 네트워크 행(hang)에 대비해 타임아웃을 건다
+        const timeout = AbortSignal.timeout(130_000);
         const res = await fetch('/api/variant', {
           method: 'POST',
-          headers: { 'content-type': 'application/json', ...inviteHeaders() },
-          body: JSON.stringify({ images: imagesRef.current, brief, plan }),
-          signal: abortRef.current?.signal,
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            images: imagesRef.current,
+            brief: sessionData.brief,
+            plan,
+            variantToken: sessionData.variantToken,
+          }),
+          signal: abortRef.current?.signal ? AbortSignal.any([abortRef.current.signal, timeout]) : timeout,
         });
         const json = await res.json();
         if (sessionRef.current !== session) return; // 이전 세션 응답 폐기
@@ -279,8 +292,14 @@ export default function Home() {
         }
         // REJECTED/502 등 개별 실패 — 이 슬롯만 재시도 버튼으로 (전체를 죽이지 않는다)
         patchSlot(plan.id, { status: 'error' });
-      } catch {
-        if (sessionRef.current === session) patchSlot(plan.id, { status: 'error' });
+      } catch (err) {
+        if (sessionRef.current !== session) return;
+        patchSlot(plan.id, { status: 'error' });
+        // 세션이 살아 있는데 AbortError면 사용자 취소가 아니라 타임아웃이다
+        // (사용자 취소는 sessionRef를 올린다)
+        if ((err as Error)?.name === 'AbortError') {
+          showToast('시간이 초과됐어요. 다시 시도해도 횟수는 차감되지 않아요');
+        }
       }
     },
     [patchSlot, showToast],
@@ -297,7 +316,7 @@ export default function Home() {
     [slots, patchSlot, fetchVariant],
   );
 
-  /** 분석 → 5종 병렬 생성 시작 */
+  /** 분석 → 3종 병렬 생성 시작 */
   const generate = useCallback(async () => {
     if (photos.length === 0) return;
     const session = ++sessionRef.current;
@@ -321,18 +340,23 @@ export default function Home() {
     // 이 한 줄이 없으면 12초 기다린 뒤 히어로로 튕겨 "초기화됐네" 하고 이탈한다.
     anchorToolRef.current = true;
     try {
+      // analyze는 maxDuration 60초 — 모바일 네트워크 행(hang)에 대비해 타임아웃을 건다
+      const timeout = AbortSignal.timeout(70_000);
       const res = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', ...inviteHeaders() },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ images, shape, length, partsIntensity }),
-        signal: ac.signal,
+        signal: AbortSignal.any([ac.signal, timeout]),
       });
       const json = await res.json();
       if (sessionRef.current !== session) return;
       if (res.ok) {
         const brief: NailBrief = json.brief;
         const plans: VariantPlan[] = json.plans;
-        briefRef.current = brief;
+        briefRef.current = {
+          brief,
+          variantToken: typeof json.variantToken === 'string' ? json.variantToken : null,
+        };
         anchorToolRef.current = false; // 성공했으므로 앵커 복귀는 필요 없다
         setMood({ keywords: brief.keywords ?? [], colors: brief.colors ?? [] });
         setCraft({ difficulty: brief.difficulty, notes: brief.feasibilityNotes });
@@ -343,13 +367,21 @@ export default function Home() {
         plans.forEach((plan) => void fetchVariant(plan, session));
         return;
       }
-      if (json.error === 'INVITE_REQUIRED') {
-        // 코드가 틀렸거나 만료 — 저장분을 버리고 다시 묻는다
-        clearInvite();
-        setGateOpen(false);
+      if (json.error === 'LOGIN_REQUIRED' || json.error === 'PAYMENT_REQUIRED') {
+        // 로그아웃됐거나 이용권이 없음 — 접근 상태를 다시 묻고 페이월로 돌린다
+        resetAccessCache();
+        const a = await fetchAccess();
+        setPaid(a.paid);
+        setAccountEmail(a.email);
+        setRemaining(a.remaining);
+        setEarlyBirdLeft(a.earlyBirdLeft);
         setPhase('start');
         anchorToolRef.current = true;
-        showInline('초대 코드가 맞지 않아요. 다시 확인해주세요');
+        showInline(
+          json.error === 'LOGIN_REQUIRED'
+            ? '로그인이 필요해요. 먼저 로그인해주세요.'
+            : '이용권이 필요해요. 아래에서 시작할 수 있어요.',
+        );
         return;
       }
       if (json.error === 'RATE_LIMIT_USER') { setPhase('blocked-user'); return; }
@@ -362,8 +394,13 @@ export default function Home() {
       );
     } catch (err) {
       if (sessionRef.current !== session) return;
-      // 사용자가 취소한 경우는 에러가 아니다
-      if ((err as Error)?.name === 'AbortError') return;
+      if ((err as Error)?.name === 'AbortError') {
+        if (ac.signal.aborted) return; // 사용자가 취소한 경우는 에러가 아니다
+        // 타임아웃 — 서버 쿼터는 선점됐을 수 있으나 실패 시 환불된다
+        setPhase('start');
+        showInline('응답이 너무 오래 걸려요. 다시 시도해주세요. 실패한 시도는 횟수가 차감되지 않아요');
+        return;
+      }
       setPhase('start');
       showInline('사진 분석에 실패했어요. 올린 사진은 그대로 있으니 다시 시도해주세요');
     }
@@ -406,19 +443,24 @@ export default function Home() {
       const slot = slots.find((s) => s.plan.id === planId);
       if (!slot?.tipSet) return;
       if (heroMap[planId]) return; // 이미 로딩 중이거나 완료 — 중복 호출 방지
+      // state는 비동기라 더블탭이 둘 다 통과한다 — ref 집합으로 먼저 선점한다
+      if (heroInflight.current.has(planId)) return;
+      heroInflight.current.add(planId);
       const session = sessionRef.current;
       setHeroError(null);
       setHeroMap((prev) => ({ ...prev, [planId]: { status: 'loading', image: null } }));
       try {
         const res = await fetch('/api/hero', {
           method: 'POST',
-          headers: { 'content-type': 'application/json', ...inviteHeaders() },
+          headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             images: imagesRef.current,
             tipSet: { image: slot.tipSet.image, mimeType: slot.tipSet.mimeType },
             // 픽커의 현재값이 아니라 이 팁셋을 만든 옵션 — 시안과 착용샷의 쉐입이 갈리면 안 된다
             ...genOptionsRef.current,
           }),
+          // hero는 maxDuration 60초 — 네트워크 행(hang)에 대비해 타임아웃을 건다
+          signal: AbortSignal.timeout(70_000),
         });
         const json = await res.json();
         if (sessionRef.current !== session) return;
@@ -437,14 +479,20 @@ export default function Home() {
             ? '오늘 착용샷 생성 한도에 도달했어요. 내일 다시 시도해주세요.'
             : '착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.',
         );
-      } catch {
+      } catch (err) {
         if (sessionRef.current !== session) return;
         setHeroMap((prev) => {
           const next = { ...prev };
           delete next[planId];
           return next;
         });
-        setHeroError('착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.');
+        setHeroError(
+          (err as Error)?.name === 'AbortError'
+            ? '착용샷 생성에 시간이 너무 오래 걸려요. 다시 시도해도 괜찮아요.'
+            : '착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.',
+        );
+      } finally {
+        heroInflight.current.delete(planId);
       }
     },
     [slots, heroMap, showToast], // shape·length는 genOptionsRef로 읽으므로 의존성 아님
@@ -477,64 +525,33 @@ export default function Home() {
             <div className="xp-tool-copy">
               <div className="xp-tool-head">
                 <span className="xp-pill t-yellow" suppressHydrationWarning>
-                  {issue.koShort}
+                  {issue.monthLabel}
                 </span>
                 {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
                 <h2>
-                  영감 사진을 올리면,
+                  Drop your inspiration,
                   <br />
-                  이달의 시안이 나와요
+                  get this month&apos;s set
                 </h2>
               </div>
               {/* 이전 문구("사진을 더할수록 진화해요")는 상한만 말해 3장을 다 올려야
                   하는 것으로 읽혔다 — 최소 1장으로 시작할 수 있음을 먼저 말한다 */}
-              <p className="sub">사진 한 장으로 시작해도 돼요. 최대 3장까지 더할 수 있어요.</p>
+              <p className="sub">Start with one photo — add up to three.</p>
               <p className="assurance">
-                올린 사진은 시안을 만드는 동안에만 쓰고 이달아 서버에 저장하지 않아요.
+                Photos are used only while creating and never stored on our servers.
               </p>
             </div>
             <div className="xp-tool-form">
               {inlineError}
-              {/* 게이트가 닫혀 있으면 업로드부터 막는다 — 사진을 다 올리게 한 뒤
+              {/* 이용권이 없으면 업로드부터 막는다 — 사진을 다 올리게 한 뒤
                   "사실 못 만들어요"라고 하는 건 최악의 순서다 */}
-              {!gateOpen ? (
-                <form
-                  className="invite-gate"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const code = inviteInput.trim();
-                    if (!code) return;
-                    setInvite(code);
-                    setGateOpen(true);
-                    setError(null);
-                  }}
-                >
-                  <label className="invite-label" htmlFor="invite-code">
-                    지금은 초대받은 분만 시안을 만들 수 있어요
-                  </label>
-                  <p className="assurance">
-                    코드가 없어도 아래 시안 예시는 모두 실제로 만들어 검수를 통과한 결과물이에요.
-                  </p>
-                  <div className="notify-row">
-                    <input
-                      id="invite-code"
-                      className="notify-input"
-                      type="text"
-                      required
-                      autoComplete="off"
-                      placeholder="초대 코드"
-                      value={inviteInput}
-                      onChange={(e) => setInviteInput(e.target.value)}
-                    />
-                    <button className="btn-fill" type="submit">
-                      확인
-                    </button>
-                  </div>
-                  {/* 초대 없는 방문자(대다수)의 유일한 다음 행동 — 닫힌 문 앞에 탈출구를 둔다 */}
-                  <a className="invite-alt" href="#subscribe">
-                    초대가 없다면 — 열릴 때 알림 받기 ↓
-                  </a>
-                </form>
+              {!paid ? (
+                <Paywall
+                  email={accountEmail}
+                  earlyBirdLeft={earlyBirdLeft}
+                  priceRegular={priceRegular}
+                  priceEarly={priceEarly}
+                />
               ) : (
                 <>
                   <InspirationTray
@@ -558,12 +575,12 @@ export default function Home() {
               {/* 비활성 버튼은 퍼널에서 지운다. 사진이 없으면 버튼이 파일 선택기를 열어
                   "다음에 필요한 행동"으로 직결된다 — 히어로 CTA로 여기 온 사용자가
                   누를 수 없는 회색 버튼을 만나지 않는다. */}
-              {gateOpen && (
+              {paid && (
                 <button
                   className="cta"
                   onClick={hasPhotos ? generate : () => fileInputRef.current?.click()}
                 >
-                  {hasPhotos ? '무료로 시안 만들기' : '사진 골라서 시작하기'}
+                  {hasPhotos ? 'Create my set' : 'Pick a photo to start'}
                 </button>
               )}
               <input
@@ -582,13 +599,10 @@ export default function Home() {
               />
               {/* 잔여를 숨기면 "아껴 쓰려다 아예 안 누르는" 역효과가 난다.
                   보이면 희소성이 행동을 밀어준다 — 알 수 있을 때는 항상 보여준다. */}
-              {/* 게이트가 닫혀 있으면 "무료 · N회 남음"은 지킬 수 없는 약속이다 */}
-              <p className="remaining">
-                {!gateOpen
-                  ? '시안 예시는 코드 없이도 볼 수 있어요'
-                  : `오늘 ${remaining ?? 3}회 남음`}
-              </p>
-              <AccountBar email={accountEmail} remaining={remaining} />
+              {paid && (
+                <p className="remaining">{`${remaining ?? 3} of 3 runs left today`}</p>
+              )}
+              <AccountBar email={accountEmail} />
               {/* 보관함은 로그인한 사람에게만 — 비로그인에게는 빈 영역이 될 뿐이다 */}
               {accountEmail && <Library />}
             </div>

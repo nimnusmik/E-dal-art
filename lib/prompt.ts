@@ -1,15 +1,4 @@
-import type { NailAnalysis, NailShape, NailLength } from './types';
-
-/**
- * 1단계 분석 결과 → 생성 프롬프트에 넣을 디자인 브리프.
- * 참조 사진의 특징을 텍스트로 고정해, 생성 모델이 사진의 어떤 요소를
- * 반영해야 하는지 명시적으로 통제한다 (분석 실패 시 빈 문자열 = 기존 동작).
- */
-export function buildAnalysisBrief(analysis: NailAnalysis | null): string {
-  if (!analysis) return '';
-  const partsLine = analysis.parts.length > 0 ? ` Parts: ${analysis.parts.join(', ')}.` : '';
-  return `\n- Design brief extracted by a salon owner from the inspiration photos — follow it precisely: base ${analysis.baseStyle}; techniques ${analysis.techniques.join(', ')}; finish ${analysis.finish}; dominant colors ${analysis.colors.join(', ')}.${partsLine}`;
-}
+import type { NailShape, NailLength } from './types';
 
 /**
  * 사람 네일 아티스트의 실제 작업물처럼 보이게 하는 공통 제약.
@@ -33,7 +22,6 @@ export function buildPrompt(
   trendKeywords: string[],
   imageCount: number,
   hasTipReference = false,
-  analysis: NailAnalysis | null = null,
 ): string {
   const sourceLine = hasTipReference
     ? 'One attached reference image is a flat-lay SET of finished nail tip designs. The five nails on the hand MUST replicate five designs chosen from that set exactly — same colors, textures, gel layers, and patterns. Do not invent new designs; copy them faithfully onto the fingernails.'
@@ -45,37 +33,10 @@ export function buildPrompt(
 
   return `You are a top Korean nail artist creating this month's signature nail art.
 Create ONE photorealistic photo of a finished nail design.
-- ${sourceLine}${buildAnalysisBrief(analysis)}
+- ${sourceLine}
 - Nail shape: ${shape}. Nail length: ${length}. This shape and length are the client's order — they OVERRIDE whatever shape or length appears in the inspiration photos. Take only colors, textures, and mood from the photos.${trendLine}
 - Style: glazed glossy finish, chrome/magnetic shimmer, translucent gel layers, dreamy low-saturation K-nail palette. Never flat garish colors.${HUMAN_ARTIST_LINES}
 - Composition: close-up of exactly ONE relaxed real hand (a single hand, five fingers — a second hand must not appear anywhere in the frame, not even partially) with fingers gently extended toward the camera, like a typical Instagram manicure after-shot. Each of the five fingernails grows naturally out of its own fingertip's nail bed, surrounded by cuticle and skin — nails are part of the fingers, never objects resting ON the skin. No detached nails, no nails on knuckles or the back of the hand, no cropped stray nails at the frame edge. Soft salon window light, natural skin texture with pores and fine knuckle creases. The nails are the hero of the shot.
 - Avoid entirely: real eyes, eyeballs, iris or pupil shapes, faces, or any eye-like motif. Keep it abstract nail art only.
 After the image, also output ONE line of plain JSON (no code fences): {"keywords": ["korean mood keyword", "korean mood keyword"], "colors": ["#RRGGBB", "#RRGGBB", "#RRGGBB"]} — 2-3 short Korean mood keywords and the 3 dominant colors.`;
-}
-
-/**
- * 네일 팁 세트(플랫레이) 지시문. 흰 배경에 개별 팁 10개(2행 5열)를 각각
- * 다른 디자인으로 — 네일샵 샘플/프레스온 세트처럼 보이게 한다.
- */
-export function buildTipSetPrompt(
-  shape: NailShape,
-  length: NailLength,
-  trendKeywords: string[],
-  imageCount: number,
-  analysis: NailAnalysis | null = null,
-): string {
-  const sourceLine =
-    imageCount > 1
-      ? `all ${imageCount} attached inspiration photos`
-      : 'the attached inspiration photo';
-
-  const trendLine = trendKeywords.length > 0 ? `\n- Trends to reflect across the set: ${trendKeywords.join(', ')}.` : '';
-
-  return `You are a top Korean nail artist presenting this month's design set.
-Create ONE photorealistic top-down flat-lay photo of a press-on nail SET: exactly 10 individual nail tips arranged neatly in 2 rows of 5 on a clean plain white background, evenly spaced, soft even studio lighting with a subtle shadow.
-- Each of the 10 tips shows a DIFFERENT finished design, but the whole set shares one cohesive theme drawn from ${sourceLine}.${buildAnalysisBrief(analysis)}
-- Nail tip shape: ${shape}. Length: ${length}.${trendLine}
-- Style: glazed glossy finish, chrome/magnetic shimmer, translucent gel layers, dreamy low-saturation K-nail palette. Never flat garish colors.${HUMAN_ARTIST_LINES}
-- The 10 tips are the only subject: no hands, no fingers, no text, no packaging — just the tips on white.
-- Avoid entirely: real eyes, eyeballs, iris or pupil shapes, faces, or any eye-like motif. Keep it abstract nail art only.`;
 }

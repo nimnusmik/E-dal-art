@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import type { ImageOutcome, ImagePayload, Mood } from './types';
+import { isMock } from './mock';
 
 export interface GeminiPart {
   inlineData?: { data: string; mimeType: string };
@@ -62,7 +63,7 @@ function getClient(): GoogleGenAI {
 }
 
 /**
- * 로컬 개발용 목 응답 (GEMINI_MOCK=1). 실제 API 호출·과금 없이
+ * 로컬 개발용 목 응답 (IMAGE_MOCK=1). 실제 API 호출·과금 없이
  * ref/ 샘플 이미지로 전체 흐름(쿼터·콜라주·저장)을 확인한다.
  */
 async function mockGemini(): Promise<ImageOutcome> {
@@ -79,7 +80,7 @@ async function mockGemini(): Promise<ImageOutcome> {
 
 /** 서버 전용. 영감 사진 1~3장 + 지시문 → 네일 이미지 + 무드 텍스트 */
 export async function callGemini(images: ImagePayload[], prompt: string): Promise<ImageOutcome> {
-  if (process.env.GEMINI_MOCK === '1') return mockGemini();
+  if (isMock()) return mockGemini();
   const model = process.env.GEMINI_IMAGE_MODEL ?? 'gemini-3.1-flash-image';
   const response = await getClient().models.generateContent({
     model,

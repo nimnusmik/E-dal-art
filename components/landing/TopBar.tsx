@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useGate } from '@/lib/useGate';
+import { useAccess } from '@/lib/useAccess';
 import { useIssue } from '@/lib/useIssue';
 
 /**
@@ -11,7 +11,7 @@ import { useIssue } from '@/lib/useIssue';
  */
 export default function TopBar() {
   const issue = useIssue();
-  const gate = useGate();
+  const access = useAccess();
   const [hidden, setHidden] = useState(false);
   const [solid, setSolid] = useState(false);
 
@@ -40,19 +40,23 @@ export default function TopBar() {
   }, []);
 
   return (
+    // 레퍼런스식 "떠 있는 다크 필" 내비 — 바 전체가 아니라 가운데 필 하나가 뜬다
     <header className={`xp-topbar${hidden ? ' is-hidden' : ''}${solid ? ' is-solid' : ''}`}>
-      <a className="xp-logo" href="#top">
-        이달아<span aria-hidden>✳</span>
-      </a>
-      <nav className="xp-topnav" aria-label="주요 메뉴">
-        <span className="xp-pill t-blue xp-issue-pill" suppressHydrationWarning>
-          {issue.koLabel}
-        </span>
-        {/* 게이트 상태에 따라 정직한 문구 — 히어로 CTA와 같은 규칙 */}
-        <a className="xp-pill xp-cta-top" href="#tool">
-          {gate.inviteRequired && !gate.hasInvite ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
+      <div className="xp-topbar-pill">
+        <a className="xp-logo" href="#top">
+          idala<span aria-hidden>✳</span>
         </a>
-      </nav>
+        <nav className="xp-topnav" aria-label="Main menu">
+          <span className="xp-topnav-issue xp-issue-pill" suppressHydrationWarning>
+            {issue.monthLabel}
+          </span>
+          {/* 이용권 상태에 따라 정직한 문구 — 히어로 CTA와 같은 규칙.
+              작은 알약이라 가격은 생략하고 행동만. */}
+          <a className="xp-pill xp-cta-top" href="#tool">
+            {access.paid ? 'Create' : 'Start'}
+          </a>
+        </nav>
+      </div>
     </header>
   );
 }

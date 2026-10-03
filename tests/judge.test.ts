@@ -53,6 +53,21 @@ describe('expectedMetalTips', () => {
     };
     expect(expectedMetalTips(brief)).toEqual({ min: 0, max: 0 });
   });
+
+  it('carry 단독 문구에 속지 않는다', () => {
+    const brief = { ...BRIEF, partsLine: 'No metal parts. All tips carry painted art only.' };
+    expect(expectedMetalTips(brief)).toEqual({ min: 0, max: 0 });
+  });
+
+  it('마침표로 끝나도 무파츠로 읽는다', () => {
+    const brief = { ...BRIEF, partsLine: 'All tips are painted gel only.' };
+    expect(expectedMetalTips(brief)).toEqual({ min: 0, max: 0 });
+  });
+
+  it('명시 개수는 무파츠 문구보다 우선한다', () => {
+    const brief = { ...BRIEF, partsLine: 'Exactly two tips carry pearls. Every other tip has no metal.' };
+    expect(expectedMetalTips(brief)).toEqual({ min: 1, max: 3 });
+  });
 });
 
 describe('verdict', () => {

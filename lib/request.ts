@@ -60,6 +60,37 @@ export async function currentAccountEmail(): Promise<string | null> {
 }
 
 /**
+ * 동적 import 캐시.
+ *
+ * import()는 한 번 로드되면 캐시되지만, "처음 로드 중"인 상태의 동시 호출은
+ * 환경에 따라 모듈을 중복 평가할 수 있다. 테스트 러너의 mock 레지스트리 같은
+ * 경우 중복 평가된 쪽이 mock을 우회한다. promise를 한 번만 만들어 공유하면
+ * 경합 자체가 사라진다. 실패하면 캐시를 비워 다음 호출이 다시 시도하게 한다.
+ */
+let authModule: Promise<typeof import('@/auth')> | null = null;
+let paymentsModule: Promise<typeof import('./payments')> | null = null;
+
+function loadAuthModule(): Promise<typeof import('@/auth')> {
+  if (!authModule) {
+    authModule = import('@/auth').catch((err: unknown) => {
+      authModule = null;
+      throw err;
+    });
+  }
+  return authModule;
+}
+
+function loadPaymentsModule(): Promise<typeof import('./payments')> {
+  if (!paymentsModule) {
+    paymentsModule = import('./payments').catch((err: unknown) => {
+      paymentsModule = null;
+      throw err;
+    });
+  }
+  return paymentsModule;
+}
+
+/**
  * 로그인한 계정의 구글 sub. 비로그인이거나 인증 설정이 없으면 null.
  *
  * auth()는 환경변수(AUTH_SECRET·구글 클라이언트)가 없으면 던질 수 있는데, 그때 생성
@@ -70,7 +101,7 @@ async function currentAccountId(): Promise<string | null> {
   try {
     // 동적 import — 인증을 쓰지 않는 코드 경로(그리고 테스트 환경)가 next-auth를
     // 모듈 그래프에 끌어들이지 않게 한다
-    const { auth } = await import('@/auth');
+    const { auth } = await loadAuthModule();
     const session = await auth();
     return session?.user?.id || null;
   } catch {
@@ -79,31 +110,23 @@ async function currentAccountId(): Promise<string | null> {
 }
 
 /**
- * 초대 코드 게이트.
+ * 결제 게이트 — 생성 3라우트(analyze/variant/hero) 공용.
  *
- * 이미지 생성은 무료 티어가 없어 호출 1건이 곧 실비다. 수요 검증이 끝나기 전까지는
- * "누구나 무료로 생성"이 아니라 "초대받은 사람만 생성"으로 두어 지출을 구조적으로 0에
- * 가깝게 유지한다. 검증에 필요한 신호(가격 버튼 클릭률)는 생성 없이 랜딩에서 측정한다.
- *
- * INVITE_CODES가 비어 있으면 게이트는 꺼진다 — 로컬 개발과 나중의 전체 공개를 위해.
+ * 초대 코드 게이트를 대체한다. 호출 1건이 곧 실비이므로, 이용권이 있는
+ * 계정만 생성할 수 있다. null이면 통과, 아니면 {status, error}를 그대로
+ * 응답하면 된다.
  */
-export function inviteCodes(): string[] {
-  return (process.env.INVITE_CODES ?? '')
-    .split(',')
-    .map((c) => c.trim().toLowerCase())
-    .filter((c) => c.length > 0);
-}
-
-export function inviteRequired(): boolean {
-  return inviteCodes().length > 0;
-}
-
-/** 요청의 초대 코드가 유효한가. 게이트가 꺼져 있으면 항상 true */
-export function hasValidInvite(req: Request): boolean {
-  const codes = inviteCodes();
-  if (codes.length === 0) return true;
-  const given = req.headers.get('x-invite-code')?.trim().toLowerCase();
-  return !!given && codes.includes(given);
+export async function paymentGate(): Promise<{
+  status: number;
+  error: 'LOGIN_REQUIRED' | 'PAYMENT_REQUIRED';
+} | null> {
+  const sub = await currentAccountId();
+  if (!sub) return { status: 401, error: 'LOGIN_REQUIRED' };
+  // 정적 import를 피한다 — @neondatabase/serverless를 클라이언트 번들에
+  // 끌어들이지 않기 위해 기존 auth()와 같은 동적 import 패턴을 쓴다
+  const { isPaidBySub } = await loadPaymentsModule();
+  if (!(await isPaidBySub(sub))) return { status: 402, error: 'PAYMENT_REQUIRED' };
+  return null;
 }
 
 /**

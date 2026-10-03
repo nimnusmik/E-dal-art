@@ -5,6 +5,20 @@ export interface CounterStore {
   incr(key: string): Promise<number>;
   decr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<unknown>;
+  /**
+   * 크래시 복구용 pending 마커 저장 — 선택적.
+   * 없는 구현(구형 fake)에서는 reserve가 조용히 건너뛴다.
+   */
+  set?(key: string, value: string, opts?: { ex?: number }): Promise<unknown>;
+  del?(key: string): Promise<unknown>;
+  /**
+   * reaper 전용 키 스캔 — 선택적. Upstash 시그니처 그대로.
+   * 없으면 reaper가 501을 반환한다.
+   */
+  scan?(
+    cursor: string | number,
+    opts?: { match?: string; count?: number },
+  ): Promise<[string | number, string[]]>;
 }
 
 export interface QuotaStatus {
@@ -15,9 +29,11 @@ export interface QuotaStatus {
 }
 
 const TTL_BUFFER_SECONDS = 60;
+const PENDING_PREFIX = 'quota:pending:';
+const DEFAULT_PENDING_TTL_SECONDS = 600; // maxDuration보다 충분히 길게
 
-/** 범위별 일일 카운터 — variant·hero 등 엔드포인트 전용 쿼터 (user/total과 키 공간 분리) */
-export type QuotaScope = 'variant' | 'hero';
+/** 범위별 일일 카운터 — variant·hero·save 등 엔드포인트 전용 쿼터 (user/total과 키 공간 분리) */
+export type QuotaScope = 'variant' | 'hero' | 'save';
 
 /**
  * 쿼터 주체 키. subject는 로그인 시 `u:<구글sub>`, 비로그인 시 `ip:<주소>`다
@@ -104,8 +120,19 @@ export interface QuotaRequest {
 }
 
 export type ReserveResult =
-  | { ok: true; release: () => Promise<void> }
+  | { ok: true; release: () => Promise<void>; commit: () => Promise<void> }
   | { ok: false; code: string };
+
+export interface ReserveOptions {
+  /**
+   * 크래시 복구용 pending 마커를 남긴다.
+   * 플랫폼 타임아웃/OOM은 catch를 타지 않아 release()에 도달하지 못한다 —
+   * 마커가 남으면 /api/cron/reaper가 정해진 시간 뒤 환불한다.
+   */
+  trackPending?: boolean;
+  /** pending 마커 TTL(초). 기본 600 — maxDuration보다 충분히 길게 잡는다 */
+  pendingTtlSeconds?: number;
+}
 
 /**
  * 카운터를 원자적으로 선점한다 (예약 → 작업 → 실패 시 환불).
@@ -121,13 +148,26 @@ export async function reserve(
   store: CounterStore,
   requests: QuotaRequest[],
   now: Date,
+  opts?: ReserveOptions,
 ): Promise<ReserveResult> {
   const ttl = secondsUntilKstMidnight(now) + TTL_BUFFER_SECONDS;
   const taken: string[] = [];
+  // pending 마커 — 성공 시 commit()이, 실패 시 release()가 지운다.
+  // 둘 다 호출되지 못한 채 남으면 reaper가 회수한다.
+  const pendingKeys: string[] = [];
+  const setFn = typeof store.set === 'function' ? store.set.bind(store) : null;
+  const delFn = typeof store.del === 'function' ? store.del.bind(store) : null;
+  const canTrack = opts?.trackPending === true && setFn !== null && delFn !== null;
+
+  const clearPending = async (): Promise<void> => {
+    if (!canTrack || !delFn) return;
+    await Promise.allSettled(pendingKeys.map((k) => delFn(k)));
+  };
 
   const rollback = async (): Promise<void> => {
     // 환불은 실패해도 되돌릴 방법이 없다 — 삼키되 카운터가 과다 계상되는 쪽(안전)으로 남는다
     await Promise.allSettled(taken.map((key) => store.decr(key)));
+    await clearPending();
   };
 
   for (const { key, limit, code } of requests) {
@@ -135,13 +175,75 @@ export async function reserve(
     taken.push(key);
     // 첫 증가에서만 TTL을 건다 (매번 걸면 자정 만료가 계속 밀린다)
     if (count === 1) await store.expire(key, ttl);
+    if (canTrack && setFn) {
+      const pkey = `${PENDING_PREFIX}${key}:${randomId()}`;
+      pendingKeys.push(pkey);
+      await setFn(pkey, JSON.stringify({ key, takenAt: Date.now() }), {
+        ex: opts?.pendingTtlSeconds ?? DEFAULT_PENDING_TTL_SECONDS,
+      });
+    }
     if (count > limit) {
       await rollback();
       return { ok: false, code };
     }
   }
 
-  return { ok: true, release: rollback };
+  return { ok: true, release: rollback, commit: clearPending };
+}
+
+function randomId(): string {
+  try {
+    const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+    if (c?.randomUUID) return c.randomUUID();
+  } catch {
+    /* 폴백으로 넘어간다 */
+  }
+  return `${Date.now().toString(36)}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+}
+
+/**
+ * 크래시로 남은 pending 마커를 회수한다 — /api/cron/reaper가 주기적으로 호출.
+ *
+ * 마커 TTL(기본 600초)보다 오래된 것만 환불하므로, 아직 살아 있는
+ * maxDuration 이내의 요청을 건드릴 일은 없다.
+ */
+export async function sweepStalePending(
+  store: CounterStore,
+  opts?: { staleAfterSeconds?: number },
+): Promise<number> {
+  const scanFn = typeof store.scan === 'function' ? store.scan.bind(store) : null;
+  const delFn = typeof store.del === 'function' ? store.del.bind(store) : null;
+  if (!scanFn || !delFn) {
+    throw new Error('CounterStore.scan/del이 없어 reaper를 실행할 수 없다');
+  }
+  const staleAfterMs = (opts?.staleAfterSeconds ?? DEFAULT_PENDING_TTL_SECONDS) * 1000;
+  const now = Date.now();
+  let cursor: string | number = 0;
+  let swept = 0;
+  for (;;) {
+    const [next, keys] = await scanFn(cursor, { match: `${PENDING_PREFIX}*`, count: 100 });
+    for (const pkey of keys) {
+      let rec: { key?: unknown; takenAt?: unknown } | null;
+      try {
+        rec = JSON.parse(String(await store.get(pkey)));
+      } catch {
+        rec = null;
+      }
+      // 깨진 마커(JSON이 아니거나 null·원시값)는 치운다 — rec.key 직접 접근 금지
+      if (typeof rec !== 'object' || rec === null || typeof rec.key !== 'string' || typeof rec.takenAt !== 'number') {
+        await delFn(pkey); // 깨진 마커는 치운다
+        continue;
+      }
+      if (now - rec.takenAt > staleAfterMs) {
+        await store.decr(rec.key);
+        await delFn(pkey);
+        swept += 1;
+      }
+    }
+    if (next === 0 || next === '0') break;
+    cursor = next;
+  }
+  return swept;
 }
 
 export async function recordMetric(

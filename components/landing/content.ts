@@ -1,5 +1,5 @@
 /**
- * 랜딩 카피·데이터 단일 소스.
+ * 랜딩 카피·데이터 단일 소스. (2026-09-20 전면 영어화 — 사용자 지시)
  * 수치는 전부 제품 사실이어야 한다 — 없는 실적·후기를 지어내지 않는다.
  *
  * 표현 원칙 두 가지:
@@ -23,32 +23,29 @@ export interface StatCard {
 
 export const STATS: StatCard[] = [
   {
-    value: '5종',
-    label: '한 번에 나오는 시안',
-    body: '사진 한 세트로 색·구조·파츠가 다른 다섯 갈래를 동시에 만들어요.',
+    value: '5',
+    label: 'sets per run',
+    body: 'One photo set becomes five takes — different colors, structures, and parts.',
     tone: 'green',
   },
   {
-    // 이전 값은 '100% / AI 검수 통과작만'이었다. 동어반복이고, 제품은 이미 부분실패를
-    // 전제하며 낙제작을 '아쉬운 컷' 배지로 보여준다 — 방어 불가능한 약속이었다.
-    // 초대 게이트가 켜져 있는 동안 "하루 3회까지 무료로 만들 수 있어요"는 지킬 수 없는
-    // 약속이 된다. 게이트 상태와 무관하게 참인 문장만 남긴다.
-    // 순서: 가장 강한 메시지(0원)를 2번째에 — 모바일 1열에서 4번째로 밀리지 않게.
-    value: '0원',
-    label: '가입도 결제도 없이',
-    body: '결제 정보를 받지 않아요. 생성이 실패하면 횟수는 차감되지 않아요.',
+    // 이전 값은 'Free / no sign-up, no card'였다. 유료 모델이므로 정직하게 바꾼다.
+    // 순서: 가장 강한 메시지(가격)를 2번째에 — 모바일 1열에서 4번째로 밀리지 않게.
+    value: '₩9,900',
+    label: 'one pass · forever',
+    body: "Pay once, never again. Three runs a day, every day. Failed runs don't count.",
     tone: 'pink',
   },
   {
-    value: '1장',
-    label: '시작에 필요한 사진',
-    body: '한 장이면 시작할 수 있어요. 스크린샷, 좋아하는 옷, 오늘의 하늘 — 최대 세 장까지.',
+    value: '1',
+    label: 'photo to start',
+    body: "A screenshot, an outfit, today's sky — start with one, add up to three.",
     tone: 'yellow',
   },
   {
-    value: '매월',
-    label: '새로 발행되는 호',
-    body: '이달의 무드로 갱신돼요. 지난달 시안과 섞이지 않아요.',
+    value: 'Monthly',
+    label: 'a fresh issue',
+    body: "Refreshed with this month's mood. Never mixed with last month's sets.",
     tone: 'purple',
   },
 ];
@@ -67,28 +64,28 @@ export interface ServiceRow {
 export const SERVICES: ServiceRow[] = [
   {
     no: '01',
-    label: '영감 사진 분석',
-    body: '올린 사진에서 색·질감·파츠 밀도를 읽어 이달의 무드로 옮겨요.',
+    label: 'Read the inspiration',
+    body: "We read color, texture, and part density from your photos, in this month's mood.",
   },
   {
     no: '02',
-    label: '5종 변주 생성',
-    body: '색과 구조가 서로 다른 다섯 갈래를 동시에 그려요. 완성되는 순서대로 나타나요.',
+    label: 'Style five variants',
+    body: 'Five takes with different colors and structures, appearing as each one finishes.',
   },
   {
     no: '03',
-    label: 'AI 품질 검수',
-    body: '파츠 배치가 이상한 컷은 걸러내고, 아쉬운 컷은 그렇게 표시해 알려줘요.',
+    label: 'AI quality check',
+    body: 'Broken sets get filtered out; near-misses are labeled so you always know.',
   },
   {
     no: '04',
-    label: '착용샷 합성',
-    body: '고른 시안을 손에 올린 모습으로 만들어요. 지금은 AI가 그린 손이에요.',
+    label: 'Try-on preview',
+    body: 'See your pick on a hand — an AI-generated hand, for now.',
   },
   {
     no: '05',
-    label: '이달의 호 발행',
-    body: '매달 무드가 갱신돼요. 지난달 시안과 섞이지 않아요.',
+    label: 'Publish the issue',
+    body: "The mood refreshes every month. Last month's sets never mix in.",
   },
 ];
 
@@ -104,14 +101,14 @@ export interface GalleryCut {
 
 /**
  * 실제 생성·검수를 통과한 시안만 싣는다. 영감 사진(`/hero/insp/*`)을 여기 쓰면
- * "이런 시안이 나와요"라는 문구가 거짓이 되므로 절대 섞지 말 것.
+ * "실제 결과물"이라는 문구가 거짓이 되므로 절대 섞지 말 것.
  * 출처와 판정 근거는 `public/gallery/SOURCES.md` 참조.
  */
 export const GALLERY: GalleryCut[] = [
-  { src: '/gallery/pastel-french.jpg', title: '파스텔 프렌치', meta: '민트·레몬 · 진주 체인', tilt: -4 },
-  { src: '/gallery/sugar-dot.jpg', title: '슈가 도트', meta: '버건디 프렌치 · 레터링', tilt: 3 },
-  { src: '/gallery/blue-brown.jpg', title: '블루 브라운', meta: '지브라 · 마블 스월', tilt: -2 },
-  { src: '/gallery/lilac-swirl.jpg', title: '라일락 스월', meta: '톤온톤 양각 · 레터링', tilt: 5 },
+  { src: '/gallery/pastel-french.jpg', title: 'Pastel French', meta: 'Mint & lemon · pearl chain', tilt: -4 },
+  { src: '/gallery/sugar-dot.jpg', title: 'Sugar Dot', meta: 'Burgundy french · lettering', tilt: 3 },
+  { src: '/gallery/blue-brown.jpg', title: 'Blue Brown', meta: 'Zebra · marble swirl', tilt: -2 },
+  { src: '/gallery/lilac-swirl.jpg', title: 'Lilac Swirl', meta: 'Tone-on-tone relief · lettering', tilt: 5 },
 ];
 
 export interface SceneCard {
@@ -124,22 +121,22 @@ export interface SceneCard {
 /** 실제 후기가 아니라 "이렇게 쓰이면 좋겠다"는 예상 장면 — 화면에도 그렇게 표기한다 */
 export const SCENES: SceneCard[] = [
   {
-    persona: '네일샵 원장',
-    role: '예상 사용 장면',
-    quote: '이달의 아트 세트를 하루 만에 정리해요',
-    body: '핀터레스트에 모아둔 영감을 올리면 번호가 붙은 시안 세트가 나와요. 인스타에 그대로 올릴 수 있어요.',
+    persona: 'Salon owner',
+    role: 'Imagined scene',
+    quote: "This month's art set, sorted in a day",
+    body: 'Upload the inspiration you saved on Pinterest and get a numbered set — ready to post on Instagram.',
   },
   {
-    persona: '셀프 네일러',
-    role: '예상 사용 장면',
-    quote: '손에 올린 모습까지 미리 봐요',
-    body: '마음에 든 시안은 착용샷으로 확인해요. 길이와 쉐입을 바꿔가며 다시 만들 수 있어요.',
+    persona: 'Self-nailer',
+    role: 'Imagined scene',
+    quote: 'Preview it on a hand first',
+    body: 'Check your favorite as a try-on shot. Swap lengths and shapes, then run it again.',
   },
   {
-    persona: '네일 러버',
-    role: '예상 사용 장면',
-    quote: '샵에 가져갈 사진이 생겨요',
-    body: '말로 설명하기 어려웠던 무드를 시안 한 장으로 보여줘요. 재료 조합까지 함께 나와요.',
+    persona: 'Nail lover',
+    role: 'Imagined scene',
+    quote: 'A photo to bring to the salon',
+    body: 'Show the mood you could never explain in words — with the material combo included.',
   },
 ];
 
@@ -151,41 +148,41 @@ export interface FaqItem {
 
 export const FAQS: FaqItem[] = [
   {
-    q: '어떤 사진을 올리면 좋아요?',
-    a: '색과 무드가 드러나는 사진이면 돼요. 스크린샷, 좋아하는 옷, 오늘의 하늘 — 네일 사진이 아니어도 괜찮아요. 한 장으로 시작해도 되고 최대 세 장까지 더할 수 있어요.',
+    q: 'What photos work best?',
+    a: "Anything that carries color and mood — a screenshot, an outfit, today's sky. It doesn't have to be a nail photo. Start with one, add up to three.",
   },
   {
-    q: '무료인가요?',
-    a: '네, 가입도 결제도 없이 무료예요. 다만 지금은 초대받은 분만 시안을 만들 수 있어요. AI 이미지 생성에 실비가 들어서, 수요를 먼저 확인하는 동안 인원을 제한하고 있어요. 아래 구독 알림을 신청해두시면 열릴 때 알려드릴게요.',
+    q: 'How much does it cost?',
+    a: "One lifetime pass — ₩9,900, pay once and it's yours. Three runs a day, refilled at midnight KST, and failed runs don't count. The first 100 members get the early-bird price of ₩4,900.",
   },
   {
-    q: '하루에 몇 번까지 만들 수 있어요?',
-    a: '하루 3회예요. 한국 시간 자정에 다시 채워져요. 생성이 실패하면 횟수는 차감되지 않아요.',
+    q: 'How many runs per day?',
+    a: "Three a day, refilled at midnight KST. Failed runs don't count.",
   },
   {
-    q: '올린 사진은 어디로 가요?',
-    a: '시안을 만드는 동안에만 쓰고 이달아 서버에 저장하지 않아요. 그림 생성은 외부 AI 모델을 거쳐요.',
+    q: 'Where do my photos go?',
+    a: "They're used only while creating and never stored on our servers. Generation runs through an external AI model.",
   },
   {
-    q: '시안은 저장되나요?',
-    a: '기본으로는 이달아 서버에 저장하지 않아요. 결과는 보고 있는 브라우저에만 잠시 남고 탭을 닫으면 사라져요. 마음에 든 시안은 저장이나 공유 버튼으로 내려받거나, 구글로 로그인하면 보관함에 담아둘 수 있어요.',
+    q: 'Are my sets saved?',
+    a: 'Not by default — results live only in your browser tab and vanish when it closes. Download or share the ones you love, or sign in with Google to keep them in your library.',
   },
   {
-    q: '착용샷도 만들 수 있어요?',
-    a: '네. 시안을 고르고 ‘착용샷 보기’를 누르면 손에 올린 모습을 만들어요. 지금은 AI가 그린 손이고, 내 손 사진을 올려 합성하는 기능은 준비 중이에요.',
+    q: 'Can I see it worn?',
+    a: "Yes — pick a set and tap 'try-on' to see it on a hand. It's an AI-generated hand for now; uploading your own hand photo is in the works.",
   },
   {
-    q: '길이랑 쉐입을 바꿀 수 있어요?',
-    a: '만들기 전에도, 결과를 본 뒤에도 바꿀 수 있어요. 쉐입 4종·길이 3종·파츠 4종을 골라 다시 만들면 돼요.',
+    q: 'Can I change length and shape?',
+    a: 'Before and after — pick from 4 shapes, 3 lengths, and 4 part levels, then run it again.',
   },
-  // 원장님 세그먼트의 결정적 질문. "인스타에 그대로 올릴 수 있어요"라고 해놓고
-  // 상업적 사용 가부를 답하지 않으면, 시험 삼아 한 번 써보고 끝난다.
+  // 원장님 세그먼트의 결정적 질문. 상업적 사용 가부를 답하지 않으면
+  // 시험 삼아 한 번 써보고 끝난다.
   {
-    q: '만든 시안, 우리 샵 홍보에 써도 되나요?',
-    a: '네, 자유롭게 쓰셔도 돼요. 인스타 게시물이나 시술 상담 자료로 써도 되고 따로 표기하지 않아도 돼요. 다만 AI가 그린 이미지라 실제 시술 결과와 다를 수 있으니, 손님께 보여줄 땐 시안이라고 안내해 주세요.',
+    q: 'Can I use the sets to promote my salon?',
+    a: "Yes, freely — Instagram posts, consultations, no credit needed. Just tell clients it's an AI concept, since the real manicure may differ.",
   },
   {
-    q: '하루 3회면 시안 몇 개가 나와요?',
-    a: '한 번에 5종이 나오니 하루 최대 15종이에요. 이달의 아트 세트 하나를 정리하기엔 넉넉한 양이에요.',
+    q: 'How many sets is three runs?',
+    a: 'Five per run — up to fifteen a day. Plenty to build one monthly art set.',
   },
 ];
