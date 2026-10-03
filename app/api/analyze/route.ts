@@ -2,44 +2,27 @@ import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
 import { getQuota, ipQuotaKey, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
 import { analyzeToBrief, applyOptions, planVariants } from '@/lib/brief';
-import { clientIp, currentAccountEmail, dailyLimits, hasValidInvite, inviteRequired, isNailLength, isNailShape, parseImages, quotaSubject } from '@/lib/request';
-import type { ImagePayload, NailLength, NailShape, PartsIntensity } from '@/lib/types';
+import { clientIp, dailyLimits, paymentGate, quotaSubject } from '@/lib/request';
+import { issueVariantToken } from '@/lib/variantToken';
+import { AnalyzeBodySchema } from '@/lib/schemas';
 
 /**
- * POST /api/analyze — 5종 변주 파이프라인 1단계 (docs/api-variants-contract.md).
- * 분석 1회 → 옵션 오버라이드 → 변주 플랜 5종. 세션 시작 = 기존 일일 크레딧 1 차감(성공 시에만).
+ * POST /api/analyze — 3종 변주 파이프라인 1단계 (docs/api-variants-contract.md).
+ * 분석 1회 → 옵션 오버라이드 → 변주 플랜 3종. 세션 시작 = 기존 일일 크레딧 1 차감(성공 시에만).
  */
 
 export const maxDuration = 60; // 분석 + 플랜 텍스트 호출 2회 + 여유
 
-const PARTS_INTENSITIES: PartsIntensity[] = ['auto', 'none', 'point', 'rich'];
-
 type AnalyzeErrorCode =
   | 'INVALID_INPUT'
-  | 'INVITE_REQUIRED'
+  | 'LOGIN_REQUIRED'
+  | 'PAYMENT_REQUIRED'
   | 'RATE_LIMIT_USER'
   | 'RATE_LIMIT_TOTAL'
   | 'ANALYZE_FAILED';
 
-interface AnalyzeRequest {
-  images: ImagePayload[];
-  shape: NailShape;
-  length: NailLength;
-  partsIntensity: PartsIntensity;
-}
-
 function errorResponse(error: AnalyzeErrorCode, status: number): NextResponse {
   return NextResponse.json({ error }, { status });
-}
-
-function validateBody(body: unknown): AnalyzeRequest | null {
-  if (typeof body !== 'object' || body === null) return null;
-  const { images, shape, length, partsIntensity } = body as Record<string, unknown>;
-  const parsedImages = parseImages(images);
-  if (!parsedImages) return null;
-  if (!isNailShape(shape) || !isNailLength(length)) return null;
-  if (!PARTS_INTENSITIES.includes(partsIntensity as PartsIntensity)) return null;
-  return { images: parsedImages, shape, length, partsIntensity: partsIntensity as PartsIntensity };
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -49,11 +32,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch {
     return errorResponse('INVALID_INPUT', 400);
   }
-  const body = validateBody(raw);
-  if (!body) return errorResponse('INVALID_INPUT', 400);
+  const parsed = AnalyzeBodySchema.safeParse(raw);
+  if (!parsed.success) return errorResponse('INVALID_INPUT', 400);
+  const body = parsed.data;
 
-  // 초대 코드 게이트 — 생성 1건이 곧 실비이므로 검증 전까지는 초대받은 사람만
-  if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
+  // 결제 게이트 — 이용권이 있어야 생성할 수 있다 (호출 1건이 곧 실비)
+  const gate = await paymentGate();
+  if (gate) return errorResponse(gate.error, gate.status);
 
   const store = getRedis();
   const ip = clientIp(req);
@@ -71,6 +56,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { key: totalQuotaKey(now), limit: totalLimit, code: 'RATE_LIMIT_TOTAL' },
     ],
     now,
+    { trackPending: true }, // 플랫폼 타임아웃/OOM 시 reaper가 환불한다
   );
   if (!held.ok) return errorResponse(held.code as AnalyzeErrorCode, 429);
 
@@ -87,25 +73,16 @@ export async function POST(req: Request): Promise<NextResponse> {
     length: body.length,
     partsIntensity: body.partsIntensity,
   });
-  const plans = await planVariants(brief); // 실패 시 내부 폴백 — 항상 5개
+  const plans = await planVariants(brief); // 실패 시 내부 폴백 — 항상 3개
 
   const quota = await getQuota(store, subject, now, userLimit, totalLimit);
-  return NextResponse.json({ brief, plans, remaining: quota.userRemaining });
-}
-
-/**
- * 남은 횟수 + 게이트 상태 조회 (차감 없음).
- * inviteRequired로 클라이언트가 "코드 입력"을 보여줄지 결정한다.
- * hasInvite는 이미 유효한 코드를 들고 있는 재방문자를 위한 것 — 코드 입력을 다시 묻지 않는다.
- */
-export async function GET(req: Request): Promise<NextResponse> {
-  const { userLimit, totalLimit } = dailyLimits();
-  const quota = await getQuota(getRedis(), await quotaSubject(req), new Date(), userLimit, totalLimit);
+  // 성공 확정 — pending 마커를 지우고 카운터는 유지한다
+  await held.commit();
   return NextResponse.json({
+    brief,
+    plans,
     remaining: quota.userRemaining,
-    inviteRequired: inviteRequired(),
-    hasInvite: hasValidInvite(req),
-    // 로그인 상태를 여기 실어 보내면 SessionProvider 없이도 UI가 계정을 안다
-    email: await currentAccountEmail(),
+    // variant 호출용 세션 토큰 — analyze를 거치지 않은 직접 호출을 막는다
+    variantToken: issueVariantToken(subject, now),
   });
 }

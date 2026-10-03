@@ -7,6 +7,7 @@ const FLAGS = ['IMAGE_MOCK', 'GEMINI_MOCK', 'SEEDREAM_MOCK'] as const;
 afterEach(() => {
   for (const f of FLAGS) delete process.env[f];
   delete process.env.IMAGE_PROVIDER;
+  delete process.env.VERCEL_ENV;
   vi.restoreAllMocks();
 });
 
@@ -23,6 +24,19 @@ describe('isMock', () => {
   it("'1'이 아닌 값은 무시한다", () => {
     process.env.IMAGE_MOCK = 'true';
     expect(isMock()).toBe(false);
+  });
+
+  it('운영 환경에서는 플래그가 있어도 false (Vercel 오설정 방어)', () => {
+    process.env.IMAGE_MOCK = '1';
+    try {
+      vi.stubEnv('NODE_ENV', 'production');
+      expect(isMock()).toBe(false);
+      vi.stubEnv('NODE_ENV', 'test');
+      vi.stubEnv('VERCEL_ENV', 'production');
+      expect(isMock()).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
 

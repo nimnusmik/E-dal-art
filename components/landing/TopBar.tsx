@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useGate } from '@/lib/useGate';
+import { useAccess } from '@/lib/useAccess';
 import { useIssue } from '@/lib/useIssue';
 
 /**
@@ -11,7 +11,7 @@ import { useIssue } from '@/lib/useIssue';
  */
 export default function TopBar() {
   const issue = useIssue();
-  const gate = useGate();
+  const access = useAccess();
   const [hidden, setHidden] = useState(false);
   const [solid, setSolid] = useState(false);
 
@@ -50,9 +50,10 @@ export default function TopBar() {
           <span className="xp-topnav-issue xp-issue-pill" suppressHydrationWarning>
             {issue.monthLabel}
           </span>
-          {/* 게이트 상태에 따라 정직한 문구 — 히어로 CTA와 같은 규칙 */}
+          {/* 이용권 상태에 따라 정직한 문구 — 히어로 CTA와 같은 규칙.
+              작은 알약이라 가격은 생략하고 행동만. */}
           <a className="xp-pill xp-cta-top" href="#tool">
-            {gate.inviteRequired && !gate.hasInvite ? 'Start with an invite code' : 'Create for free'}
+            {access.paid ? 'Create' : 'Start'}
           </a>
         </nav>
       </div>

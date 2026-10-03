@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIssue } from '@/lib/useIssue';
-import { useGate } from '@/lib/useGate';
+import { useAccess } from '@/lib/useAccess';
 import { HERO_INSPO } from './heroInspo';
 import { beadLayoutAt, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
 
@@ -15,7 +15,8 @@ const AFTER_SRC = '/hero/hand-after.webp';
  */
 export default function HeroHand() {
   const issue = useIssue();
-  const gate = useGate();
+  const access = useAccess();
+  const earlyBird = access.earlyBirdLeft !== null && access.earlyBirdLeft > 0;
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const beadRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -168,18 +169,18 @@ export default function HeroHand() {
   return (
     <section className="xp-hero xp-meadow" id="top" aria-label="이달아 — 이달의 네일 아트">
       <div className="xp-hero-copy">
-        {/* 배지 3개는 모바일에서 2줄로 깨지며 정렬 축이 사라졌다. "지금 무료"는
-            나중에 유료라는 신호였는데 실제 한도를 말하지 않아 3회에서 벽을 만났다 —
-            처음부터 정직하게 "하루 3회 무료". */}
+        {/* 배지 3개는 모바일에서 2줄로 깨지며 정렬 축이 사라졌다.
+            유료 모델이므로 "무료" 문구는 쓸 수 없다 — 이용권 상태를 정직하게. */}
         <div className="xp-hero-pills" aria-hidden>
           <span className="xp-pill t-yellow" suppressHydrationWarning>
             {issue.monthLabel}
           </span>
-          {/* 게이트가 켜져 있으면 "하루 3회 무료"는 거짓이 된다 — 상태에 맞춰 말한다 */}
           <span className="xp-pill t-green">
-            {gate.inviteRequired && !gate.hasInvite
-              ? '초대받은 분만 · 예시는 자유롭게'
-              : '가입 없이 · 하루 3회 무료'}
+            {access.paid
+              ? '이용권 사용 중 · 하루 3회'
+              : earlyBird
+                ? '얼리버드 · 선착순 100명'
+                : '한 번 결제 · 평생 이용'}
           </span>
         </div>
         <h1 className="xp-display xp-hero-title">
@@ -193,9 +194,13 @@ export default function HeroHand() {
           영감 사진을 올리면 AI가 다섯 갈래 시안을 만들어요. 마음에 든 시안은 손에 올린 모습까지
           미리 볼 수 있어요.
         </p>
-        {/* 게이트가 닫혀 있으면 "무료로"는 문 앞에서 깨지는 약속이다 — 상태에 맞춰 말한다 */}
+        {/* "무료로"는 결제 페이지에서 깨지는 약속이다 — 이용권 상태에 맞춰 말한다 */}
         <a className="xp-cta" href="#tool">
-          {gate.inviteRequired && !gate.hasInvite ? '초대 코드로 시작하기' : '무료로 시안 만들기'}
+          {access.paid
+            ? '시안 만들기'
+            : earlyBird
+              ? '얼리버드 ₩4,900으로 시작하기'
+              : '₩9,900으로 시작하기'}
         </a>
       </div>
       {/* ↓↓↓ 이 무대는 heroMorph 타임라인과 1:1로 묶여 있다 — 구조 변경 금지 ↓↓↓ */}

@@ -14,6 +14,14 @@ const fakeStore: CounterStore = {
 };
 
 vi.mock('@/lib/redis', () => ({ getRedis: () => fakeStore }));
+// 결제 게이트 통과용 — 실제 Stripe/DB를 건드리지 않는다
+vi.mock('@/auth', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/payments', () => ({
+  isPaidBySub: vi.fn(),
+  markPaid: vi.fn(),
+  PRICE_REGULAR_KRW: 9900,
+  PRICE_EARLY_KRW: 4900,
+}));
 vi.mock('@/lib/provider', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/provider')>();
   return { ...original, generateImage: vi.fn() };
@@ -26,6 +34,9 @@ vi.mock('@/lib/judge', async (importOriginal) => {
 
 import { generateImage } from '@/lib/provider';
 import { judgeImage } from '@/lib/judge';
+import { issueVariantToken } from '@/lib/variantToken';
+import { auth } from '@/auth';
+import { isPaidBySub } from '@/lib/payments';
 import type { NailJudgement } from '@/lib/judge';
 import type { NailBrief } from '@/lib/brief';
 import type { VariantPlan } from '@/lib/types';
@@ -33,6 +44,8 @@ import { POST } from '@/app/api/variant/route';
 
 const mockGenerateImage = vi.mocked(generateImage);
 const mockJudgeImage = vi.mocked(judgeImage);
+const mockAuth = vi.mocked(auth);
+const mockIsPaid = vi.mocked(isPaidBySub);
 
 const VALID_BRIEF: NailBrief = {
   shape: 'almond',
@@ -88,18 +101,26 @@ const VALID_BODY = {
   images: [{ data: 'aGVsbG8=', mimeType: 'image/jpeg' }],
   brief: VALID_BRIEF,
   plan: VALID_PLAN,
+  // analyze를 거친 세션 토큰 — 같은 주체·당일 것만 유효하다 (로그인 계정 기준)
+  variantToken: issueVariantToken('u:test-sub', new Date()),
 };
 
 function variantKey(): string {
-  return 'quota:variant:ip:1.2.3.4:' + kstToday();
+  return 'quota:variant:u:test-sub:' + kstToday();
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  // @/auth는 라우트에서 동적 import된다 — 모듈 캐시를 미리 채워
+  // 동시 요청 테스트의 로딩 경합을 피한다
+  await import('@/auth');
   store.reset();
   mockGenerateImage.mockReset();
   mockJudgeImage.mockReset();
   mockGenerateImage.mockResolvedValue(GEN_OK);
   mockJudgeImage.mockResolvedValue(CLEAN_JUDGEMENT);
+  // 결제 게이트 통과: 로그인됨 + 이용권 보유
+  mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'test@example.com' } } as never);
+  mockIsPaid.mockResolvedValue(true);
   process.env.DAILY_USER_LIMIT = '3';
   process.env.DAILY_TOTAL_LIMIT = '200';
 });
@@ -119,7 +140,7 @@ describe('POST /api/variant', () => {
       issues: [],
     });
     expect(store.data.get(variantKey())).toBe(1);
-    expect(mockGenerateImage).toHaveBeenCalledTimes(1); // variant당 재시도 없음
+    expect(mockGenerateImage).toHaveBeenCalledTimes(1); // 통과작은 재시도 없음
   });
 
   it('플랜이 브리프에 병합된 프롬프트로 생성한다 (플랜 패턴·파츠 반영)', async () => {
@@ -129,11 +150,44 @@ describe('POST /api/variant', () => {
     expect(prompt).toContain(VALID_PLAN.partsLine);
   });
 
-  it('낙제작도 반환한다 — quality.pass=false 표시만 (422 아님)', async () => {
+  it('낙제작도 반환한다 — 1회 재시도 후에도 낙제면 quality.pass=false 표시만 (422 아님)', async () => {
     mockJudgeImage.mockResolvedValue({ ...CLEAN_JUDGEMENT, physicsOk: false });
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(200);
     expect((await res.json()).quality.pass).toBe(false);
+    expect(mockGenerateImage).toHaveBeenCalledTimes(2);
+  });
+
+  it('낙제작은 1회 재생성하고, 통과한 재시도작을 반환한다', async () => {
+    mockGenerateImage
+      .mockResolvedValueOnce(GEN_OK)
+      .mockResolvedValueOnce({ ...GEN_OK, image: { data: 'cmV0cnk=', mimeType: 'image/png' } });
+    mockJudgeImage
+      .mockResolvedValueOnce({ ...CLEAN_JUDGEMENT, physicsOk: false })
+      .mockResolvedValueOnce(CLEAN_JUDGEMENT);
+    const json = await (await POST(makeRequest(VALID_BODY))).json();
+    expect(json.tipSet.image).toBe('cmV0cnk=');
+    expect(json.quality.pass).toBe(true);
+    expect(store.data.get('quota:image:' + kstToday())).toBe(2); // 재시도도 이미지 1장
+  });
+
+  it('재시도작이 더 나쁘면 첫 결과를 유지한다', async () => {
+    mockGenerateImage
+      .mockResolvedValueOnce(GEN_OK)
+      .mockResolvedValueOnce({ ...GEN_OK, image: { data: 'd29yc2U=', mimeType: 'image/png' } });
+    mockJudgeImage
+      .mockResolvedValueOnce({ ...CLEAN_JUDGEMENT, physicsOk: false })
+      .mockResolvedValueOnce({ ...CLEAN_JUDGEMENT, physicsOk: false, cleanRender: false, baseMatch: false });
+    const json = await (await POST(makeRequest(VALID_BODY))).json();
+    expect(json.tipSet.image).toBe('cmVzdWx0');
+  });
+
+  it('전역 이미지 한도가 남지 않으면 재시도하지 않는다', async () => {
+    store.data.set('quota:image:' + kstToday(), 199); // 첫 장으로 200 도달
+    mockJudgeImage.mockResolvedValue({ ...CLEAN_JUDGEMENT, physicsOk: false });
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(200);
+    expect(mockGenerateImage).toHaveBeenCalledTimes(1);
   });
 
   it('검수 호출 실패(null)면 quality=null로 반환한다', async () => {
@@ -155,6 +209,16 @@ describe('POST /api/variant', () => {
     expect(res.status).toBe(400);
   });
 
+  it('variantToken이 없거나 위조되면 400 (analyze 우회 차단)', async () => {
+    const { variantToken: _omit, ...noToken } = VALID_BODY;
+    const res1 = await POST(makeRequest(noToken));
+    expect(res1.status).toBe(400);
+    const res2 = await POST(makeRequest({ ...VALID_BODY, variantToken: 'forged.token' }));
+    expect(res2.status).toBe(400);
+    expect((await res2.json()).error).toBe('INVALID_TOKEN');
+    expect(mockGenerateImage).not.toHaveBeenCalled();
+  });
+
   it('variant 한도(DAILY_USER_LIMIT×6) 소진 → 429 RATE_LIMIT_VARIANT, 생성 호출 안 함', async () => {
     store.data.set(variantKey(), 18); // 3 × 6
     const res = await POST(makeRequest(VALID_BODY));
@@ -163,11 +227,14 @@ describe('POST /api/variant', () => {
     expect(mockGenerateImage).not.toHaveBeenCalled();
   });
 
-  it('전역 이미지 한도 소진 → 429, IP를 바꿔도 통과 못 한다', async () => {
-    // IP별 한도만 있으면 IP를 갈아끼우는 만큼 비용이 선형으로 늘어난다.
+  it('전역 이미지 한도 소진 → 429, 계정을 바꿔도 통과 못 한다', async () => {
+    // 계정별 한도만 있으면 계정을 갈아끼우는 만큼 비용이 선형으로 늘어난다.
     // 전역 카운터가 "우회당해도 하루 상한은 고정"을 만드는 지점.
     store.data.set('quota:image:' + kstToday(), 200); // DAILY_IMAGE_LIMIT 기본값
-    const res = await POST(makeRequest(VALID_BODY, '9.9.9.9'));
+    // 토큰은 주체(계정)에 바인딩되므로 바뀐 계정용으로 새로 발급한다
+    mockAuth.mockResolvedValue({ user: { id: 'other-sub', email: 'o@o.co' } } as never);
+    const body = { ...VALID_BODY, variantToken: issueVariantToken('u:other-sub', new Date()) };
+    const res = await POST(makeRequest(body));
     expect(res.status).toBe(429);
     expect((await res.json()).error).toBe('RATE_LIMIT_TOTAL');
     expect(mockGenerateImage).not.toHaveBeenCalled();

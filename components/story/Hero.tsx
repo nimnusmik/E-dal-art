@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useGate } from '@/lib/useGate';
+import { useAccess } from '@/lib/useAccess';
 import { useIssue } from '@/lib/useIssue';
 import { GALLERY } from '@/components/landing/content';
 import { HERO_INSPO } from './heroInspo';
@@ -48,8 +48,10 @@ function usePhoneState(wrapRef: React.RefObject<HTMLDivElement | null>): 0 | 1 |
 
 export default function Hero() {
   const issue = useIssue();
-  const gate = useGate();
-  const gated = gate.inviteRequired && !gate.hasInvite;
+  const access = useAccess();
+  // 얼리버드(선착순 100명 ₩4,900)가 살아 있으면 CTA에 그 가격을, 아니면 정가를.
+  // 쿠폰 상태를 모르면(null) 얼리버드를 약속하지 않는다.
+  const earlyBird = access.earlyBirdLeft !== null && access.earlyBirdLeft > 0;
   const wrapRef = useRef<HTMLDivElement>(null);
   const state = usePhoneState(wrapRef);
 
@@ -61,7 +63,11 @@ export default function Hero() {
             {issue.monthLabel}
           </span>
           <span className="xp-pill">
-            {gated ? 'Invite-only · examples are open' : 'No sign-up · 3 free runs a day'}
+            {access.paid
+              ? 'Lifetime pass · 3 runs a day'
+              : earlyBird
+                ? 'Early bird · first 100 only'
+                : 'One payment · yours forever'}
           </span>
         </div>
         {/* 디스플레이 레이어는 영어, 설득 문장은 한국어 — 이중 레이어 카피 체계 */}
@@ -73,8 +79,14 @@ export default function Hero() {
         <p className="xp-hero-sub">
           Upload an inspiration photo and AI styles five nail sets. Preview your favorite on a hand before you commit.
         </p>
+        {/* 무료가 아니다 — "free"라고 쓰면 결제 페이지에서 배신당한다.
+            이용권이 있으면 만들기, 없으면 가격을 정직하게. */}
         <a className="xp-cta" href="#tool">
-          {gated ? 'Start with an invite code' : 'Create for free'}
+          {access.paid
+            ? 'Create my set'
+            : earlyBird
+              ? 'Start — early bird ₩4,900'
+              : 'Start — ₩9,900 lifetime'}
         </a>
         <span className="xp-hero-scrollhint" aria-hidden>
           Scroll to create ↓

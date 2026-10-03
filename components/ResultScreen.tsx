@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import OptionsPicker from '@/components/OptionsPicker';
-import PriceProbe from '@/components/PriceProbe';
 import SaveToLibrary from '@/components/SaveToLibrary';
 import VariantGrid from '@/components/VariantGrid';
 import { drawCollage, extractColors } from '@/lib/collage';
@@ -38,7 +37,20 @@ function downloadDataUrl(url: string, name: string): void {
   const a = document.createElement('a');
   a.href = url;
   a.download = name;
+  // DOM에 붙지 않은 앵커의 click은 iOS Safari에서 무시된다 — 붙였다 떼낸다
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+}
+
+/**
+ * iOS는 <a download>을 data: URL에 적용하지 않는다.
+ * click만으로는 저장이 안 되니 새 탭으로 열어 '길게 눌러 저장'을 유도한다.
+ */
+function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
 async function dataUrlToFile(url: string, name: string): Promise<File> {
@@ -61,6 +73,12 @@ async function shareOrDownload(url: string, name: string, text: string): Promise
     }
   } catch {
     // 사용자 취소 또는 미지원 — 폴백으로 넘어간다
+  }
+  if (isIOS()) {
+    // iOS Safari는 download 속성을 무시해 click만으로 저장이 안 된다.
+    // 새 탭으로 열어 시스템 공유 시트('이미지 저장')로 넘긴다.
+    window.open(url, '_blank', 'noopener');
+    return 'download';
   }
   downloadDataUrl(url, name);
   return 'download';
@@ -326,12 +344,11 @@ export default function ResultScreen({
         </div>
       )}
 
-      {/* 가치를 가장 크게 체감하는 자리 — 착용샷을 막 본 직후.
-          예전엔 페이지 최하단, 그것도 "탭 닫으면 사라지니 받아두세요"(이탈 유도)
-          바로 뒤에 있어서, 사용자를 내보낸 다음 결제 의사를 묻는 순서였다. */}
-      {hasAnyDone && <PriceProbe />}
+      {/* 결과 화면에서는 가격을 다시 묻지 않는다 — 페이월·랜딩 가격 섹션에서
+          이미 안내했고, 착용샷을 본 직후 결제 의사를 묻는 것은 순서를 뒤집는다.
+          (예전 가짜 가격 버튼 자리) */}
 
-      {/* 시안 5종 그리드 — 아직 그려지는 중이어도 완성분부터 갈아탈 수 있다 */}
+      {/* 시안 3종 그리드 — 아직 그려지는 중이어도 완성분부터 갈아탈 수 있다 */}
       <div className="tipset-block">
         <h2 className="overline">Five Looks{stillDrawing ? ' — 그리는 중' : ''}</h2>
         <VariantGrid slots={slots} selectedId={selectedId} onSelect={onSelect} onRetry={onRetry} />

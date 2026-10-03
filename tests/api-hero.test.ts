@@ -14,6 +14,14 @@ const fakeStore: CounterStore = {
 };
 
 vi.mock('@/lib/redis', () => ({ getRedis: () => fakeStore }));
+// 결제 게이트 통과용 — 실제 Stripe/DB를 건드리지 않는다
+vi.mock('@/auth', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/payments', () => ({
+  isPaidBySub: vi.fn(),
+  markPaid: vi.fn(),
+  PRICE_REGULAR_KRW: 9900,
+  PRICE_EARLY_KRW: 4900,
+}));
 vi.mock('@/lib/provider', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/provider')>();
   return { ...original, generateImage: vi.fn() };
@@ -21,8 +29,12 @@ vi.mock('@/lib/provider', async (importOriginal) => {
 
 import { generateImage } from '@/lib/provider';
 import { POST } from '@/app/api/hero/route';
+import { auth } from '@/auth';
+import { isPaidBySub } from '@/lib/payments';
 
 const mockGenerateImage = vi.mocked(generateImage);
+const mockAuth = vi.mocked(auth);
+const mockIsPaid = vi.mocked(isPaidBySub);
 
 const GEN_OK = {
   image: { data: 'aGVybw==', mimeType: 'image/png' },
@@ -46,13 +58,16 @@ const VALID_BODY = {
 };
 
 function heroKey(): string {
-  return 'quota:hero:ip:1.2.3.4:' + kstToday();
+  return 'quota:hero:u:test-sub:' + kstToday();
 }
 
 beforeEach(() => {
   store.reset();
   mockGenerateImage.mockReset();
   mockGenerateImage.mockResolvedValue(GEN_OK);
+  // 결제 게이트 통과: 로그인됨 + 이용권 보유
+  mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'test@example.com' } } as never);
+  mockIsPaid.mockResolvedValue(true);
   process.env.DAILY_USER_LIMIT = '3';
   process.env.DAILY_TOTAL_LIMIT = '200';
 });

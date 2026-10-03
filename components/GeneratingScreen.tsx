@@ -40,7 +40,7 @@ export default function GeneratingScreen({
   onSelect,
   onCancel,
 }: {
-  /** analyzing: 사진 분석 중 / variants: 시안 5종이 완성순으로 도착 중 */
+  /** analyzing: 사진 분석 중 / variants: 시안 3종이 완성순으로 도착 중 */
   stage: 'analyzing' | 'variants';
   slots: VariantSlot[];
   onRetry: (planId: string) => void;
@@ -124,13 +124,13 @@ export default function GeneratingScreen({
     );
   }
 
-  // 2단계 — 시안 5종 그리는 중: 완성되는 순서대로 슬롯이 채워진다
+  // 2단계 — 시안 3종 그리는 중: 완성되는 순서대로 슬롯이 채워진다
   return (
     <div className="generating generating-variants">
       <p className="overline">Now Printing</p>
       <div role="status" aria-live="polite">
         <p className="generating-msg">
-          시안 5종 그리는 중 — {announced}/{slots.length}
+          시안 3종 그리는 중 — {announced}/{slots.length}
         </p>
       </div>
       <p className="sub generating-hint">

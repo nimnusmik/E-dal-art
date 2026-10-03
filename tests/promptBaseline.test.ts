@@ -37,6 +37,6 @@ describe('기존 코케트 프롬프트 (회귀 가드)', () => {
     expect(prompt).toContain('30-45%');
     expect(prompt).toContain('PARTS RULE');
     expect(prompt).toContain('Sugar');
-    expect(prompt).toContain('hand-paintable by a human artist');
+    expect(prompt).toContain('buildable by hand');
   });
 });

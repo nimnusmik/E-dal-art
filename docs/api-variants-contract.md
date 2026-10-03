@@ -26,18 +26,20 @@ interface VariantPlan {
 ## POST /api/analyze
 
 요청: `{ images: ImagePayload[1~3], shape: NailShape, length: NailLength, partsIntensity: PartsIntensity }`
-응답 200: `{ brief: NailBrief, plans: VariantPlan[5], remaining: number }`
+응답 200: `{ brief: NailBrief, plans: VariantPlan[5], remaining: number, variantToken: string }`
 오류: 400 INVALID_INPUT / 429 RATE_LIMIT_USER·RATE_LIMIT_TOTAL / 502 ANALYZE_FAILED
 쿼터: 성공 시 기존 일일 사용자 크레딧 1 차감 (세션 시작 = 1회).
 동작: analyzeToBrief → shape/length/partsIntensity 오버라이드 적용 → planVariants(브리프→5플랜).
+variantToken: POST /api/variant 호출용 세션 토큰. 당일·동일 주체에만 유효 —
+analyze를 거치지 않은 variant 직접 호출을 차단한다.
 
 GET /api/analyze → 200 `{ remaining: number }` — 쿼터 조회만, 차감 없음 (기존 GET /api/generate와 동일 로직). 시작 화면의 남은 횟수 표시용.
 
 ## POST /api/variant
 
-요청: `{ images: ImagePayload[1~3], brief: NailBrief, plan: VariantPlan }`
+요청: `{ images: ImagePayload[1~3], brief: NailBrief, plan: VariantPlan, variantToken: string }`
 응답 200: `{ tipSet: { image: string; mimeType: string }, quality: { pass: boolean; score: number } | null }`
-오류: 400 / 422 REJECTED / 429 RATE_LIMIT_VARIANT / 502 GENERATION_FAILED
+오류: 400 INVALID_INPUT·INVALID_TOKEN / 422 REJECTED / 429 RATE_LIMIT_VARIANT / 502 GENERATION_FAILED
 쿼터: 별도 variant 일일 카운터 (상한 = DAILY_USER_LIMIT × 6). 성공 시에만 차감.
 동작: plan을 브리프에 merge → 팁셋 1장 생성 + 검수 1회 (variant당 재시도 없음 —
 5종 병렬이 곧 다양성이므로 낙제작은 quality.pass=false로 표시만).

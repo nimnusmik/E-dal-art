@@ -1,3 +1,5 @@
+import type { StyleId } from '@/config/styles';
+
 export type NailShape = 'almond' | 'round' | 'square' | 'stiletto';
 export type NailLength = 'short' | 'medium' | 'long';
 
@@ -5,17 +7,19 @@ export type NailLength = 'short' | 'medium' | 'long';
  *  auto: 사진의 파츠 밀도 그대로 / none: 파츠 0 / point: 포인트 1~2개 / rich: 화려하게 */
 export type PartsIntensity = 'auto' | 'none' | 'point' | 'rich';
 
-/** 5종 변주 플랜 — 베이스 브리프의 일부 라인을 대체하는 델타 (docs/api-variants-contract.md) */
+/** 3종 큰 변주 플랜 — 베이스 브리프의 일부 라인을 대체하는 델타 (docs/api-variants-contract.md) */
 export interface VariantPlan {
-  id: string;            // "v1"~"v5"
+  id: string;            // "v1"~"v3"
   title: string;         // 한국어 짧은 이름 (예: "도트 반전", "레이스 포인트") — UI 카드 라벨
   patternLines: string[]; // 베이스 브리프의 patternLines를 대체
-  partsLine: string;      // 베이스 브리프의 partsLine을 대체
+  partsLine: string;      // 베이스 브리프의 patternLines를 대체
   letteringWord: string | null;
   paletteLine?: string;   // 없으면 베이스 브리프 것 사용
+  /** 시술 스타일 (config/styles.ts) — 베이스·구조·질감·파츠 밀도를 서버가 이 id로 채운다 */
+  styleId?: StyleId;
   /**
    * 카드에 붙는 한국어 한 줄 — "이 시안이 다른 넷과 무엇이 다른가".
-   * 이름만 있으면 사용자에게는 무작위 단어 5개이고, "왜 5장인가"에 화면이 답하지 못한다.
+   * 이름만 있으면 사용자에게는 무작위 단어 3개이고, "왜 3장인가"에 화면이 답하지 못한다.
    */
   note?: string;
 }
@@ -49,7 +53,7 @@ export interface GeneratedImage {
 }
 
 export interface GenerateSuccess {
-  hero: GeneratedImage; // 손 착용샷 (콜라주 히어로)
+  hero: GeneratedImage; // 손 착용샷 콜라주(히어로)
   tipSet: GeneratedImage | null; // 개별 팁 10개 플랫레이 (실패 시 null)
   mood: Mood | null;
   remaining: number;
@@ -57,7 +61,8 @@ export interface GenerateSuccess {
 
 export type GenerateErrorCode =
   | 'INVALID_INPUT'
-  | 'INVITE_REQUIRED'
+  | 'LOGIN_REQUIRED'
+  | 'PAYMENT_REQUIRED'
   | 'RATE_LIMIT_USER'
   | 'RATE_LIMIT_TOTAL'
   | 'REJECTED'

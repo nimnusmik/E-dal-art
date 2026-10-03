@@ -29,14 +29,11 @@ export const STATS: StatCard[] = [
     tone: 'green',
   },
   {
-    // 이전 값은 '100% / AI 검수 통과작만'이었다. 동어반복이고, 제품은 이미 부분실패를
-    // 전제하며 낙제작을 '아쉬운 컷' 배지로 보여준다 — 방어 불가능한 약속이었다.
-    // 초대 게이트가 켜져 있는 동안 "하루 3회 무료"는 지킬 수 없는 약속이 된다.
-    // 게이트 상태와 무관하게 참인 문장만 남긴다.
-    // 순서: 가장 강한 메시지(Free)를 2번째에 — 모바일 1열에서 4번째로 밀리지 않게.
-    value: 'Free',
-    label: 'no sign-up, no card',
-    body: "We never ask for payment info. Failed runs don't count against you.",
+    // 이전 값은 'Free / no sign-up, no card'였다. 유료 모델이므로 정직하게 바꾼다.
+    // 순서: 가장 강한 메시지(가격)를 2번째에 — 모바일 1열에서 4번째로 밀리지 않게.
+    value: '₩9,900',
+    label: 'one pass · forever',
+    body: "Pay once, never again. Three runs a day, every day. Failed runs don't count.",
     tone: 'pink',
   },
   {
@@ -155,8 +152,8 @@ export const FAQS: FaqItem[] = [
     a: "Anything that carries color and mood — a screenshot, an outfit, today's sky. It doesn't have to be a nail photo. Start with one, add up to three.",
   },
   {
-    q: 'Is it free?',
-    a: "Yes — no sign-up, no payment. Creating is invite-only for now: AI image generation has real costs, so we're limiting seats while we gauge demand. Leave your email below and we'll tell you when it opens.",
+    q: 'How much does it cost?',
+    a: "One lifetime pass — ₩9,900, pay once and it's yours. Three runs a day, refilled at midnight KST, and failed runs don't count. The first 100 members get the early-bird price of ₩4,900.",
   },
   {
     q: 'How many runs per day?',

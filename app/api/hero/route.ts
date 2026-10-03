@@ -4,7 +4,8 @@ import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { buildPrompt } from '@/lib/prompt';
 import { getTrendKeywords } from '@/config/trends';
 import { generateImage } from '@/lib/provider';
-import { hasValidInvite, clientIp, dailyLimits, isNailLength, isNailShape, parseImages, MAX_IMAGE_BASE64_CHARS, quotaSubject } from '@/lib/request';
+import { clientIp, dailyLimits, paymentGate, quotaSubject } from '@/lib/request';
+import { HeroBodySchema } from '@/lib/schemas';
 import type { ImagePayload, NailLength, NailShape } from '@/lib/types';
 
 /**
@@ -19,7 +20,8 @@ const HERO_LIMIT_MULTIPLIER = 5;
 
 type HeroErrorCode =
   | 'INVALID_INPUT'
-  | 'INVITE_REQUIRED'
+  | 'LOGIN_REQUIRED'
+  | 'PAYMENT_REQUIRED'
   | 'RATE_LIMIT_HERO'
   | 'RATE_LIMIT_TOTAL'
   | 'REJECTED'
@@ -36,23 +38,9 @@ function errorResponse(error: HeroErrorCode, status: number): NextResponse {
   return NextResponse.json({ error }, { status });
 }
 
-function parseTipSet(value: unknown): { image: string; mimeType: string } | null {
-  if (typeof value !== 'object' || value === null) return null;
-  const { image, mimeType } = value as Record<string, unknown>;
-  if (typeof image !== 'string' || image.length === 0 || image.length > MAX_IMAGE_BASE64_CHARS * 2) return null;
-  if (typeof mimeType !== 'string' || !mimeType.startsWith('image/')) return null;
-  return { image, mimeType };
-}
-
 function validateBody(body: unknown): HeroRequest | null {
-  if (typeof body !== 'object' || body === null) return null;
-  const { images, tipSet, shape, length } = body as Record<string, unknown>;
-  const parsedImages = parseImages(images);
-  if (!parsedImages) return null;
-  const parsedTipSet = parseTipSet(tipSet);
-  if (!parsedTipSet) return null;
-  if (!isNailShape(shape) || !isNailLength(length)) return null;
-  return { images: parsedImages, tipSet: parsedTipSet, shape, length };
+  const parsed = HeroBodySchema.safeParse(body);
+  return parsed.success ? parsed.data : null;
 }
 
 export async function POST(req: Request): Promise<NextResponse> {
@@ -65,8 +53,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   const body = validateBody(raw);
   if (!body) return errorResponse('INVALID_INPUT', 400);
 
-  // 초대 코드 게이트 — 생성 1건이 곧 실비이므로 검증 전까지는 초대받은 사람만
-  if (!hasValidInvite(req)) return errorResponse('INVITE_REQUIRED', 403);
+  // 결제 게이트 — 이용권이 있어야 생성할 수 있다 (호출 1건이 곧 실비)
+  const gate = await paymentGate();
+  if (gate) return errorResponse(gate.error, gate.status);
 
   const store = getRedis();
   const subject = await quotaSubject(req);
@@ -85,6 +74,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       { key: imageQuotaKey(now), limit: imageLimit, code: 'RATE_LIMIT_TOTAL' },
     ],
     now,
+    { trackPending: true }, // 플랫폼 타임아웃/OOM 시 reaper가 환불한다
   );
   if (!held.ok) return errorResponse(held.code as HeroErrorCode, 429);
 
@@ -107,6 +97,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return errorResponse(outcome.safetyBlocked ? 'REJECTED' : 'GENERATION_FAILED', outcome.safetyBlocked ? 422 : 502);
   }
 
+  // 성공 확정 — pending 마커를 지우고 카운터는 유지한다
+  await held.commit();
   return NextResponse.json({
     hero: { image: outcome.image.data, mimeType: outcome.image.mimeType },
   });

@@ -1,33 +1,41 @@
 'use client';
 
-import { useGate } from '@/lib/useGate';
+import { useAccess } from '@/lib/useAccess';
 
 /**
  * 초원 배경 초대형 타이포 CTA. 풋터 바는 <main> 밖 SiteFooter가 소유한다.
- * 페이지 끝까지 읽고도 초대가 없는 사람에게는 두 번째 제안(구독 알림)을 함께 보인다 —
- * 유일한 전환 경로가 닫힌 문이면 여기서 이탈이 확정된다.
+ * 무료가 아니다 — "무료"라고 쓰면 결제 페이지에서 배신당한다.
+ * 대신 "한 번 사면 끝" — 평생 이용권의 실체를 한 줄로.
  */
 export default function FooterCta() {
-  const gate = useGate();
-  const gated = gate.inviteRequired && !gate.hasInvite;
+  const access = useAccess();
+  const earlyBird = access.earlyBirdLeft !== null && access.earlyBirdLeft > 0;
+  const fmt = (n: number) => `₩${n.toLocaleString('ko-KR')}`;
+  const cta = access.paid
+    ? 'Create my set'
+    : earlyBird
+      ? `얼리버드 ${fmt(access.priceEarly)}으로 시작하기`
+      : `${fmt(access.priceRegular)}으로 시작하기`;
   return (
     <section className="xp-meadow xp-footer-cta" aria-label="Go create a set">
       <div className="xp-footer-inner">
         <span className="xp-pill t-blue" aria-hidden>
-          Ready?
+          {earlyBird && !access.paid ? `Early bird · ${access.earlyBirdLeft} left` : 'One pass · forever'}
         </span>
         <h2 className="xp-display xp-footer-title">
-          Meet this month's nails
+          Meet this month&apos;s nails
           <br />
           before anyone else
         </h2>
         <a className="xp-cta" href="#tool">
-          {gated ? 'Start with an invite code' : 'Create for free'}
+          {cta}
         </a>
-        {gated && (
-          <a className="xp-footer-alt" href="#subscribe">
-            No invite? Get notified when it opens
-          </a>
+        {!access.paid && (
+          <p className="xp-footer-note">
+            {earlyBird
+              ? `얼리버드 ${fmt(access.priceEarly)} (정가 ${fmt(access.priceRegular)}) · 선착순 100명`
+              : `평생 이용권 ${fmt(access.priceRegular)} · 하루 3회 생성`}
+          </p>
         )}
       </div>
     </section>

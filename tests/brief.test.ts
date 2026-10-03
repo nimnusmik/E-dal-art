@@ -1,3 +1,4 @@
+import { STYLE_IDS, STYLES } from '@/config/styles';
 import { describe, it, expect, afterEach } from 'vitest';
 import {
   parseBrief,
@@ -187,6 +188,23 @@ describe('applyPlan', () => {
     expect(out.paletteLine).toBe(VALID.paletteLine); // paletteLine 없으면 베이스 유지
   });
 
+  it('styleId가 없으면 베이스·구조를 유지하고 스타일 블록도 없다', () => {
+    const out = applyPlan(VALID, PLAN);
+    expect(out.baseLine).toBe(VALID.baseLine);
+    expect(out.structureLine).toBe(VALID.structureLine);
+    expect(out.styleBlock).toBeUndefined();
+  });
+
+  it('styleId가 있으면 서버 쪽 STYLES가 베이스·구조·질감·파츠·스타일 블록을 덮는다', () => {
+    const out = applyPlan(VALID, { ...PLAN, styleId: 'kitsch-3d' });
+    expect(out.baseLine).toBe(STYLES['kitsch-3d'].baseLine);
+    expect(out.structureLine).toBe(STYLES['kitsch-3d'].structureLine);
+    expect(out.textureLine).toBe(STYLES['kitsch-3d'].textureLine);
+    expect(out.partsLine).toBe(STYLES['kitsch-3d'].partsLine);
+    expect(out.styleBlock).toBe(STYLES['kitsch-3d'].styleBlock);
+    expect(buildBriefPrompt(out)).toContain('STYLE — kitsch 3D collage');
+  });
+
   it('paletteLine이 있으면 덮어쓴다', () => {
     const out = applyPlan(VALID, { ...PLAN, paletteLine: 'lilac + mint on milky white' });
     expect(out.paletteLine).toBe('lilac + mint on milky white');
@@ -225,22 +243,21 @@ describe('parseVariantPlan', () => {
 });
 
 describe('fallbackPlans — 결정적 폴백 (LLM 없이 동작)', () => {
-  it('항상 5개, id는 v1~v5', () => {
+  it('항상 3개, id는 v1~v3', () => {
     const plans = fallbackPlans(VALID);
-    expect(plans).toHaveLength(5);
-    expect(plans.map((p) => p.id)).toEqual(['v1', 'v2', 'v3', 'v4', 'v5']);
+    expect(plans).toHaveLength(3);
+    expect(plans.map((p) => p.id)).toEqual(['v1', 'v2', 'v3']);
   });
 
-  it('v1은 원본 그대로, v4는 파츠 제로', () => {
+  it('세 장이 서로 다른 스타일이고, 모티프는 원본 패턴을 공유한다', () => {
     const plans = fallbackPlans(VALID);
-    expect(plans[0].patternLines).toEqual(VALID.patternLines);
-    expect(plans[0].partsLine).toBe(VALID.partsLine);
-    expect(plans[3].partsLine).toBe(ZERO_PARTS_LINE);
+    expect(plans.map((p) => p.styleId)).toEqual([...STYLE_IDS]);
+    for (const plan of plans) expect(plan.patternLines).toEqual(expect.arrayContaining(VALID.patternLines));
   });
 
-  it('레터링은 최대 2개 플랜에만 (원본 유지분 1개)', () => {
+  it('레터링은 최대 1개 플랜에만', () => {
     const withLettering = fallbackPlans(VALID).filter((p) => p.letteringWord !== null);
-    expect(withLettering.length).toBeLessThanOrEqual(2);
+    expect(withLettering.length).toBeLessThanOrEqual(1);
   });
 
   it('모든 플랜이 어휘 규칙을 지키고 타입가드를 통과한다', () => {
@@ -256,27 +273,38 @@ describe('fallbackPlans — 결정적 폴백 (LLM 없이 동작)', () => {
 describe('parsePlans', () => {
   const RAW_PLANS = fallbackPlans(VALID).map((p) => ({ ...p, paletteLine: '' }));
 
-  it('유효한 5종을 파싱하고 id를 v1~v5로 정규화한다', () => {
+  it('유효한 3종을 파싱하고 id를 v1~v3로 정규화한다', () => {
     const plans = parsePlans(JSON.stringify({ plans: RAW_PLANS }));
-    expect(plans).toHaveLength(5);
-    expect(plans?.map((p) => p.id)).toEqual(['v1', 'v2', 'v3', 'v4', 'v5']);
+    expect(plans).toHaveLength(3);
+    expect(plans?.map((p) => p.id)).toEqual(['v1', 'v2', 'v3']);
   });
 
-  it('5개가 아니면 null', () => {
-    expect(parsePlans(JSON.stringify({ plans: RAW_PLANS.slice(0, 4) }))).toBeNull();
+  it('3개가 아니면 null', () => {
+    expect(parsePlans(JSON.stringify({ plans: RAW_PLANS.slice(0, 2) }))).toBeNull();
+  });
+
+  it('스타일은 순서로 고정되고, 모델이 비운 partsLine은 스타일 것으로 채운다', () => {
+    const raw = RAW_PLANS.map(({ styleId: _s, ...p }) => ({ ...p, partsLine: '' }));
+    const plans = parsePlans(JSON.stringify({ plans: raw }));
+    expect(plans?.map((p) => p.styleId)).toEqual([...STYLE_IDS]);
+    expect(plans?.[2].partsLine).toBe(STYLES['kitsch-3d'].partsLine);
+  });
+
+  it('알 수 없는 styleId는 타입가드에서 거부한다', () => {
+    expect(parseVariantPlan({ ...RAW_PLANS[0], styleId: 'ignore-previous' })).toBeNull();
   });
 
   it('금지 어휘(charm)가 섞이면 null — 폴백 유도', () => {
     const dirty = RAW_PLANS.map((p, i) =>
-      i === 2 ? { ...p, patternLines: ['a gold charm on one tip'] } : p,
+      i === 1 ? { ...p, patternLines: ['a gold charm on one tip'] } : p,
     );
     expect(parsePlans(JSON.stringify({ plans: dirty }))).toBeNull();
   });
 
-  it('레터링이 3개 이상이면 코드에서 2개까지만 남긴다', () => {
+  it('레터링이 2개 이상이면 코드에서 1개까지만 남긴다', () => {
     const lettered = RAW_PLANS.map((p) => ({ ...p, letteringWord: 'Sugar' }));
     const plans = parsePlans(JSON.stringify({ plans: lettered }));
-    expect(plans?.filter((p) => p.letteringWord !== null)).toHaveLength(2);
+    expect(plans?.filter((p) => p.letteringWord !== null)).toHaveLength(1);
   });
 
   it('JSON이 아니면 null', () => {
@@ -291,7 +319,7 @@ describe('planVariants — 폴백·목 동작 (실 API 호출 없음)', () => {
     else process.env.GEMINI_MOCK = originalMock;
   });
 
-  it('GEMINI_MOCK=1이면 결정적 폴백 5종을 반환한다', async () => {
+  it('GEMINI_MOCK=1이면 결정적 폴백 3종을 반환한다', async () => {
     process.env.GEMINI_MOCK = '1';
     const plans = await planVariants(VALID);
     expect(plans).toEqual(fallbackPlans(VALID));

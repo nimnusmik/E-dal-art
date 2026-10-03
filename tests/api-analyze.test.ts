@@ -14,6 +14,14 @@ const fakeStore: CounterStore = {
 };
 
 vi.mock('@/lib/redis', () => ({ getRedis: () => fakeStore }));
+// 결제 게이트 통과용 — 실제 Stripe/DB를 건드리지 않는다
+vi.mock('@/auth', () => ({ auth: vi.fn() }));
+vi.mock('@/lib/payments', () => ({
+  isPaidBySub: vi.fn(),
+  markPaid: vi.fn(),
+  PRICE_REGULAR_KRW: 9900,
+  PRICE_EARLY_KRW: 4900,
+}));
 // 외부 API를 부르는 함수만 목킹 — applyOptions·fallbackPlans 등 순수 함수는 원본 사용
 vi.mock('@/lib/brief', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/brief')>();
@@ -22,7 +30,12 @@ vi.mock('@/lib/brief', async (importOriginal) => {
 
 import { analyzeToBrief, planVariants, fallbackPlans, ZERO_PARTS_LINE } from '@/lib/brief';
 import type { NailBrief } from '@/lib/brief';
-import { POST, GET } from '@/app/api/analyze/route';
+import { POST } from '@/app/api/analyze/route';
+import { auth } from '@/auth';
+import { isPaidBySub } from '@/lib/payments';
+
+const mockAuth = vi.mocked(auth);
+const mockIsPaid = vi.mocked(isPaidBySub);
 
 const mockAnalyzeToBrief = vi.mocked(analyzeToBrief);
 const mockPlanVariants = vi.mocked(planVariants);
@@ -66,21 +79,25 @@ beforeEach(() => {
   mockPlanVariants.mockReset();
   mockAnalyzeToBrief.mockResolvedValue(VALID_BRIEF);
   mockPlanVariants.mockImplementation(async (brief) => fallbackPlans(brief));
+  // 결제 게이트 통과: 로그인됨 + 이용권 보유
+  mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'test@example.com' } } as never);
+  mockIsPaid.mockResolvedValue(true);
   process.env.DAILY_USER_LIMIT = '3';
   process.env.DAILY_TOTAL_LIMIT = '200';
 });
 
 describe('POST /api/analyze', () => {
-  it('성공: brief+plans(5개)+remaining 반환, 쉐입·길이는 주문값 우선, 크레딧 1 차감', async () => {
+  it('성공: brief+plans(3개)+remaining 반환, 쉐입·길이는 주문값 우선, 크레딧 1 차감', async () => {
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.brief.shape).toBe('square');
     expect(json.brief.length).toBe('long');
-    expect(json.plans).toHaveLength(5);
-    expect(json.plans.map((p: { id: string }) => p.id)).toEqual(['v1', 'v2', 'v3', 'v4', 'v5']);
+    expect(json.plans).toHaveLength(3);
+    expect(json.plans.map((p: { id: string }) => p.id)).toEqual(['v1', 'v2', 'v3']);
     expect(json.remaining).toBe(2);
-    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(1);
+    expect(typeof json.variantToken).toBe('string'); // variant 호출용 세션 토큰
+    expect(store.data.get('quota:user:u:test-sub:' + kstToday())).toBe(1);
   });
 
   it('partsIntensity=none이면 브리프 partsLine이 파츠 제로 문장으로 교체된다', async () => {
@@ -101,7 +118,7 @@ describe('POST /api/analyze', () => {
   });
 
   it('개인 한도 소진 → 429 RATE_LIMIT_USER, 분석 호출 안 함', async () => {
-    store.data.set('quota:user:ip:1.2.3.4:' + kstToday(), 3);
+    store.data.set('quota:user:u:test-sub:' + kstToday(), 3);
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(429);
     expect((await res.json()).error).toBe('RATE_LIMIT_USER');
@@ -120,22 +137,30 @@ describe('POST /api/analyze', () => {
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(502);
     expect((await res.json()).error).toBe('ANALYZE_FAILED');
-    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(0); // 선점분 환불됨
+    expect(store.data.get('quota:user:u:test-sub:' + kstToday())).toBe(0); // 선점분 환불됨
   });
 });
 
-describe('GET /api/analyze', () => {
-  it('남은 횟수 반환 (차감 없음)', async () => {
-    store.data.set('quota:user:ip:1.2.3.4:' + kstToday(), 1);
-    const res = await GET(new Request('http://localhost/api/analyze', {
-      headers: { 'x-forwarded-for': '1.2.3.4' },
-    }));
-    expect((await res.json()).remaining).toBe(2);
-    expect(store.data.get('quota:user:ip:1.2.3.4:' + kstToday())).toBe(1);
-  });
-});
 
 function kstToday(): string {
   const kst = new Date(Date.now() + 9 * 3600 * 1000);
   return kst.toISOString().slice(0, 10).replace(/-/g, '');
 }
+
+describe('결제 게이트', () => {
+  it('미로그인 → 401 LOGIN_REQUIRED', async () => {
+    mockAuth.mockResolvedValue(null as never);
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe('LOGIN_REQUIRED');
+    expect(mockAnalyzeToBrief).not.toHaveBeenCalled();
+  });
+
+  it('로그인했지만 미결제 → 402 PAYMENT_REQUIRED', async () => {
+    mockIsPaid.mockResolvedValue(false);
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(402);
+    expect((await res.json()).error).toBe('PAYMENT_REQUIRED');
+    expect(mockAnalyzeToBrief).not.toHaveBeenCalled();
+  });
+});

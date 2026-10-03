@@ -1,4 +1,6 @@
 import { GoogleGenAI, Type } from '@google/genai';
+import { STYLE_IDS, STYLES } from '@/config/styles';
+import type { StyleId } from '@/config/styles';
 import type { ImagePayload, NailLength, NailShape, PartsIntensity, VariantPlan } from './types';
 import type { NailCore } from './core';
 import { isMock } from './mock';
@@ -45,6 +47,10 @@ export interface NailBrief {
   difficulty: 'easy' | 'medium' | 'hard';
   /** 시술 조정 메모 (한국어) */
   feasibilityNotes: string;
+  /** 변주 스타일 규칙 블록 — 분석 결과엔 없고 applyPlan이 서버 쪽 STYLES에서 채운다 */
+  styleBlock?: string;
+  /** 촬영 장면 — 없으면 기본(창가 아크릴 스탠드). 수동 설계도에서만 지정 */
+  sceneLine?: string;
 }
 
 /** 분석 실패 시 null — 일시 오류(쿼터 등) 대비 1회 재시도. 호출부는 기존 analyze.ts 경로로 폴백 가능 */
@@ -88,6 +94,8 @@ const FIELD_MAX = {
   line: 400, // 정상 브리프 한 줄은 200자 안쪽
   listItem: 60, // keywords·colors 항목
   listLength: 8,
+  /** 플랜의 팁별 설계 줄 — 팁 10개를 한 줄씩 (3~5줄로 10개를 채우게 하면 복사해서 메웠다) */
+  tipLines: 10,
   letteringWord: 16,
 } as const;
 
@@ -96,9 +104,13 @@ function clampLine(value: string, max: number = FIELD_MAX.line): string {
   return value.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
 }
 
-function clampList(values: string[], max: number = FIELD_MAX.listItem): string[] {
+function clampList(
+  values: string[],
+  max: number = FIELD_MAX.listItem,
+  count: number = FIELD_MAX.listLength,
+): string[] {
   return values
-    .slice(0, FIELD_MAX.listLength)
+    .slice(0, count)
     .map((v) => clampLine(v, max))
     .filter((v) => v.length > 0);
 }
@@ -207,16 +219,37 @@ export function applyOptions(
   return next;
 }
 
-/** 플랜을 베이스 브리프에 병합 — 순수 함수 (variant 라우트에서 사용) */
+/**
+ * 플랜을 베이스 브리프에 병합 — 순수 함수 (variant 라우트에서 사용).
+ * styleId가 있으면 베이스·구조·질감·파츠 밀도·스타일 블록을 서버 쪽 STYLES가 덮는다.
+ */
 export function applyPlan(brief: NailBrief, plan: VariantPlan): NailBrief {
-  return {
+  const merged: NailBrief = {
     ...brief,
     patternLines: plan.patternLines,
     partsLine: plan.partsLine,
     letteringWord: plan.letteringWord,
     paletteLine: plan.paletteLine ?? brief.paletteLine,
   };
+  if (!plan.styleId) return merged;
+  const style = STYLES[plan.styleId];
+  return {
+    ...merged,
+    baseLine: style.baseLine,
+    structureLine: style.structureLine,
+    textureLine: style.textureLine,
+    partsLine: style.partsLine,
+    styleBlock: style.styleBlock,
+  };
 }
+
+/**
+ * 세트 품질 기준 — 스타일과 무관하게 모든 세트에 적용 (사용자 제시 최소 기준 사진, 2026-09-22).
+ * 팁마다 굵은 아이디어 하나 + 세트 통일감. 자잘한 장식을 흩뿌린 팁은 "AI 같다"고 읽혔다.
+ */
+export const SET_QUALITY = `- SET QUALITY: each tip carries ONE bold, clearly readable idea that owns its composition (a large sculpted or metal centerpiece, a spiral or lattice of raised chrome line work, a framed cameo motif, bold retro stripes) — confident and graphic, never a scatter of tiny bits. All ten ideas differ.
+- SET COHESION: the same two or three base colors and one metal tone repeat across all ten tips, so ten different designs read as one curated set.
+- Raised line work is smooth, even and slightly proud of the surface, like piped chrome gel.`;
 
 /**
  * 파츠 물리 법칙 — 모든 생성 프롬프트 공통 첨부.
@@ -243,8 +276,8 @@ export function buildBriefPrompt(brief: NailBrief): string {
     ? `- Exactly one tip carries a single short cursive black script word "${brief.letteringWord}" — written once, on one tip only.`
     : '';
   const textureLine = brief.textureLine ? `- ${brief.textureLine}` : '';
-  return `You are a top Korean nail artist presenting a design set inspired by the attached reference photo.
-Create ONE photorealistic top-down flat-lay photo of a press-on nail tip sample board: individual ${brief.length} ${brief.shape} nail tips laid out in neat rows on a plain light-grey background, soft even studio lighting.
+  return `You are a top Korean nail artist presenting a design set. The attached photos are mood references only: borrow their motifs, palette and mood, and render everything as real nail art in the brief below — never as printed stickers of the artwork.
+${brief.sceneLine ?? `Create ONE real, unedited phone photo taken by a nail salon owner of a finished press-on set she made by hand: ten individual ${brief.length} ${brief.shape} nail tips mounted in two rows of five on a clear acrylic display stand on a white tabletop, lit by soft natural window daylight from one side, with real soft shadows, faint reflections on the acrylic, and a slightly shallow depth of field.`}
 
 DESIGN BRIEF — follow every line exactly:
 - ${brief.baseLine}
@@ -253,23 +286,30 @@ DESIGN BRIEF — follow every line exactly:
 ${LENGTH_RULES[brief.length]}
 ${brief.patternLines.map((l) => `- ${l}`).join('\n')}
 ${textureLine}
+${brief.styleBlock ?? ''}
 - PARTS RULE: ${brief.partsLine}
 ${letteringLine}
+${SET_QUALITY}
 ${PARTS_PHYSICS}
 - Mood: ${brief.moodLine}
-- Every element is hand-paintable by a human artist with gel: slight hand-made micro-variations, natural gel edge highlights, clean crisp edges.
-- The tips are the only subject: plain background, clean composition, no text overlays, nothing else in frame.`
+- Every element is buildable by hand: gel painting, 3D sculpting gel or acrylic, pearls and flat-back rhinestones sealed under clear gel.
+- Real handmade character: each tip is its own unique design; painted lines vary slightly in thickness, sculpted pieces differ a little in size and angle, pearls and rhinestones sit at slightly irregular positions, gel shows natural thickness at the edges. The photo reads as a genuine salon photo — natural color, real texture, no CGI gloss.
+- Exactly ten tips, two rows of five, following the per-tip list in order.
+- Keep it original: no recognizable characters or mascots.
+- The tips on their stand are the only subject: simple tabletop, no text overlays, no watermarks.`
     .replace(/\n{3,}/g, '\n\n');
 }
 
 const BRIEF_INSTRUCTION = `You are a veteran Korean nail artist AND a prompt engineer for an image generation model.
-Study the attached inspiration photo(s) and write a DESIGN BRIEF that lets an image model recreate a press-on nail SET faithful to this photo's character. You are not describing the photo — you are writing generation instructions.
+Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. The photos are mood references — often graphics, illustrations or collages, not nails. Take ONLY their motifs, palette and mood, and describe each motif as a nail design element (a drawn flower becomes a nail flower motif, a graphic symbol becomes a small motif or line work). Never plan to copy the artwork as a printed sticker or decal — the execution style is decided later. You are writing generation instructions, not describing the photo.
 
 ## Vocabulary for parts (use ONLY these nouns)
 - painted elements: dots, thin stripes, gingham check, lace-trim line, swirl doodles, script lettering, hand-painted flowers/fruits, animal print (zebra/croc)
 - metal: "tiny silver microbeads", "flat gold/silver metal stud shaped as <motif>" (NEVER the word "charm" — it makes the model draw a hanging pendant; NEVER "anchor" — it draws ⚓)
-- other parts: "small pearl", "small 3D acrylic rose", "flat button-shaped part"
+- other parts: "small pearl", "tiny flat-back crystal rhinestone", "small 3D acrylic rose", "flat button-shaped part"
+- sculpted 3D (gel or acrylic): "sculpted 3D gel <flower> with veined petals", "sculpted 3D seashell", "sculpted 3D starfish", "twisted spiral horn in iridescent gel", "domed jelly <motif>"
 - gel volume techniques: "clear gel water droplets", "tone-on-tone raised gel <motif> (same color as base, embossed)", "sculpted gel waves"
+- finishes: "aurora iridescent chrome sheen", "pearl chrome", "translucent jelly gradient"
 
 ## Parts placement structures (pick what matches the photo)
 - one accent part on one tip, all other tips painted-only
@@ -283,10 +323,11 @@ Study the attached inspiration photo(s) and write a DESIGN BRIEF that lets an im
 1. partsLine MUST use explicit counts ("Exactly one tip...", "Exactly three tips...") AND end by excluding the rest, e.g. "Exactly one tip carries a single small pearl on its french boundary line. Every other tip is painted gel only — no metal, no gems, no pearls." Never write vague quantifiers like "select tips" or "some tips". First COUNT how many tips in the photo actually carry parts and mirror that density: a parts-heavy photo gets a high explicit count, a minimal photo gets 1-2, a painted-only photo gets the zero-parts sentence.
 2. Use positive phrasing everywhere. Say what IS, precisely, instead of listing what to avoid.
 3. Every noun you write will be drawn literally. Choose nouns whose most common image is what you want.
-4. If the photo's decorations are physically impossible or dangling, translate them into flat stud / painted equivalents and note it in feasibilityNotes.
+4. Sculpted 3D elements are welcome; they are built flush on the nail surface. Anything dangling or hanging off the tip becomes a sculpted or flat equivalent — note it in feasibilityNotes.
 5. structureLine: state whether tips are deep-French on sheer nude (design only in the tip zone, nude zone stays empty) or full-color / mixed, matching the photo.
 6. patternLines: 2-5 lines describing the per-tip variations like a human artist plans a set (vary scale, density, figure/ground swap, boundary shape).
-7. letteringWord: only if the photo mood suits script lettering — a common 4-6 letter word derived from the concept (e.g. Sugar, Honey, Cherie, Bonbon). Otherwise empty string.
+7. letteringWord: usually empty string. Only if script lettering is central to the mood, one common 4-6 letter word (e.g. Sugar, Honey). Words printed in the photo are NOT lettering to copy.
+9. Keep it original: no recognizable characters or mascots (Miffy, Sanrio, Disney, etc.) — animals are drawn as simple generic silhouettes or sculpted forms.
 8. moodLine: one short English mood sentence. keywords: 2-3 short Korean mood words. colors: 3 dominant #RRGGBB. feasibilityNotes: one short Korean sentence for the salon artist.`;
 
 const BRIEF_SCHEMA = {
@@ -336,7 +377,9 @@ async function mockBrief(): Promise<NailBrief> {
 }
 
 /* ------------------------------------------------------------------ */
-/* 5종 변주 플랜 (docs/api-variants-contract.md)                        */
+/* 3종 큰 변주 플랜 (docs/api-variants-contract.md)                     */
+
+export const VARIANT_COUNT = 3;
 /* ------------------------------------------------------------------ */
 
 /** 금지 어휘 검사 — charm(펜던트 고리)·anchor(닻) 단어 함정 (PARTS_ANALYSIS 5-1절) */
@@ -352,15 +395,17 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
   if (typeof p.title !== 'string' || p.title.length === 0) return null;
   if (!Array.isArray(p.patternLines) || p.patternLines.length === 0) return null;
   if (!p.patternLines.every((l) => typeof l === 'string' && l.length > 0)) return null;
-  if (typeof p.partsLine !== 'string' || p.partsLine.length === 0) return null;
+  if (typeof p.partsLine !== 'string') return null;
+  // 스타일 플랜은 파츠를 스타일이 정하므로 빈 문자열 허용 (applyPlan이 채운다)
+  if (p.partsLine.length === 0 && p.styleId === undefined) return null;
   if (p.letteringWord !== null && p.letteringWord !== undefined && typeof p.letteringWord !== 'string') return null;
   if (p.paletteLine !== undefined && typeof p.paletteLine !== 'string') return null;
+  if (p.styleId !== undefined && !STYLE_IDS.includes(p.styleId as StyleId)) return null;
   const lettering =
     typeof p.letteringWord === 'string' ? clampLine(p.letteringWord, FIELD_MAX.letteringWord) : '';
-  const patternLines = clampList(p.patternLines as string[], FIELD_MAX.line);
+  const patternLines = clampList(p.patternLines as string[], FIELD_MAX.line, FIELD_MAX.tipLines);
   if (patternLines.length === 0) return null;
   const partsLine = clampLine(p.partsLine);
-  if (partsLine.length === 0) return null;
   const paletteLine = typeof p.paletteLine === 'string' ? clampLine(p.paletteLine) : '';
   const note = typeof p.note === 'string' ? clampLine(p.note, FIELD_MAX.listItem) : '';
   return {
@@ -370,71 +415,34 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
     partsLine,
     letteringWord: lettering.length > 0 ? lettering : null,
     ...(paletteLine.length > 0 ? { paletteLine } : {}),
+    ...(p.styleId !== undefined ? { styleId: p.styleId as StyleId } : {}),
     ...(note.length > 0 ? { note } : {}),
   };
 }
 
 /**
- * 결정적 폴백 플랜 5종 — LLM 없이 코드로 생성 (변주 연산자: 원본/색 반전/스케일 축소/파츠 제로/경계선 사선).
+ * 결정적 폴백 플랜 3종 — LLM 없이 코드로 생성. 세 장이 서로 다른 시술 스타일
+ * (config/styles.ts)로 같은 모티프를 표현한다. (작은 연산자 5종은 서로 너무 비슷해 보였다)
  * planVariants 실패 시에도 파이프라인이 빈손이 되지 않게 하는 안전망.
  */
 export function fallbackPlans(brief: NailBrief): VariantPlan[] {
-  return [
-    {
-      id: 'v1',
-      title: '오리지널',
-      note: '올린 사진을 가장 가깝게 옮겼어요',
-      patternLines: brief.patternLines,
-      partsLine: brief.partsLine,
-      letteringWord: brief.letteringWord,
-    },
-    {
-      id: 'v2',
-      title: '컬러 반전',
-      note: '모티프와 배경 색을 서로 바꿨어요',
-      patternLines: [
-        'Invert figure and ground on every tip: paint each motif in the former background color and each background in the former motif color, keeping the same shapes and placement.',
-        ...brief.patternLines,
-      ],
-      partsLine: brief.partsLine,
-      letteringWord: null,
-    },
-    {
-      id: 'v3',
-      title: '마이크로 스케일',
-      note: '무늬를 아주 작게 줄였어요',
-      patternLines: [
-        'Shrink every motif to micro scale: dots at 0.5-1mm diameter, lines at 0.5mm thickness, keeping the same layout and rhythm.',
-        ...brief.patternLines,
-      ],
-      partsLine: brief.partsLine,
-      letteringWord: null,
-    },
-    {
-      id: 'v4',
-      title: '핸드페인트 온리',
-      note: '파츠 없이 붓으로만 그렸어요',
-      patternLines: brief.patternLines,
-      partsLine: ZERO_PARTS_LINE,
-      letteringWord: null,
-    },
-    {
-      id: 'v5',
-      title: '사선 프렌치',
-      note: '프렌치 경계를 사선으로 그었어요',
-      patternLines: [
-        'Redraw every tip boundary as one clean straight diagonal line running from the lower left to the upper right of the tip, with the design fully contained inside the diagonal tip zone.',
-        ...brief.patternLines,
-      ],
-      partsLine: brief.partsLine,
-      letteringWord: null,
-    },
-  ];
+  return STYLE_IDS.map((styleId, i) => ({
+    id: `v${i + 1}`,
+    title: STYLES[styleId].title,
+    note: STYLES[styleId].note,
+    styleId,
+    patternLines: [
+      ...brief.patternLines,
+      "Render every motif with this style's own techniques, never as a printed copy of the reference artwork.",
+    ],
+    partsLine: STYLES[styleId].partsLine,
+    letteringWord: i === 0 ? brief.letteringWord : null,
+  }));
 }
 
 /**
- * 브리프 → 변주 플랜 5종. Gemini 텍스트 호출(responseSchema, analyzeToBrief와 동일 방식).
- * 스키마 위반·어휘 위반·호출 실패 시 fallbackPlans로 폴백 — LLM 없이도 항상 5개 반환.
+ * 브리프 → 변주 플랜 3종. Gemini 텍스트 호출(responseSchema, analyzeToBrief와 동일 방식).
+ * 스키마 위반·어휘 위반·호출 실패 시 fallbackPlans로 폴백 — LLM 없이도 항상 3개 반환.
  */
 export async function planVariants(brief: NailBrief): Promise<VariantPlan[]> {
   if (isMock()) {
@@ -449,13 +457,16 @@ export async function planVariants(brief: NailBrief): Promise<VariantPlan[]> {
       contents: [{ text: variantInstruction(brief) }],
       config: { responseMimeType: 'application/json', responseSchema: PLANS_SCHEMA },
     });
-    return parsePlans(response.text ?? '') ?? fallbackPlans(brief);
-  } catch {
+    const __p = parsePlans(response.text ?? '');
+    if (!__p) console.error('RAWPLANS', (response.text ?? '').slice(0, 3000));
+    return __p ?? fallbackPlans(brief);
+  } catch (e) {
+    console.error('ERRPLANS', String(e).slice(0, 600));
     return fallbackPlans(brief);
   }
 }
 
-/** JSON 텍스트 → 플랜 5종. 개수·스키마·어휘 위반 시 null (호출부가 폴백) */
+/** JSON 텍스트 → 플랜 3종. 개수·스키마·어휘 위반 시 null (호출부가 폴백) */
 export function parsePlans(text: string): VariantPlan[] | null {
   let parsed: unknown;
   try {
@@ -465,58 +476,67 @@ export function parsePlans(text: string): VariantPlan[] | null {
   }
   if (typeof parsed !== 'object' || parsed === null) return null;
   const rawPlans = (parsed as Record<string, unknown>).plans;
-  if (!Array.isArray(rawPlans) || rawPlans.length !== 5) return null;
+  if (!Array.isArray(rawPlans) || rawPlans.length !== VARIANT_COUNT) return null;
   const plans: VariantPlan[] = [];
-  for (const raw of rawPlans) {
-    const plan = parseVariantPlan(raw);
+  for (const [i, raw] of rawPlans.entries()) {
+    // 스타일은 순서로 고정 — 모델에게 맡기면 3장이 같은 스타일로 수렴할 수 있다
+    const plan = typeof raw === 'object' && raw !== null ? parseVariantPlan({ ...raw, styleId: STYLE_IDS[i] }) : null;
     if (!plan) return null;
-    const allText = [plan.title, plan.partsLine, plan.paletteLine ?? '', ...plan.patternLines].join(' ');
+    const allText = [
+      plan.title,
+      plan.partsLine,
+      plan.paletteLine ?? '',
+      ...plan.patternLines,
+    ].join(' ');
     if (hasBannedVocab(allText)) return null; // 어휘 함정 유입 → 세트 전체 폐기(폴백)
     plans.push(plan);
   }
-  // 레터링은 최대 2개 플랜까지 — 초과분은 코드에서 제거 (모델은 개수를 못 센다)
+  // 레터링은 최대 1개 플랜까지 — 초과분은 코드에서 제거 (모델은 개수를 못 센다)
   let letteringSeen = 0;
   return plans.map((plan, i) => {
-    const keepLettering = plan.letteringWord !== null && letteringSeen < 2;
+    const keepLettering = plan.letteringWord !== null && letteringSeen < 1;
     if (plan.letteringWord !== null) letteringSeen += keepLettering ? 1 : 0;
-    return { ...plan, id: `v${i + 1}`, letteringWord: keepLettering ? plan.letteringWord : null };
+    const styleId = STYLE_IDS[i];
+    return {
+      ...plan,
+      id: `v${i + 1}`,
+      styleId,
+      title: STYLES[styleId].title,
+      note: STYLES[styleId].note,
+      partsLine: STYLES[styleId].partsLine,
+      letteringWord: keepLettering ? plan.letteringWord : null,
+    };
   });
 }
 
 function variantInstruction(brief: NailBrief): string {
-  return `You are a veteran Korean nail artist planning FIVE variant designs from one base design brief.
-Each variant keeps the base's mood and palette family but transforms the design using VARIATION OPERATORS.
+  const styles = STYLE_IDS.map(
+    (id, i) => `- v${i + 1} = ${STYLES[id].styleBlock.replace(/\n/g, ' ')} PARTS: ${STYLES[id].partsLine}`,
+  ).join('\n');
+  return `You are a veteran Korean nail artist planning THREE nail sets from one mood brief. All three share the brief's motifs, palette and mood, but each is executed in a DIFFERENT nail style, so a salon owner sees three genuinely different sets.
 
-BASE BRIEF:
-- Base: ${brief.baseLine}
-- Structure: ${brief.structureLine}
+MOOD BRIEF:
 - Palette: ${brief.paletteLine}
-- Patterns: ${brief.patternLines.join(' | ')}
-- Parts rule: ${brief.partsLine}
-- Lettering: ${brief.letteringWord ?? 'none'}
+- Motifs and placement: ${brief.patternLines.join(' | ')}
 - Mood: ${brief.moodLine}
 
-## Variation operators (pick a DIFFERENT combination of 2-3 per variant — no two variants may share the same combination)
-1. Invert — swap figure and ground colors (pink tip with black dots ↔ black tip with white dots)
-2. Rescale — micro motifs ↔ big motifs (one scale per tip)
-3. Density — dense ↔ sparse, or a shrinking dot trail
-4. Boundary swap — smile-line french ↔ diagonal ↔ straight french
-5. Material swap — repaint a painted motif as a gel-volume or metal-stud version (or the reverse)
-6. Palette rotate — same pattern, rotated to different colors within the base palette
+STYLES (in this order):
+${styles}
 
-## Output: exactly 5 plans, each with
-- id: "v1" to "v5"
-- title: a short Korean name for the variant card (e.g. "도트 반전", "레이스 포인트")
-- note: ONE short Korean sentence (under 30 characters) telling the customer what makes THIS variant different from the other four, in plain words a non-expert understands (e.g. "모티프와 배경 색을 서로 바꿨어요", "무늬를 아주 작게 줄였어요"). No jargon, no English.
-- patternLines: 2-5 English lines describing per-tip variations, written as generation instructions
-- partsLine: MUST use explicit counts ("Exactly one tip carries ...") AND end by excluding the rest ("Every other tip is painted gel only — no metal, no gems, no pearls."). A zero-parts variant uses "Every tip is painted gel only — no metal, no gems, no pearls, no 3D parts."
-- letteringWord: a common 4-6 letter word matching the mood (e.g. Sugar, Honey, Bonbon) in AT MOST 1-2 of the 5 plans; empty string for the rest
-- paletteLine: only when the variant rotates the palette; otherwise empty string
+## Output: exactly 3 plans (v1, v2, v3 in the style order above), each with
+- id: "v1" to "v3"
+- title: short Korean name
+- note: one short Korean sentence
+- patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Every tip gets its OWN distinct design — a different motif, layout or technique from all nine others, like a real handmade set where no two nails match. Each tip line names ONE bold idea that fills the tip (a large centerpiece, a spiral or lattice of raised line work, a framed cameo, bold stripes) rather than several small scattered bits, and the ten lines reuse the same two or three base colors so the set stays cohesive. Distribute this style's parts budget across the ten lines exactly as the style's PARTS line states, and give the plain tips a painted pattern or finish of their own so no tip is blank.
+- partsLine: empty string (the style decides parts)
+- letteringWord: usually empty string; at most one plan may carry a common 4-6 letter script word
+- paletteLine: empty string
 
 ## Writing rules (violations make the generation fail)
-1. Every noun is drawn literally. For metal parts write "flat gold/silver metal stud shaped as <motif>", "tiny silver microbeads", "small pearl", "small 3D acrylic rose". The words "charm" and "anchor" are forbidden — they draw a hanging pendant and ⚓.
+1. Every noun is drawn literally. The words "charm" and "anchor" are forbidden — they draw a hanging pendant and ⚓.
 2. Use positive phrasing everywhere: say what IS, precisely.
-3. Keep every variant hand-paintable by a human artist with gel.`;
+3. No recognizable characters or mascots; animals are simple generic silhouettes or sculpted forms.
+4. Everything is buildable by hand with gel painting, sculpting gel or acrylic, pearls and flat-back rhinestones.`;
 }
 
 const PLANS_SCHEMA = {
