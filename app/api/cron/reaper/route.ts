@@ -9,8 +9,11 @@ import { sweepStalePending } from '@/lib/quota';
  * reserve()의 release()에 도달하지 못한다. reserve(trackPending: true)가
  * 남긴 pending 마커 중 TTL(기본 10분)을 넘긴 것을 여기서 환불한다.
  *
- * vercel.json의 Cron이 10분 간격으로 호출한다. 인증은 CRON_SECRET Bearer.
- * (Vercel Hobby 플랜은 Cron 실행 횟수에 제한이 있으니 플랜에 맞게 주기를 조정할 것)
+ * 크론 비활성화됨 (2026-10-03): Vercel Hobby 플랜은 하루 1회 크론만 허용이라
+ * vercel.json의 10분 크론이 배포를 막았다. reaper 없이도 pending 마커는
+ * Redis TTL(10분)로 자동 소멸하고, 카운터는 KST 자정에 리셋되므로 최악의 경우
+ * "크래시 난 요청의 쿼터가 자정까지 미환불"이다. Pro 플랜이면 vercel.json에
+ * 크론을 되살리면 된다. 인증은 CRON_SECRET Bearer.
  */
 
 export const maxDuration = 60;
