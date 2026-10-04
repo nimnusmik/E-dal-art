@@ -53,6 +53,7 @@ describe('POST /api/checkout', () => {
     // Paddle 비카탈로그 형식: product는 price 안에 (item 바로 아래면 400 — 샌드박스 실측)
     expect(body.items[0].price.product).toMatchObject({ tax_category: 'standard' });
     expect(body.items[0].product).toBeUndefined();
+    expect(body.items[0].price.quantity).toEqual({ minimum: 1, maximum: 1 }); // 수량 변경 불가
   });
 
   it('라이브 키면 라이브 API로', async () => {

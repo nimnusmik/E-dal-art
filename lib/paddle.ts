@@ -60,6 +60,8 @@ export async function createCheckoutTransaction(googleSub: string): Promise<stri
             name: `${PACK_CREDITS}회 이용권`,
             tax_mode: 'internal',
             unit_price: { amount: String(PRICE_REGULAR_KRW), currency_code: 'KRW' },
+            // 결제창의 수량 +/- 를 없앤다 — 2개를 사면 19,800원을 내고 10회만 받는다
+            quantity: { minimum: 1, maximum: 1 },
             // product는 price 안에 둔다 — item 바로 아래에 두면 400 (샌드박스 실측)
             product: { name: `이달아 ${PACK_CREDITS}회 이용권`, tax_category: 'standard' },
           },

@@ -18,7 +18,13 @@ interface PaddleGlobal {
     token: string;
     eventCallback?: (e: { name?: string; data?: { transaction_id?: string } }) => void;
   }): void;
-  Checkout: { open(opts: { transactionId: string; customer?: { email: string } }): void };
+  Checkout: {
+    open(opts: {
+      transactionId: string;
+      customer?: { email: string; address?: { countryCode: string } };
+      settings?: { locale?: string };
+    }): void;
+  };
 }
 
 const PADDLE_JS = 'https://cdn.paddle.com/paddle/v2/paddle.js';
@@ -79,7 +85,9 @@ export default function Paywall({ email }: { email: string | null }) {
       if (res.ok && typeof json?.transactionId === 'string') {
         paddle.Checkout.open({
           transactionId: json.transactionId,
-          ...(email ? { customer: { email } } : {}),
+          // 한국어 결제창, 국가 기본값 한국(우편번호 입력 생략) — 손님 대부분이 국내 원장님
+          ...(email ? { customer: { email, address: { countryCode: 'KR' } } } : {}),
+          settings: { locale: 'ko' },
         });
         return;
       }
