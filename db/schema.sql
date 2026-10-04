@@ -57,11 +57,11 @@ create table if not exists designs (
 create index if not exists designs_user_created_idx on designs (user_id, created_at desc);
 
 -- ─── 결제 (횟수권 구매) ──────────────────────────────────────────
--- Stripe는 webhook을 "최소 1회" 보내고 /pay/success도 같은 세션을 처리한다.
--- 세션 id를 기본키로 두어 같은 결제로 횟수가 두 번 들어가는 일을 DB가 막는다.
+-- PG사(Paddle)는 webhook을 "최소 1회" 보내고 /pay/success도 같은 거래를 처리한다.
+-- 거래 id를 기본키로 두어 같은 결제로 횟수가 두 번 들어가는 일을 DB가 막는다.
 -- 설계 규칙 1·3 그대로 — PG사 참조 id만 두고, 탈퇴하면 cascade로 함께 파기된다.
 create table if not exists payments (
-  stripe_session_id text        primary key,
+  payment_ref       text        primary key,
   user_id           uuid        not null references users(id) on delete cascade,
   credits           integer     not null,
   created_at        timestamptz not null default now()

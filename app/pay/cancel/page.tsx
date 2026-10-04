@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-/** /pay/cancel — Stripe Checkout에서 취소하고 돌아왔을 때 */
+/** /pay/cancel — 결제를 취소하고 돌아왔을 때 */
 export default function PayCancel() {
   return (
     <main className="screen">

@@ -15,13 +15,7 @@ const fakeStore: CounterStore = {
 
 vi.mock('@/lib/redis', () => ({ getRedis: () => fakeStore }));
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/payments', () => ({
-  creditsBySub: vi.fn(),
-  PRICE_REGULAR_KRW: 9900,
-  PRICE_EARLY_KRW: 4900,
-}));
-// Stripe 키 없이도 돌아가야 한다 — 쿠폰 조회는 건너뛰고 earlyBirdLeft=null
-vi.mock('@/lib/stripe', () => ({ getStripe: () => null }));
+vi.mock('@/lib/payments', () => ({ creditsBySub: vi.fn() }));
 
 import { GET } from '@/app/api/access/route';
 import { auth } from '@/auth';
@@ -51,8 +45,6 @@ describe('GET /api/access', () => {
     expect(json.paid).toBe(false);
     expect(json.remaining).toBe(0); // 남은 횟수권
     expect(json.email).toBe('test@example.com');
-    expect(json.priceRegular).toBe(9900);
-    expect(json.priceEarly).toBe(4900);
     // 차감 없음
     expect(store.data.get('quota:user:u:test-sub:' + kstToday())).toBe(1);
   });
@@ -71,10 +63,5 @@ describe('GET /api/access', () => {
     const json = await res.json();
     expect(json.paid).toBe(false);
     expect(json.email).toBe(null);
-  });
-
-  it('Stripe 없으면 earlyBirdLeft=null (얼리버드가를 보여주지 않는다)', async () => {
-    const res = await GET(new Request('http://localhost/api/access'));
-    expect((await res.json()).earlyBirdLeft).toBe(null);
   });
 });

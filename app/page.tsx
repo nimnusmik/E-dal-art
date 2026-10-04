@@ -90,10 +90,6 @@ export default function Home() {
    * "사실 못 만들어요"라고 하는 건 최악의 순서다.
    */
   const [paid, setPaid] = useState(false);
-  /** 얼리버드 남은 수량 (null이면 모름 — 그때는 얼리버드가를 보여주지 않는다) */
-  const [earlyBirdLeft, setEarlyBirdLeft] = useState<number | null>(null);
-  const [priceRegular, setPriceRegular] = useState(9900);
-  const [priceEarly, setPriceEarly] = useState(4900);
   /** 로그인한 계정 이메일 — 접근 조회에 실려 온다(SessionProvider 불필요) */
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [error, setError] = useState<AppError>(null);
@@ -189,9 +185,6 @@ export default function Home() {
       setRemaining(a.remaining);
       setPaid(a.paid);
       setAccountEmail(a.email);
-      setEarlyBirdLeft(a.earlyBirdLeft);
-      setPriceRegular(a.priceRegular);
-      setPriceEarly(a.priceEarly);
     });
   }, []);
 
@@ -374,7 +367,6 @@ export default function Home() {
         setPaid(a.paid);
         setAccountEmail(a.email);
         setRemaining(a.remaining);
-        setEarlyBirdLeft(a.earlyBirdLeft);
         setPhase('start');
         anchorToolRef.current = true;
         showInline(
@@ -548,12 +540,7 @@ export default function Home() {
               {/* 이용권이 없으면 업로드부터 막는다 — 사진을 다 올리게 한 뒤
                   "사실 못 만들어요"라고 하는 건 최악의 순서다 */}
               {!paid ? (
-                <Paywall
-                  email={accountEmail}
-                  earlyBirdLeft={earlyBirdLeft}
-                  priceRegular={priceRegular}
-                  priceEarly={priceEarly}
-                />
+                <Paywall email={accountEmail} />
               ) : (
                 <>
                   <InspirationTray

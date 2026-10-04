@@ -65,22 +65,22 @@ describe('takeCredit', () => {
 });
 
 describe('markPaid', () => {
-  it('세션 id를 payments 기본키로 넣고 그때만 PACK_CREDITS를 더한다', async () => {
-    const ok = await markPaid({ googleSub: 'sub-1', email: 'a@b.co', sessionId: 'cs_123' });
+  it('거래 id를 payments 기본키로 넣고 그때만 PACK_CREDITS를 더한다', async () => {
+    const ok = await markPaid({ googleSub: 'sub-1', email: 'a@b.co', paymentRef: 'txn_123' });
     expect(ok).toBe(true);
     expect(seenQueries).toHaveLength(2);
-    expect(seenQueries[1]).toContain('on conflict (stripe_session_id) do nothing');
-    expect(seenQueries[1]).toContain('cs_123');
+    expect(seenQueries[1]).toContain('on conflict (payment_ref) do nothing');
+    expect(seenQueries[1]).toContain('txn_123');
     expect(seenQueries[1]).toContain(String(PACK_CREDITS));
   });
 
   it('DB가 없으면 false', async () => {
     dbMissing = true;
-    expect(await markPaid({ googleSub: 's', email: 'e', sessionId: 'cs' })).toBe(false);
+    expect(await markPaid({ googleSub: 's', email: 'e', paymentRef: 'txn' })).toBe(false);
   });
 
   it('DB 에러면 false', async () => {
     shouldThrow = true;
-    expect(await markPaid({ googleSub: 's', email: 'e', sessionId: 'cs' })).toBe(false);
+    expect(await markPaid({ googleSub: 's', email: 'e', paymentRef: 'txn' })).toBe(false);
   });
 });

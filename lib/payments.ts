@@ -4,11 +4,11 @@ import { getDb } from './db';
  * 횟수권 (Postgres users.credits + payments).
  *
  * 스키마 설계 규칙 그대로 — 카드번호·생년월일 같은 것은 절대 들어오지 않고,
- * PG사 참조(stripe_session_id)와 지급한 횟수만 둔다.
+ * PG사 거래 id(payment_ref)와 지급한 횟수만 둔다.
  * 탈퇴하면 행이 통째로 지워지므로 결제 기록도 함께 파기된다.
  */
 
-export { PACK_CREDITS, PRICE_EARLY_KRW, PRICE_REGULAR_KRW } from './pricing';
+export { PACK_CREDITS, PRICE_REGULAR_KRW } from './pricing';
 import { PACK_CREDITS } from './pricing';
 
 /** 남은 횟수. DB가 없거나 실패하면 0 — "열려 있는" 쪽으로 실패하지 않는다 */
@@ -58,14 +58,15 @@ export async function refundCredit(googleSub: string): Promise<void> {
 export interface MarkPaidInput {
   googleSub: string;
   email: string;
-  sessionId: string;
+  /** PG사 거래 id (Paddle txn_…) — 같은 결제의 중복 지급을 막는 키 */
+  paymentRef: string;
 }
 
 /**
- * checkout.session.completed 처리 — 멱등이다.
+ * 결제 완료 처리 — 멱등이다.
  *
- * Stripe는 webhook을 "최소 1회" 전달하고 /pay/success 폴백도 같은 세션을 처리한다.
- * payments의 기본키(세션 id) 삽입이 성공한 경우에만 횟수를 더하므로, 몇 번이 와도
+ * PG사는 webhook을 "최소 1회" 전달하고 /pay/success 폴백도 같은 거래를 처리한다.
+ * payments의 기본키(거래 id) 삽입이 성공한 경우에만 횟수를 더하므로, 몇 번이 와도
  * 결제 1건 = PACK_CREDITS회다. 두 문장은 한 트랜잭션이다.
  */
 export async function markPaid(input: MarkPaidInput): Promise<boolean> {
@@ -80,9 +81,9 @@ export async function markPaid(input: MarkPaidInput): Promise<boolean> {
       `,
       sql`
         with p as (
-          insert into payments (stripe_session_id, user_id, credits)
-          select ${input.sessionId}, id, ${PACK_CREDITS} from users where google_sub = ${input.googleSub}
-          on conflict (stripe_session_id) do nothing
+          insert into payments (payment_ref, user_id, credits)
+          select ${input.paymentRef}, id, ${PACK_CREDITS} from users where google_sub = ${input.googleSub}
+          on conflict (payment_ref) do nothing
           returning user_id, credits
         )
         update users set credits = users.credits + p.credits, last_seen_at = now()
