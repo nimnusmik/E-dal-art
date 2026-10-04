@@ -137,8 +137,8 @@ export default function PrivacyPage() {
         <p className="sub">
           개인정보 보호책임자에게 아래 이메일로 문의하실 수 있습니다.
           <br />
-          <a className="legal-link" href="mailto:gvaidevelop@gmail.com">
-            gvaidevelop@gmail.com
+          <a className="legal-link" href="mailto:kimsunmin0227@gmail.com">
+            kimsunmin0227@gmail.com
           </a>
         </p>
       </section>

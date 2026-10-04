@@ -1315,6 +1315,7 @@ label.slot:focus-within .slot-add {
 }
 
 .legal section { display: flex; flex-direction: column; gap: var(--sp-3); }
+.legal ul { margin: 0; padding-left: 1.2em; }
 
 .legal h2 {
   font-size: var(--fs-500);

@@ -95,7 +95,16 @@ export default function Paywall({
           {starting ? '결제 페이지로 이동 중…' : `${fmt(price)}에 시작하기`}
         </button>
       </div>
-      <p className="assurance">결제는 Stripe에서 안전하게 처리돼요. 카드번호는 이달아를 거치지 않아요.</p>
+      <p className="assurance">
+        카드번호는 이달아를 거치지 않아요 ·{' '}
+        <a className="legal-link" href="/refund" target="_blank" rel="noopener noreferrer">
+          환불 정책
+        </a>
+        {' · '}
+        <a className="legal-link" href="/terms" target="_blank" rel="noopener noreferrer">
+          이용약관
+        </a>
+      </p>
     </div>
   );
 }

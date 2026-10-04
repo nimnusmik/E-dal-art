@@ -17,6 +17,8 @@ export default function SiteFooter() {
           <a href="#faq">FAQ</a>
           {/* 처리방침은 어느 화면에서든 닿을 수 있어야 한다 */}
           <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/refund">Refunds</a>
           {/* 결제 의사를 묻는 페이지에 문의 채널이 없으면 신뢰가 깎인다 */}
           <a href="mailto:kimsunmin0227@gmail.com">Contact</a>
         </span>
