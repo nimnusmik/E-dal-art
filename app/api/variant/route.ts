@@ -4,7 +4,7 @@ import { imageQuotaKey, reserve, scopedQuotaKey } from '@/lib/quota';
 import { applyPlan, buildBriefPrompt, parseBrief, parseVariantPlan } from '@/lib/brief';
 import { judgeImage, verdictDetail } from '@/lib/judge';
 import { generateImage } from '@/lib/provider';
-import { clientIp, dailyLimits, paymentGate, quotaSubject } from '@/lib/request';
+import { dailyLimits, quotaSubject } from '@/lib/request';
 import { verifyVariantToken } from '@/lib/variantToken';
 import { VariantBodySchema } from '@/lib/schemas';
 import type { NailBrief } from '@/lib/brief';
@@ -13,17 +13,16 @@ import type { ImagePayload, VariantPlan } from '@/lib/types';
 /**
  * POST /api/variant — 플랜 1개 → 팁셋 1장 생성 + 검수 1회 (docs/api-variants-contract.md).
  * 검수 낙제작만 1회 재생성해 더 나은 쪽을 반환. 그래도 낙제면 quality.pass=false로 표시만.
- * 쿼터: 별도 variant 일일 카운터 (상한 = DAILY_USER_LIMIT × 6). 성공 시에만 차감.
+ * 쿼터: 세션(횟수권 1회)당 variant 카운터 (상한 6장, 재생성 포함). 성공 시에만 차감.
  */
 
 export const maxDuration = 120; // 생성·검수 최대 2회 + 여유
 
-const VARIANT_LIMIT_MULTIPLIER = 6;
+/** 세션 1회당 시안 상한(재생성 포함) — 횟수권 1회의 원가 상한을 정한다 */
+const VARIANT_LIMIT_PER_SESSION = 6;
 
 type VariantErrorCode =
   | 'INVALID_INPUT'
-  | 'LOGIN_REQUIRED'
-  | 'PAYMENT_REQUIRED'
   | 'INVALID_TOKEN'
   | 'RATE_LIMIT_VARIANT'
   | 'RATE_LIMIT_TOTAL'
@@ -68,31 +67,22 @@ export async function POST(req: Request): Promise<NextResponse> {
   const body = validateBody(raw);
   if (!body) return errorResponse('INVALID_INPUT', 400);
 
-  // 결제 게이트 — 이용권이 있어야 생성할 수 있다 (호출 1건이 곧 실비)
-  const gate = await paymentGate();
-  if (gate) return errorResponse(gate.error, gate.status);
-
   const store = getRedis();
   const subject = await quotaSubject(req);
   const now = new Date();
-  const { userLimit, imageLimit } = dailyLimits();
+  const { imageLimit } = dailyLimits();
 
-  // 세션 바인딩 — 당일 analyze를 통과한 같은 주체의 토큰이 있어야 한다.
-  // 없으면 세션 크레딧(analyze 한도)을 우회해 variant에 직접 POST할 수 있다.
-  if (!verifyVariantToken(body.variantToken, subject, now)) {
-    return errorResponse('INVALID_TOKEN', 400);
-  }
+  // 세션 바인딩 — 횟수권을 차감한 analyze가 발급한 같은 주체의 토큰이 있어야 한다.
+  // 이 토큰이 결제 게이트 역할을 한다 (analyze를 우회한 직접 POST 차단)
+  const sid = verifyVariantToken(body.variantToken, subject, now);
+  if (!sid) return errorResponse('INVALID_TOKEN', 400);
 
   // IP별 한도 + 전역 이미지 한도를 함께 선점한다. 전역 한도가 없으면 IP를 갈아끼우는
   // 만큼 비용이 선형으로 늘어난다 — 이 키가 하루 지출의 실질적 상한이다.
   const held = await reserve(
     store,
     [
-      {
-        key: scopedQuotaKey('variant', subject, now),
-        limit: userLimit * VARIANT_LIMIT_MULTIPLIER,
-        code: 'RATE_LIMIT_VARIANT',
-      },
+      { key: scopedQuotaKey('variant', sid, now), limit: VARIANT_LIMIT_PER_SESSION, code: 'RATE_LIMIT_VARIANT' },
       { key: imageQuotaKey(now), limit: imageLimit, code: 'RATE_LIMIT_TOTAL' },
     ],
     now,
@@ -127,11 +117,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     const again = await reserve(
       store,
       [
-        {
-          key: scopedQuotaKey('variant', subject, now),
-          limit: userLimit * VARIANT_LIMIT_MULTIPLIER,
-          code: 'RATE_LIMIT_VARIANT',
-        },
+        { key: scopedQuotaKey('variant', sid, now), limit: VARIANT_LIMIT_PER_SESSION, code: 'RATE_LIMIT_VARIANT' },
         { key: imageQuotaKey(now), limit: imageLimit, code: 'RATE_LIMIT_TOTAL' },
       ],
       now,

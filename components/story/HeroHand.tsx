@@ -177,10 +177,10 @@ export default function HeroHand() {
           </span>
           <span className="xp-pill t-green">
             {access.paid
-              ? '이용권 사용 중 · 하루 3회'
+              ? `${access.remaining ?? 0}회 남음`
               : earlyBird
                 ? '얼리버드 · 선착순 100명'
-                : '한 번 결제 · 평생 이용'}
+                : '10회 이용권 · 구독 아님'}
           </span>
         </div>
         <h1 className="xp-display xp-hero-title">

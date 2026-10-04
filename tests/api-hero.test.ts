@@ -14,14 +14,8 @@ const fakeStore: CounterStore = {
 };
 
 vi.mock('@/lib/redis', () => ({ getRedis: () => fakeStore }));
-// 결제 게이트 통과용 — 실제 Stripe/DB를 건드리지 않는다
+// 로그인 주체용 — 결제 게이트는 analyze가 차감하고 발급한 토큰이 대신한다
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/payments', () => ({
-  isPaidBySub: vi.fn(),
-  markPaid: vi.fn(),
-  PRICE_REGULAR_KRW: 9900,
-  PRICE_EARLY_KRW: 4900,
-}));
 vi.mock('@/lib/provider', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/provider')>();
   return { ...original, generateImage: vi.fn() };
@@ -30,11 +24,10 @@ vi.mock('@/lib/provider', async (importOriginal) => {
 import { generateImage } from '@/lib/provider';
 import { POST } from '@/app/api/hero/route';
 import { auth } from '@/auth';
-import { isPaidBySub } from '@/lib/payments';
+import { issueVariantToken } from '@/lib/variantToken';
 
 const mockGenerateImage = vi.mocked(generateImage);
 const mockAuth = vi.mocked(auth);
-const mockIsPaid = vi.mocked(isPaidBySub);
 
 const GEN_OK = {
   image: { data: 'aGVybw==', mimeType: 'image/png' },
@@ -55,19 +48,24 @@ const VALID_BODY = {
   tipSet: { image: 'dGlwc2V0', mimeType: 'image/png' },
   shape: 'almond',
   length: 'short',
+  variantToken: issueVariantToken('u:test-sub', new Date()),
 };
 
 function heroKey(): string {
-  return 'quota:hero:u:test-sub:' + kstToday();
+  return 'quota:hero:' + sidOf(VALID_BODY.variantToken) + ':' + kstToday();
 }
+
+/** 토큰 안의 세션 id — variant·hero 한도 키가 세션 단위다 */
+function sidOf(token: string): string {
+  return JSON.parse(Buffer.from(token.split('.')[0], 'base64url').toString('utf8')).sid;
+}
+
 
 beforeEach(() => {
   store.reset();
   mockGenerateImage.mockReset();
   mockGenerateImage.mockResolvedValue(GEN_OK);
-  // 결제 게이트 통과: 로그인됨 + 이용권 보유
   mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'test@example.com' } } as never);
-  mockIsPaid.mockResolvedValue(true);
   process.env.DAILY_USER_LIMIT = '3';
   process.env.DAILY_TOTAL_LIMIT = '200';
 });
@@ -102,8 +100,18 @@ describe('POST /api/hero', () => {
     expect(res.status).toBe(400);
   });
 
-  it('hero 한도(DAILY_USER_LIMIT×5) 소진 → 429 RATE_LIMIT_HERO, 생성 호출 안 함', async () => {
-    store.data.set(heroKey(), 15); // 3 × 5
+  it('토큰이 없거나 남의 것이면 400 — analyze(횟수 차감) 없이 착용샷을 못 뽑는다', async () => {
+    const { variantToken: _omit, ...noToken } = VALID_BODY;
+    expect((await POST(makeRequest(noToken))).status).toBe(400);
+    const other = { ...VALID_BODY, variantToken: issueVariantToken('u:other-sub', new Date()) };
+    const res = await POST(makeRequest(other));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('INVALID_TOKEN');
+    expect(mockGenerateImage).not.toHaveBeenCalled();
+  });
+
+  it('세션 한도(5장) 소진 → 429 RATE_LIMIT_HERO, 생성 호출 안 함', async () => {
+    store.data.set(heroKey(), 5);
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(429);
     expect((await res.json()).error).toBe('RATE_LIMIT_HERO');

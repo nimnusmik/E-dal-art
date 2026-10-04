@@ -1,12 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/payments', () => ({
-  isPaidBySub: vi.fn(),
-  markPaid: vi.fn(),
-  PRICE_REGULAR_KRW: 9900,
-  PRICE_EARLY_KRW: 4900,
-}));
 
 const mockCouponsRetrieve = vi.fn();
 const mockSessionsCreate = vi.fn();
@@ -21,21 +15,17 @@ vi.mock('@/lib/stripe', () => ({
 
 import { POST } from '@/app/api/checkout/route';
 import { auth } from '@/auth';
-import { isPaidBySub } from '@/lib/payments';
 
 const mockAuth = vi.mocked(auth);
-const mockIsPaid = vi.mocked(isPaidBySub);
 
 const savedEnv = { ...process.env };
 
 beforeEach(() => {
   mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'buyer@example.com' } } as never);
-  mockIsPaid.mockResolvedValue(false);
   stripeAvailable = true;
   mockCouponsRetrieve.mockReset();
   mockSessionsCreate.mockReset();
   mockSessionsCreate.mockResolvedValue({ url: 'https://checkout.stripe.com/pay/cs_test' });
-  process.env.STRIPE_PRICE_ID = 'price_test123';
   process.env.STRIPE_EARLYBIRD_COUPON_ID = 'coupon_test123';
 });
 
@@ -56,13 +46,6 @@ describe('POST /api/checkout', () => {
     expect(mockSessionsCreate).not.toHaveBeenCalled();
   });
 
-  it('이미 결제함 → 409 ALREADY_PAID', async () => {
-    mockIsPaid.mockResolvedValue(true);
-    const res = await post();
-    expect(res.status).toBe(409);
-    expect((await res.json()).error).toBe('ALREADY_PAID');
-  });
-
   it('Stripe 키 없음 → 503 PAYMENT_UNAVAILABLE', async () => {
     stripeAvailable = false;
     const res = await post();
@@ -80,6 +63,20 @@ describe('POST /api/checkout', () => {
     expect(args.metadata).toEqual({ google_sub: 'test-sub' });
     expect(args.customer_email).toBe('buyer@example.com');
     expect(args.mode).toBe('payment');
+    // Price ID 없이 금액을 직접 넘긴다 — 키와 다른 계정의 Price ID로 막히는 일이 없게
+    expect(args.line_items).toEqual([
+      expect.objectContaining({
+        quantity: 1,
+        price_data: expect.objectContaining({ currency: 'krw', unit_amount: 9900 }),
+      }),
+    ]);
+  });
+
+  it('Stripe가 세션 생성을 거절하면 503 (500으로 터지지 않는다)', async () => {
+    mockSessionsCreate.mockRejectedValue(new Error('No such price'));
+    const res = await post();
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe('PAYMENT_UNAVAILABLE');
   });
 
   it('쿠폰이 소진됐으면 정가로 진행 (discounts 없음)', async () => {

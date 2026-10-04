@@ -14,14 +14,8 @@ const fakeStore: CounterStore = {
 };
 
 vi.mock('@/lib/redis', () => ({ getRedis: () => fakeStore }));
-// 결제 게이트 통과용 — 실제 Stripe/DB를 건드리지 않는다
+// 로그인 주체용 — 결제 게이트는 analyze가 차감하고 발급한 토큰이 대신한다
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/payments', () => ({
-  isPaidBySub: vi.fn(),
-  markPaid: vi.fn(),
-  PRICE_REGULAR_KRW: 9900,
-  PRICE_EARLY_KRW: 4900,
-}));
 vi.mock('@/lib/provider', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/provider')>();
   return { ...original, generateImage: vi.fn() };
@@ -36,7 +30,6 @@ import { generateImage } from '@/lib/provider';
 import { judgeImage } from '@/lib/judge';
 import { issueVariantToken } from '@/lib/variantToken';
 import { auth } from '@/auth';
-import { isPaidBySub } from '@/lib/payments';
 import type { NailJudgement } from '@/lib/judge';
 import type { NailBrief } from '@/lib/brief';
 import type { VariantPlan } from '@/lib/types';
@@ -45,7 +38,6 @@ import { POST } from '@/app/api/variant/route';
 const mockGenerateImage = vi.mocked(generateImage);
 const mockJudgeImage = vi.mocked(judgeImage);
 const mockAuth = vi.mocked(auth);
-const mockIsPaid = vi.mocked(isPaidBySub);
 
 const VALID_BRIEF: NailBrief = {
   shape: 'almond',
@@ -105,9 +97,15 @@ const VALID_BODY = {
   variantToken: issueVariantToken('u:test-sub', new Date()),
 };
 
-function variantKey(): string {
-  return 'quota:variant:u:test-sub:' + kstToday();
+function variantKey(token = VALID_BODY.variantToken): string {
+  return 'quota:variant:' + sidOf(token) + ':' + kstToday();
 }
+
+/** 토큰 안의 세션 id — variant·hero 한도 키가 세션 단위다 */
+function sidOf(token: string): string {
+  return JSON.parse(Buffer.from(token.split('.')[0], 'base64url').toString('utf8')).sid;
+}
+
 
 beforeEach(async () => {
   // @/auth는 라우트에서 동적 import된다 — 모듈 캐시를 미리 채워
@@ -118,9 +116,7 @@ beforeEach(async () => {
   mockJudgeImage.mockReset();
   mockGenerateImage.mockResolvedValue(GEN_OK);
   mockJudgeImage.mockResolvedValue(CLEAN_JUDGEMENT);
-  // 결제 게이트 통과: 로그인됨 + 이용권 보유
   mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'test@example.com' } } as never);
-  mockIsPaid.mockResolvedValue(true);
   process.env.DAILY_USER_LIMIT = '3';
   process.env.DAILY_TOTAL_LIMIT = '200';
 });
@@ -219,8 +215,8 @@ describe('POST /api/variant', () => {
     expect(mockGenerateImage).not.toHaveBeenCalled();
   });
 
-  it('variant 한도(DAILY_USER_LIMIT×6) 소진 → 429 RATE_LIMIT_VARIANT, 생성 호출 안 함', async () => {
-    store.data.set(variantKey(), 18); // 3 × 6
+  it('세션 한도(6장) 소진 → 429 RATE_LIMIT_VARIANT, 생성 호출 안 함', async () => {
+    store.data.set(variantKey(), 6);
     const res = await POST(makeRequest(VALID_BODY));
     expect(res.status).toBe(429);
     expect((await res.json()).error).toBe('RATE_LIMIT_VARIANT');
@@ -256,8 +252,16 @@ describe('POST /api/variant', () => {
     const results = await Promise.all(
       Array.from({ length: 25 }, () => POST(makeRequest(VALID_BODY))),
     );
-    expect(results.filter((r) => r.status === 200)).toHaveLength(18); // 3 × 6
-    expect(store.data.get(variantKey())).toBe(18);
+    expect(results.filter((r) => r.status === 200)).toHaveLength(6);
+    expect(store.data.get(variantKey())).toBe(6);
+  });
+
+  it('한도는 세션(횟수권 1회)마다 따로다 — 같은 날 같은 계정이어도 토큰이 다르면 새로 센다', async () => {
+    store.data.set(variantKey(), 6); // 앞 세션 소진
+    const next = issueVariantToken('u:test-sub', new Date()); // analyze를 다시 거쳐 받은 토큰
+    const res = await POST(makeRequest({ ...VALID_BODY, variantToken: next }));
+    expect(res.status).toBe(200);
+    expect(store.data.get(variantKey(next))).toBe(1);
   });
 
   it('안전 차단 → 422 REJECTED, 카운터 미차감', async () => {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRedis } from '@/lib/redis';
-import { getQuota, ipQuotaKey, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
+import { ipQuotaKey, reserve, totalQuotaKey, userQuotaKey } from '@/lib/quota';
 import { analyzeToBrief, applyOptions, planVariants } from '@/lib/brief';
 import { clientIp, dailyLimits, paymentGate, quotaSubject } from '@/lib/request';
 import { issueVariantToken } from '@/lib/variantToken';
@@ -36,9 +36,9 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!parsed.success) return errorResponse('INVALID_INPUT', 400);
   const body = parsed.data;
 
-  // 결제 게이트 — 이용권이 있어야 생성할 수 있다 (호출 1건이 곧 실비)
+  // 결제 게이트 — 횟수권 1회를 선점한다 (호출 1건이 곧 실비). 아래 실패 경로는 전부 환불
   const gate = await paymentGate();
-  if (gate) return errorResponse(gate.error, gate.status);
+  if (!gate.ok) return errorResponse(gate.error, gate.status);
 
   const store = getRedis();
   const ip = clientIp(req);
@@ -58,12 +58,15 @@ export async function POST(req: Request): Promise<NextResponse> {
     now,
     { trackPending: true }, // 플랫폼 타임아웃/OOM 시 reaper가 환불한다
   );
-  if (!held.ok) return errorResponse(held.code as AnalyzeErrorCode, 429);
+  if (!held.ok) {
+    await gate.refund();
+    return errorResponse(held.code as AnalyzeErrorCode, 429);
+  }
 
   // 분석 실패 시 502 — 예약분을 환불해 "실패는 미차감" 규칙을 유지한다
   const rawBrief = await analyzeToBrief(body.images);
   if (!rawBrief) {
-    await held.release();
+    await Promise.all([held.release(), gate.refund()]);
     return errorResponse('ANALYZE_FAILED', 502);
   }
 
@@ -75,13 +78,12 @@ export async function POST(req: Request): Promise<NextResponse> {
   });
   const plans = await planVariants(brief); // 실패 시 내부 폴백 — 항상 3개
 
-  const quota = await getQuota(store, subject, now, userLimit, totalLimit);
   // 성공 확정 — pending 마커를 지우고 카운터는 유지한다
   await held.commit();
   return NextResponse.json({
     brief,
     plans,
-    remaining: quota.userRemaining,
+    remaining: gate.creditsLeft, // 남은 횟수권
     // variant 호출용 세션 토큰 — analyze를 거치지 않은 직접 호출을 막는다
     variantToken: issueVariantToken(subject, now),
   });

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { PACK_CREDITS } from '@/lib/pricing';
 
 /**
  * 페이월 — 이용권이 없는 방문자에게 보여주는 툴 카드 내용.
@@ -39,11 +40,6 @@ export default function Paywall({
         window.location.href = json.url as string;
         return;
       }
-      if (json?.error === 'ALREADY_PAID') {
-        // 다른 탭에서 이미 결제됨 — 새로고침하면 열린다
-        window.location.reload();
-        return;
-      }
       setCheckoutError(
         json?.error === 'PAYMENT_UNAVAILABLE'
           ? '지금은 결제를 시작할 수 없어요. 잠시 후 다시 시도해주세요.'
@@ -63,7 +59,7 @@ export default function Paywall({
         <p className="assurance">
           {earlyBird
             ? `얼리버드 ${fmt(priceEarly)} · 선착순 100명 중 ${earlyBirdLeft}명 남음`
-            : `평생 이용권 ${fmt(priceRegular)}`}
+            : `${PACK_CREDITS}회 이용권 ${fmt(priceRegular)}`}
         </p>
         <div className="notify-row">
           <button className="btn-fill" type="button" onClick={() => void signIn('google')}>
@@ -86,9 +82,9 @@ export default function Paywall({
           <s>{fmt(priceRegular)}</s> · 선착순 100명 중 {earlyBirdLeft}명 남음
         </p>
       ) : (
-        <p className="assurance">평생 이용권 {fmt(priceRegular)} · 한 번만 결제해요</p>
+        <p className="assurance">{PACK_CREDITS}회 이용권 {fmt(priceRegular)} · 구독 아님, 쓴 만큼만</p>
       )}
-      <p className="assurance">하루 3회 생성 · 평생 이용 · 언제든 탈퇴하면 기록과 함께 지워져요</p>
+      <p className="assurance">1회 = 시안 세트 1번 · 실패한 회차는 차감 안 돼요 · 탈퇴하면 기록과 함께 지워져요</p>
       {checkoutError && (
         <div className="error-inline" role="alert">
           <p>{checkoutError}</p>

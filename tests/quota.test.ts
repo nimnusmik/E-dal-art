@@ -171,6 +171,7 @@ describe('reserve — 크래시 복구 pending 마커', () => {
   function trackingStore() {
     const base = fakeStore();
     const kv = new Map<string, string>();
+    const markerTtls = new Map<string, number>();
     const store: CounterStore = {
       ...base.store,
       // 실제 Redis와 달리 fake는 카운터(map)와 마커(kv)를 나눠 들고 있다 —
@@ -179,8 +180,9 @@ describe('reserve — 크래시 복구 pending 마커', () => {
         if (kv.has(key)) return kv.get(key) ?? null;
         return base.store.get(key);
       },
-      async set(key: string, value: string) {
+      async set(key: string, value: string, opts?: { ex?: number }) {
         kv.set(key, value);
+        if (opts?.ex !== undefined) markerTtls.set(key, opts.ex);
       },
       async del(key: string) {
         kv.delete(key);
@@ -191,7 +193,7 @@ describe('reserve — 크래시 복구 pending 마커', () => {
         return [0, keys] as [number, string[]];
       },
     };
-    return { store, kv, map: base.map };
+    return { store, kv, map: base.map, markerTtls };
   }
 
   it('trackPending이면 마커가 남고, commit()이 지운다 (카운터는 유지)', async () => {
@@ -205,6 +207,15 @@ describe('reserve — 크래시 복구 pending 마커', () => {
     await held.commit();
     expect(f.kv.size).toBe(0);
     expect(f.map.get('quota:variant:x:20260707')).toBe(1); // 성공분은 차감 유지
+  });
+
+  it('마커는 크래시 판정(10분)보다 오래 살아야 reaper가 볼 수 있다', async () => {
+    const f = trackingStore();
+    await reserve(f.store, [{ key: 'quota:variant:x:20260707', limit: 10, code: 'X' }], NOW, {
+      trackPending: true,
+    });
+    const [ttl] = [...f.markerTtls.values()];
+    expect(ttl).toBeGreaterThan(600);
   });
 
   it('release()는 카운터를 되돌리고 마커도 지운다', async () => {

@@ -24,13 +24,13 @@ create table if not exists users (
   created_at    timestamptz not null default now(),
   last_seen_at  timestamptz not null default now(),
   -- 매달 발송 동의. 필수 동의와 분리된 별도 항목이다(정보통신망법)
-  marketing_ok  boolean     not null default false,
-  -- 이용권(Stripe). 설계 규칙 1 그대로 — 카드번호 같은 것은 절대 들어오지 않고
-  -- PG사 참조 ID와 결제 시각만 둔다. 탈퇴하면 행이 통째로 지워져 기록도 함께 파기된다.
-  stripe_customer_id text,
-  stripe_session_id  text,
-  paid_at       timestamptz
+  marketing_ok  boolean     not null default false
 );
+
+-- 위 create table은 테이블이 이미 있으면 통째로 건너뛴다 — 나중에 생긴 컬럼은
+-- 반드시 여기 alter로 추가해야 기존 DB에도 들어간다 (paid_at이 그렇게 누락됐었다)
+-- 남은 생성 횟수(횟수권). 결제마다 늘고 analyze 1회마다 1씩 준다
+alter table users add column if not exists credits integer not null default 0 check (credits >= 0);
 
 create index if not exists users_email_idx on users (email);
 
@@ -55,3 +55,14 @@ create table if not exists designs (
 );
 
 create index if not exists designs_user_created_idx on designs (user_id, created_at desc);
+
+-- ─── 결제 (횟수권 구매) ──────────────────────────────────────────
+-- Stripe는 webhook을 "최소 1회" 보내고 /pay/success도 같은 세션을 처리한다.
+-- 세션 id를 기본키로 두어 같은 결제로 횟수가 두 번 들어가는 일을 DB가 막는다.
+-- 설계 규칙 1·3 그대로 — PG사 참조 id만 두고, 탈퇴하면 cascade로 함께 파기된다.
+create table if not exists payments (
+  stripe_session_id text        primary key,
+  user_id           uuid        not null references users(id) on delete cascade,
+  credits           integer     not null,
+  created_at        timestamptz not null default now()
+);

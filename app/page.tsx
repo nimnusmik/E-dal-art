@@ -287,7 +287,7 @@ export default function Home() {
           setSlots((prev) =>
             prev.map((s) => (s.status === 'pending' ? { ...s, status: 'stopped' } : s)),
           );
-          showToast('오늘 시안 생성 한도에 도달했어요. 먼저 완성된 시안은 그대로 볼 수 있어요');
+          showToast('이번 회차의 시안 한도에 도달했어요. 먼저 완성된 시안은 그대로 볼 수 있어요');
           return;
         }
         // REJECTED/502 등 개별 실패 — 이 슬롯만 재시도 버튼으로 (전체를 죽이지 않는다)
@@ -380,7 +380,7 @@ export default function Home() {
         showInline(
           json.error === 'LOGIN_REQUIRED'
             ? '로그인이 필요해요. 먼저 로그인해주세요.'
-            : '이용권이 필요해요. 아래에서 시작할 수 있어요.',
+            : '남은 횟수가 없어요. 아래에서 횟수권을 살 수 있어요.',
         );
         return;
       }
@@ -458,6 +458,8 @@ export default function Home() {
             tipSet: { image: slot.tipSet.image, mimeType: slot.tipSet.mimeType },
             // 픽커의 현재값이 아니라 이 팁셋을 만든 옵션 — 시안과 착용샷의 쉐입이 갈리면 안 된다
             ...genOptionsRef.current,
+            // 이번 회차(횟수권 1회)의 세션 토큰 — 없으면 서버가 거절한다
+            variantToken: briefRef.current?.variantToken,
           }),
           // hero는 maxDuration 60초 — 네트워크 행(hang)에 대비해 타임아웃을 건다
           signal: AbortSignal.timeout(70_000),
@@ -476,7 +478,7 @@ export default function Home() {
         });
         setHeroError(
           json.error === 'RATE_LIMIT_HERO'
-            ? '오늘 착용샷 생성 한도에 도달했어요. 내일 다시 시도해주세요.'
+            ? '이번 회차의 착용샷 한도(5장)에 도달했어요.'
             : '착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.',
         );
       } catch (err) {
@@ -600,7 +602,7 @@ export default function Home() {
               {/* 잔여를 숨기면 "아껴 쓰려다 아예 안 누르는" 역효과가 난다.
                   보이면 희소성이 행동을 밀어준다 — 알 수 있을 때는 항상 보여준다. */}
               {paid && (
-                <p className="remaining">{`${remaining ?? 3} of 3 runs left today`}</p>
+                <p className="remaining">{`${remaining ?? 0}회 남음`}</p>
               )}
               <AccountBar email={accountEmail} />
               {/* 보관함은 로그인한 사람에게만 — 비로그인에게는 빈 영역이 될 뿐이다 */}
@@ -689,7 +691,7 @@ export default function Home() {
   const blocked = phase === 'blocked-user'
     ? {
         title: '오늘의 발행이 마감됐어요',
-        body: '하루 3회까지 만들 수 있어요. 한국 시간 자정에 다시 채워져요.',
+        body: '남용을 막기 위해 하루 3회까지 만들 수 있어요. 남은 횟수는 그대로 있고, 한국 시간 자정에 다시 열려요.',
       }
     : {
         title: '이번 호가 매진됐어요',
