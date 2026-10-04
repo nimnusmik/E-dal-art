@@ -16,8 +16,8 @@ export const metadata: Metadata = {
 };
 
 const UPDATED = '2026년 10월 4일';
-/** Paddle 심사용 판매자 실명 — 배포 전에 반드시 채운다 */
-const SELLER = '[판매자 실명]';
+/** 판매자 실명 — Paddle 심사 요건(개인은 신분증과 같은 실명) */
+const SELLER = '김선민';
 const CONTACT = 'kimsunmin0227@gmail.com';
 
 export default function TermsPage() {
