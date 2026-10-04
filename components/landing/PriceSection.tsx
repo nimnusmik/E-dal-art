@@ -6,8 +6,8 @@ import { useAccess } from '@/lib/useAccess';
  * 가격 섹션 — 갤러리 바로 뒤.
  *
  * 예전에는 가짜 가격 버튼(수요 측정용)이 있었다. 이제 실제 Stripe 결제로
- * 바뀌었으므로 진짜 가격을 보여준다. 얼리버드(선착순 100명 ₩4,900)가
- * 살아 있으면 그 가격을, 아니면 정가 ₩9,900을.
+ * 바뀌었으므로 진짜 가격을 보여준다. 10회 횟수권 — 얼리버드 쿠폰이
+ * 살아 있으면 그 가격을, 아니면 정가를.
  */
 export default function PriceSection() {
   const access = useAccess();
@@ -20,7 +20,7 @@ export default function PriceSection() {
         <span className="xp-pill t-purple" aria-hidden>
           Pricing
         </span>
-        <h2>One pass, yours forever</h2>
+        <h2>10 runs, no subscription</h2>
       </div>
       <div className="xp-price-inner">
         <div className="xp-price-card">
@@ -36,8 +36,8 @@ export default function PriceSection() {
             <p className="xp-price-now">{fmt(access.priceRegular)}</p>
           )}
           <ul className="xp-price-list">
-            <li>Lifetime access — pay once, never again</li>
-            <li>3 runs a day, refilled at midnight KST</li>
+            <li>10 runs — use them whenever, they never expire</li>
+            <li>Each run: a full set of takes + try-on shots</li>
             <li>Failed runs don&apos;t count</li>
             <li>Secure checkout via Stripe</li>
           </ul>

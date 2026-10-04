@@ -7,7 +7,6 @@ vi.mock('@/lib/stripe', () => ({
   getStripe: () => ({ webhooks: realWebhooks }),
 }));
 vi.mock('@/lib/payments', () => ({
-  isPaidBySub: vi.fn(),
   markPaid: vi.fn(),
   PRICE_REGULAR_KRW: 9900,
   PRICE_EARLY_KRW: 4900,
@@ -44,7 +43,7 @@ function signedRequest(type: string, obj: Record<string, unknown>, secret = SECR
 }
 
 beforeEach(() => {
-  mockMarkPaid.mockReset();
+  mockMarkPaid.mockReset().mockResolvedValue(true);
   process.env.STRIPE_WEBHOOK_SECRET = SECRET;
 });
 
@@ -60,9 +59,14 @@ describe('POST /api/stripe/webhook', () => {
     expect(mockMarkPaid).toHaveBeenCalledWith({
       googleSub: 'sub-1',
       email: 'buyer@example.com',
-      customerId: 'cus_test123',
       sessionId: 'cs_test123',
     });
+  });
+
+  it('DB 기록 실패 시 500 — Stripe가 재전송하게 한다', async () => {
+    mockMarkPaid.mockResolvedValue(false);
+    const res = await POST(signedRequest('checkout.session.completed', sessionObject()));
+    expect(res.status).toBe(500);
   });
 
   it('서명이 틀리면 400, markPaid 미호출', async () => {

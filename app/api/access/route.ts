@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getRedis } from '@/lib/redis';
-import { getQuota } from '@/lib/quota';
-import { currentAccountEmail, dailyLimits, quotaSubject } from '@/lib/request';
+import { currentAccountEmail, quotaSubject } from '@/lib/request';
 import { getStripe } from '@/lib/stripe';
-import { PRICE_EARLY_KRW, PRICE_REGULAR_KRW, isPaidBySub } from '@/lib/payments';
+import { PRICE_EARLY_KRW, PRICE_REGULAR_KRW, creditsBySub } from '@/lib/payments';
 
 /**
  * GET /api/access — 이용 상태 조회 (차감 없음).
@@ -13,14 +11,8 @@ import { PRICE_EARLY_KRW, PRICE_REGULAR_KRW, isPaidBySub } from '@/lib/payments'
  */
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const { userLimit, totalLimit } = dailyLimits();
   const subject = await quotaSubject(req);
-  const quota = await getQuota(getRedis(), subject, new Date(), userLimit, totalLimit);
-
-  let paid = false;
-  if (subject.startsWith('u:')) {
-    paid = await isPaidBySub(subject.slice(2));
-  }
+  const credits = subject.startsWith('u:') ? await creditsBySub(subject.slice(2)) : 0;
 
   // 얼리버드 남은 수량 — 쿠폰의 times_redeemed 기준. 조회 실패하면 null
   // (모르면 얼리버드가를 보여주지 않는다 — 없는 할인을 약속하지 않게)
@@ -38,8 +30,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   }
 
   return NextResponse.json({
-    paid,
-    remaining: quota.userRemaining,
+    paid: credits > 0, // 지금 생성할 수 있나 (남은 횟수 있음)
+    remaining: credits, // 남은 횟수권
     email: await currentAccountEmail(),
     earlyBirdLeft,
     priceRegular: PRICE_REGULAR_KRW,

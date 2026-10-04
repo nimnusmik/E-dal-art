@@ -30,7 +30,7 @@ export default function AccountBar({ email }: { email: string | null }) {
           Sign in with Google
         </button>
         <p className="assurance">
-          Sign in to start — your lifetime pass and remaining runs follow you across devices.
+          Sign in to start — your remaining runs follow you across devices.
         </p>
       </div>
       {/* 동의 고지 — 이메일을 받기 시작하는 순간 필요한 최소 절차 */}

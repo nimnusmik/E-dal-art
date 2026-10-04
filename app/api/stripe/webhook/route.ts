@@ -7,10 +7,10 @@ import { markPaid } from '@/lib/payments';
  * POST /api/stripe/webhook — Stripe 결제 완료 수신.
  *
  * 서명은 STRIPE_WEBHOOK_SECRET으로 검증한다. 서명이 틀리면 400 —
- * 위조 요청으로 paid_at이 찍히는 일이 없게 한다.
+ * 위조 요청으로 횟수가 늘어나는 일이 없게 한다.
  *
- * checkout.session.completed에서 metadata.google_sub을 읽어 이용권을
- * 부여한다. Stripe는 "최소 1회" 전달하므로 markPaid는 멱등이다.
+ * checkout.session.completed에서 metadata.google_sub을 읽어 횟수권을
+ * 지급한다. Stripe는 "최소 1회" 전달하므로 markPaid는 멱등이다.
  */
 
 export const runtime = 'nodejs';
@@ -38,12 +38,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     const s = event.data.object as Stripe.Checkout.Session;
     const sub = s.metadata?.google_sub;
     if (sub && s.payment_status === 'paid') {
-      await markPaid({
+      const ok = await markPaid({
         googleSub: sub,
         email: s.customer_email ?? s.customer_details?.email ?? '',
-        customerId: typeof s.customer === 'string' ? s.customer : '',
         sessionId: s.id,
       });
+      // DB 기록 실패를 200으로 삼키면 Stripe가 재전송하지 않아 결제하고도 이용권이
+      // 없는 사용자가 생긴다 — 500으로 재시도를 받는다 (markPaid는 멱등)
+      if (!ok) return NextResponse.json({ error: 'RECORD_FAILED' }, { status: 500 });
     }
   }
 

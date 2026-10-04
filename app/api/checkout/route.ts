@@ -1,16 +1,17 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getStripe } from '@/lib/stripe';
-import { isPaidBySub } from '@/lib/payments';
 
 /**
  * POST /api/checkout — Stripe Checkout 세션 생성 후 결제 URL 반환.
  *
- * 흐름: 로그인 필수 → 이미 결제했으면 409 → 얼리버드 쿠폰이 남아 있으면
+ * 흐름: 로그인 필수 → 얼리버드 쿠폰이 남아 있으면
  * 자동 적용 → Checkout URL. 실제 카드 입력·승인은 전부 Stripe 호스팅
  * 페이지에서 일어나고, 이 앱은 카드번호를 절대 만지지 않는다.
  *
- * 성공 후: webhook(/api/stripe/webhook)이 paid_at을 찍는다.
+ * 횟수권이라 재구매를 막지 않는다 — 다 쓰면 다시 산다.
+ *
+ * 성공 후: webhook(/api/stripe/webhook)이 횟수를 더한다.
  * webhook이 늦으면 /pay/success가 세션을 직접 조회해 같은 처리를 한다.
  */
 
@@ -25,9 +26,6 @@ export async function POST(req: Request): Promise<NextResponse> {
     sub = null;
   }
   if (!sub) return NextResponse.json({ error: 'LOGIN_REQUIRED' }, { status: 401 });
-  if (await isPaidBySub(sub)) {
-    return NextResponse.json({ error: 'ALREADY_PAID' }, { status: 409 });
-  }
 
   const stripe = getStripe();
   const priceId = process.env.STRIPE_PRICE_ID;

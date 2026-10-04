@@ -16,8 +16,7 @@ const fakeStore: CounterStore = {
 vi.mock('@/lib/redis', () => ({ getRedis: () => fakeStore }));
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
 vi.mock('@/lib/payments', () => ({
-  isPaidBySub: vi.fn(),
-  markPaid: vi.fn(),
+  creditsBySub: vi.fn(),
   PRICE_REGULAR_KRW: 9900,
   PRICE_EARLY_KRW: 4900,
 }));
@@ -26,15 +25,15 @@ vi.mock('@/lib/stripe', () => ({ getStripe: () => null }));
 
 import { GET } from '@/app/api/access/route';
 import { auth } from '@/auth';
-import { isPaidBySub } from '@/lib/payments';
+import { creditsBySub } from '@/lib/payments';
 
 const mockAuth = vi.mocked(auth);
-const mockIsPaid = vi.mocked(isPaidBySub);
+const mockCredits = vi.mocked(creditsBySub);
 
 beforeEach(() => {
   store.reset();
   mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'test@example.com' } } as never);
-  mockIsPaid.mockResolvedValue(false);
+  mockCredits.mockResolvedValue(0);
   process.env.DAILY_USER_LIMIT = '3';
   process.env.DAILY_TOTAL_LIMIT = '200';
 });
@@ -50,7 +49,7 @@ describe('GET /api/access', () => {
     const res = await GET(new Request('http://localhost/api/access'));
     const json = await res.json();
     expect(json.paid).toBe(false);
-    expect(json.remaining).toBe(2);
+    expect(json.remaining).toBe(0); // 남은 횟수권
     expect(json.email).toBe('test@example.com');
     expect(json.priceRegular).toBe(9900);
     expect(json.priceEarly).toBe(4900);
@@ -58,10 +57,12 @@ describe('GET /api/access', () => {
     expect(store.data.get('quota:user:u:test-sub:' + kstToday())).toBe(1);
   });
 
-  it('결제한 계정은 paid=true', async () => {
-    mockIsPaid.mockResolvedValue(true);
+  it('횟수가 남은 계정은 paid=true, remaining=남은 횟수', async () => {
+    mockCredits.mockResolvedValue(7);
     const res = await GET(new Request('http://localhost/api/access'));
-    expect((await res.json()).paid).toBe(true);
+    const json = await res.json();
+    expect(json.paid).toBe(true);
+    expect(json.remaining).toBe(7);
   });
 
   it('미로그인은 paid=false, email=null', async () => {

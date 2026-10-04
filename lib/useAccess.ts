@@ -6,12 +6,13 @@ import { useEffect, useState } from 'react';
  * 이용 상태 (결제 게이트 + 잔여 횟수).
  *
  * 예전 useGate(초대 코드)를 대체한다. 히어로 배지·툴 카드·페이월이 같은 사실을
- * 말해야 하므로(결제 안 했는데 "하루 3회"라고 적혀 있으면 거짓말이 된다)
+ * 말해야 하므로(횟수가 없는데 "만들기"라고 적혀 있으면 거짓말이 된다)
  * 한 번만 불러 공유한다. 모듈 레벨 캐시라 컴포넌트가 몇 개든 네트워크 요청은 1회다.
  */
 export interface AccessState {
-  /** 이용권 보유 여부 */
+  /** 지금 생성할 수 있나 (남은 횟수 > 0) */
   paid: boolean;
+  /** 남은 횟수권 */
   remaining: number | null;
   /** 로그인한 계정의 이메일. 비로그인이면 null */
   email: string | null;

@@ -52,6 +52,7 @@ export const HeroBodySchema = z.object({
   tipSet: TipSetSchema,
   shape: z.enum(SHAPE_TUPLE),
   length: z.enum(LENGTH_TUPLE),
+  variantToken: z.string().min(1),
 });
 export type HeroBody = z.infer<typeof HeroBodySchema>;
 

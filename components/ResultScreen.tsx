@@ -447,7 +447,7 @@ export default function ResultScreen({
           </button>
         </div>
       </div>
-      {remaining !== null && <p className="remaining">오늘 {remaining}회 남음</p>}
+      {remaining !== null && <p className="remaining">{remaining}회 남음</p>}
     </>
   );
 }

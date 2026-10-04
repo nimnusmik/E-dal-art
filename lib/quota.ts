@@ -30,9 +30,10 @@ export interface QuotaStatus {
 
 const TTL_BUFFER_SECONDS = 60;
 const PENDING_PREFIX = 'quota:pending:';
-const DEFAULT_PENDING_TTL_SECONDS = 600; // maxDuration보다 충분히 길게
+/** 이 시간이 지난 pending 마커는 크래시로 본다 — maxDuration보다 충분히 길게 */
+const PENDING_STALE_SECONDS = 600;
 
-/** 범위별 일일 카운터 — variant·hero·save 등 엔드포인트 전용 쿼터 (user/total과 키 공간 분리) */
+/** 범위별 카운터 — save는 주체별 일일, variant·hero는 세션(sid)별 (user/total과 키 공간 분리) */
 export type QuotaScope = 'variant' | 'hero' | 'save';
 
 /**
@@ -130,8 +131,6 @@ export interface ReserveOptions {
    * 마커가 남으면 /api/cron/reaper가 정해진 시간 뒤 환불한다.
    */
   trackPending?: boolean;
-  /** pending 마커 TTL(초). 기본 600 — maxDuration보다 충분히 길게 잡는다 */
-  pendingTtlSeconds?: number;
 }
 
 /**
@@ -178,9 +177,9 @@ export async function reserve(
     if (canTrack && setFn) {
       const pkey = `${PENDING_PREFIX}${key}:${randomId()}`;
       pendingKeys.push(pkey);
-      await setFn(pkey, JSON.stringify({ key, takenAt: Date.now() }), {
-        ex: opts?.pendingTtlSeconds ?? DEFAULT_PENDING_TTL_SECONDS,
-      });
+      // 마커 TTL은 카운터와 같게(자정까지) — 크래시 판정 시간(10분)과 같게 두면
+      // reaper가 보기 전에 Redis가 먼저 지워 환불이 영영 안 된다
+      await setFn(pkey, JSON.stringify({ key, takenAt: Date.now() }), { ex: ttl });
     }
     if (count > limit) {
       await rollback();
@@ -204,7 +203,7 @@ function randomId(): string {
 /**
  * 크래시로 남은 pending 마커를 회수한다 — /api/cron/reaper가 주기적으로 호출.
  *
- * 마커 TTL(기본 600초)보다 오래된 것만 환불하므로, 아직 살아 있는
+ * 10분(PENDING_STALE_SECONDS)보다 오래된 것만 환불하므로, 아직 살아 있는
  * maxDuration 이내의 요청을 건드릴 일은 없다.
  */
 export async function sweepStalePending(
@@ -216,7 +215,7 @@ export async function sweepStalePending(
   if (!scanFn || !delFn) {
     throw new Error('CounterStore.scan/del이 없어 reaper를 실행할 수 없다');
   }
-  const staleAfterMs = (opts?.staleAfterSeconds ?? DEFAULT_PENDING_TTL_SECONDS) * 1000;
+  const staleAfterMs = (opts?.staleAfterSeconds ?? PENDING_STALE_SECONDS) * 1000;
   const now = Date.now();
   let cursor: string | number = 0;
   let swept = 0;

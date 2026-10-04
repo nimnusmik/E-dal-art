@@ -64,10 +64,10 @@ export default function Hero() {
           </span>
           <span className="xp-pill">
             {access.paid
-              ? 'Lifetime pass · 3 runs a day'
+              ? `${access.remaining ?? 0} runs left`
               : earlyBird
                 ? 'Early bird · first 100 only'
-                : 'One payment · yours forever'}
+                : '10 runs · no subscription'}
           </span>
         </div>
         {/* 디스플레이 레이어는 영어, 설득 문장은 한국어 — 이중 레이어 카피 체계 */}
@@ -86,7 +86,7 @@ export default function Hero() {
             ? 'Create my set'
             : earlyBird
               ? 'Start — early bird ₩4,900'
-              : 'Start — ₩9,900 lifetime'}
+              : 'Start — 10 runs ₩9,900'}
         </a>
         <span className="xp-hero-scrollhint" aria-hidden>
           Scroll to create ↓

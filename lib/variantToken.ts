@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { kstDateKey } from './kst';
 
 /**
@@ -8,7 +8,9 @@ import { kstDateKey } from './kst';
  * analyze는 일일 크레딧(세션)을 차감하므로, 이 토큰이 있어야만
  * "세션 1건 → variant 최대 N회"라는 쿼터 모델이 성립한다.
  *
- * 토큰 = base64url({sub, day}) + '.' + HMAC-SHA256. 당일·동일 주체에만 유효하다.
+ * 토큰 = base64url({sub, day, sid}) + '.' + HMAC-SHA256. 당일·동일 주체에만 유효하다.
+ * sid는 세션(=횟수권 1회)마다 새로 뽑는다 — variant·hero 한도를 하루가 아니라
+ * 세션 단위로 세는 키다. 없으면 1회 결제로 하루 종일 생성할 수 있다.
  * AUTH_SECRET은 next-auth용으로 이미 필수이므로 서명 키로 재사용한다.
  * 로컬 개발(AUTH_SECRET 없음)에서는 고정 폴백 키를 쓴다 — 개발용 토큰이
  * 운영에서 통할 일은 없다(운영은 AUTH_SECRET 필수).
@@ -19,24 +21,27 @@ function secret(): string {
 }
 
 export function issueVariantToken(subject: string, now: Date): string {
-  const payload = Buffer.from(JSON.stringify({ sub: subject, day: kstDateKey(now) })).toString('base64url');
+  const payload = Buffer.from(
+    JSON.stringify({ sub: subject, day: kstDateKey(now), sid: randomUUID() }),
+  ).toString('base64url');
   const sig = createHmac('sha256', secret()).update(payload).digest('base64url');
   return `${payload}.${sig}`;
 }
 
-export function verifyVariantToken(token: unknown, subject: string, now: Date): boolean {
-  if (typeof token !== 'string') return false;
+/** 유효하면 세션 id(sid), 아니면 null */
+export function verifyVariantToken(token: unknown, subject: string, now: Date): string | null {
+  if (typeof token !== 'string') return null;
   const dot = token.lastIndexOf('.');
-  if (dot <= 0) return false;
+  if (dot <= 0) return null;
   const payload = token.slice(0, dot);
-  let parsed: { sub?: unknown; day?: unknown };
+  let parsed: { sub?: unknown; day?: unknown; sid?: unknown };
   try {
     parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
   } catch {
-    return false;
+    return null;
   }
-  if (parsed.sub !== subject || parsed.day !== kstDateKey(now)) return false;
+  if (parsed.sub !== subject || parsed.day !== kstDateKey(now) || typeof parsed.sid !== 'string') return null;
   const sig = Buffer.from(token.slice(dot + 1), 'utf8');
   const expected = Buffer.from(createHmac('sha256', secret()).update(payload).digest('base64url'), 'utf8');
-  return sig.length === expected.length && timingSafeEqual(sig, expected);
+  return sig.length === expected.length && timingSafeEqual(sig, expected) ? parsed.sid : null;
 }

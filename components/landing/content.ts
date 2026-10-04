@@ -32,8 +32,8 @@ export const STATS: StatCard[] = [
     // 이전 값은 'Free / no sign-up, no card'였다. 유료 모델이므로 정직하게 바꾼다.
     // 순서: 가장 강한 메시지(가격)를 2번째에 — 모바일 1열에서 4번째로 밀리지 않게.
     value: '₩9,900',
-    label: 'one pass · forever',
-    body: "Pay once, never again. Three runs a day, every day. Failed runs don't count.",
+    label: '10 runs · no subscription',
+    body: "Ten runs, use them whenever. No monthly bill. Failed runs don't count.",
     tone: 'pink',
   },
   {
@@ -153,11 +153,11 @@ export const FAQS: FaqItem[] = [
   },
   {
     q: 'How much does it cost?',
-    a: "One lifetime pass — ₩9,900, pay once and it's yours. Three runs a day, refilled at midnight KST, and failed runs don't count. The first 100 members get the early-bird price of ₩4,900.",
+    a: "A 10-run pass is ₩9,900 — no subscription, top up when you run out. Each run makes a full set of takes plus try-on shots, and failed runs don't count.",
   },
   {
     q: 'How many runs per day?',
-    a: "Three a day, refilled at midnight KST. Failed runs don't count.",
+    a: "Use your runs whenever you like — up to three a day to prevent abuse. Unused runs never expire, and failed runs don't count.",
   },
   {
     q: 'Where do my photos go?',

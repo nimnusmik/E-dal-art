@@ -1,12 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
-vi.mock('@/lib/payments', () => ({
-  isPaidBySub: vi.fn(),
-  markPaid: vi.fn(),
-  PRICE_REGULAR_KRW: 9900,
-  PRICE_EARLY_KRW: 4900,
-}));
 
 const mockCouponsRetrieve = vi.fn();
 const mockSessionsCreate = vi.fn();
@@ -21,16 +15,13 @@ vi.mock('@/lib/stripe', () => ({
 
 import { POST } from '@/app/api/checkout/route';
 import { auth } from '@/auth';
-import { isPaidBySub } from '@/lib/payments';
 
 const mockAuth = vi.mocked(auth);
-const mockIsPaid = vi.mocked(isPaidBySub);
 
 const savedEnv = { ...process.env };
 
 beforeEach(() => {
   mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'buyer@example.com' } } as never);
-  mockIsPaid.mockResolvedValue(false);
   stripeAvailable = true;
   mockCouponsRetrieve.mockReset();
   mockSessionsCreate.mockReset();
@@ -54,13 +45,6 @@ describe('POST /api/checkout', () => {
     expect(res.status).toBe(401);
     expect((await res.json()).error).toBe('LOGIN_REQUIRED');
     expect(mockSessionsCreate).not.toHaveBeenCalled();
-  });
-
-  it('이미 결제함 → 409 ALREADY_PAID', async () => {
-    mockIsPaid.mockResolvedValue(true);
-    const res = await post();
-    expect(res.status).toBe(409);
-    expect((await res.json()).error).toBe('ALREADY_PAID');
   });
 
   it('Stripe 키 없음 → 503 PAYMENT_UNAVAILABLE', async () => {

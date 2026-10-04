@@ -57,6 +57,7 @@ describe('HeroBodySchema', () => {
     tipSet: { image: 'dGlwc2V0', mimeType: 'image/png' },
     shape: 'almond',
     length: 'short',
+    variantToken: 'tok',
   };
 
   it('정상 바디 통과', () => {

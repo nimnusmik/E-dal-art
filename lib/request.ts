@@ -110,23 +110,24 @@ async function currentAccountId(): Promise<string | null> {
 }
 
 /**
- * 결제 게이트 — 생성 3라우트(analyze/variant/hero) 공용.
+ * 결제 게이트 — analyze 전용. 횟수권 1회를 선점한다.
  *
- * 초대 코드 게이트를 대체한다. 호출 1건이 곧 실비이므로, 이용권이 있는
- * 계정만 생성할 수 있다. null이면 통과, 아니면 {status, error}를 그대로
- * 응답하면 된다.
+ * 호출 1건이 곧 실비이므로 남은 횟수가 있는 계정만 세션을 연다. 성공하면
+ * refund()를 돌려준다 — 생성이 실패하면 호출해 "실패는 미차감"을 지킨다.
+ * variant·hero는 이 세션이 발급한 토큰(variantToken)으로만 열리므로 다시 차감하지 않는다.
  */
-export async function paymentGate(): Promise<{
-  status: number;
-  error: 'LOGIN_REQUIRED' | 'PAYMENT_REQUIRED';
-} | null> {
+export async function paymentGate(): Promise<
+  | { ok: false; status: number; error: 'LOGIN_REQUIRED' | 'PAYMENT_REQUIRED' }
+  | { ok: true; creditsLeft: number; refund: () => Promise<void> }
+> {
   const sub = await currentAccountId();
-  if (!sub) return { status: 401, error: 'LOGIN_REQUIRED' };
+  if (!sub) return { ok: false, status: 401, error: 'LOGIN_REQUIRED' };
   // 정적 import를 피한다 — @neondatabase/serverless를 클라이언트 번들에
   // 끌어들이지 않기 위해 기존 auth()와 같은 동적 import 패턴을 쓴다
-  const { isPaidBySub } = await loadPaymentsModule();
-  if (!(await isPaidBySub(sub))) return { status: 402, error: 'PAYMENT_REQUIRED' };
-  return null;
+  const { takeCredit, refundCredit } = await loadPaymentsModule();
+  const left = await takeCredit(sub);
+  if (left === null) return { ok: false, status: 402, error: 'PAYMENT_REQUIRED' };
+  return { ok: true, creditsLeft: left, refund: () => refundCredit(sub) };
 }
 
 /**
