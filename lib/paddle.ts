@@ -60,8 +60,9 @@ export async function createCheckoutTransaction(googleSub: string): Promise<stri
             name: `${PACK_CREDITS}회 이용권`,
             tax_mode: 'internal',
             unit_price: { amount: String(PRICE_REGULAR_KRW), currency_code: 'KRW' },
+            // product는 price 안에 둔다 — item 바로 아래에 두면 400 (샌드박스 실측)
+            product: { name: `이달아 ${PACK_CREDITS}회 이용권`, tax_category: 'standard' },
           },
-          product: { name: `이달아 ${PACK_CREDITS}회 이용권`, tax_category: 'standard' },
         },
       ],
       // 웹훅이 누구에게 횟수를 줄지 아는 유일한 연결고리

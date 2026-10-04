@@ -50,6 +50,9 @@ describe('POST /api/checkout', () => {
     expect(body.custom_data).toEqual({ google_sub: 'test-sub' });
     expect(body.items[0].price.unit_price).toEqual({ amount: '9900', currency_code: 'KRW' });
     expect(body.items[0].price.tax_mode).toBe('internal'); // 세금 포함 — 손님은 정확히 ₩9,900
+    // Paddle 비카탈로그 형식: product는 price 안에 (item 바로 아래면 400 — 샌드박스 실측)
+    expect(body.items[0].price.product).toMatchObject({ tax_category: 'standard' });
+    expect(body.items[0].product).toBeUndefined();
   });
 
   it('라이브 키면 라이브 API로', async () => {
