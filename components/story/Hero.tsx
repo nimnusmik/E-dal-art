@@ -49,9 +49,6 @@ function usePhoneState(wrapRef: React.RefObject<HTMLDivElement | null>): 0 | 1 |
 export default function Hero() {
   const issue = useIssue();
   const access = useAccess();
-  // 얼리버드(선착순 100명 ₩4,900)가 살아 있으면 CTA에 그 가격을, 아니면 정가를.
-  // 쿠폰 상태를 모르면(null) 얼리버드를 약속하지 않는다.
-  const earlyBird = access.earlyBirdLeft !== null && access.earlyBirdLeft > 0;
   const wrapRef = useRef<HTMLDivElement>(null);
   const state = usePhoneState(wrapRef);
 
@@ -65,9 +62,7 @@ export default function Hero() {
           <span className="xp-pill">
             {access.paid
               ? `${access.remaining ?? 0} runs left`
-              : earlyBird
-                ? 'Early bird · first 100 only'
-                : '10 runs · no subscription'}
+              : '10 runs · no subscription'}
           </span>
         </div>
         {/* 디스플레이 레이어는 영어, 설득 문장은 한국어 — 이중 레이어 카피 체계 */}
@@ -84,9 +79,7 @@ export default function Hero() {
         <a className="xp-cta" href="#tool">
           {access.paid
             ? 'Create my set'
-            : earlyBird
-              ? 'Start — early bird ₩4,900'
-              : 'Start — 10 runs ₩9,900'}
+            : 'Start — 10 runs ₩9,900'}
         </a>
         <span className="xp-hero-scrollhint" aria-hidden>
           Scroll to create ↓

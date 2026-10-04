@@ -2,95 +2,68 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('@/auth', () => ({ auth: vi.fn() }));
 
-const mockCouponsRetrieve = vi.fn();
-const mockSessionsCreate = vi.fn();
-let stripeAvailable = true;
-vi.mock('@/lib/stripe', () => ({
-  getStripe: () => (stripeAvailable ? {
-    coupons: { retrieve: mockCouponsRetrieve },
-    checkout: { sessions: { create: mockSessionsCreate } },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any : null),
-}));
-
 import { POST } from '@/app/api/checkout/route';
 import { auth } from '@/auth';
 
 const mockAuth = vi.mocked(auth);
-
+const mockFetch = vi.fn();
 const savedEnv = { ...process.env };
 
 beforeEach(() => {
   mockAuth.mockResolvedValue({ user: { id: 'test-sub', email: 'buyer@example.com' } } as never);
-  stripeAvailable = true;
-  mockCouponsRetrieve.mockReset();
-  mockSessionsCreate.mockReset();
-  mockSessionsCreate.mockResolvedValue({ url: 'https://checkout.stripe.com/pay/cs_test' });
-  process.env.STRIPE_EARLYBIRD_COUPON_ID = 'coupon_test123';
+  mockFetch.mockReset().mockResolvedValue(
+    new Response(JSON.stringify({ data: { id: 'txn_abc' } }), { status: 201 }),
+  );
+  vi.stubGlobal('fetch', mockFetch);
+  process.env.PADDLE_API_KEY = 'pdl_sdbx_apikey_test';
 });
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   process.env = { ...savedEnv };
 });
 
-function post() {
-  return POST(new Request('http://localhost/api/checkout', { method: 'POST' }));
-}
-
 describe('POST /api/checkout', () => {
-  it('미로그인 → 401 LOGIN_REQUIRED', async () => {
+  it('미로그인 → 401 LOGIN_REQUIRED, Paddle 호출 안 함', async () => {
     mockAuth.mockResolvedValue(null as never);
-    const res = await post();
+    const res = await POST();
     expect(res.status).toBe(401);
     expect((await res.json()).error).toBe('LOGIN_REQUIRED');
-    expect(mockSessionsCreate).not.toHaveBeenCalled();
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it('Stripe 키 없음 → 503 PAYMENT_UNAVAILABLE', async () => {
-    stripeAvailable = false;
-    const res = await post();
+  it('Paddle 키 없음 → 503 PAYMENT_UNAVAILABLE', async () => {
+    delete process.env.PADDLE_API_KEY;
+    const res = await POST();
     expect(res.status).toBe(503);
     expect((await res.json()).error).toBe('PAYMENT_UNAVAILABLE');
   });
 
-  it('얼리버드 쿠폰이 남아 있으면 자동 적용', async () => {
-    mockCouponsRetrieve.mockResolvedValue({ valid: true, times_redeemed: 42, max_redemptions: 100 });
-    const res = await post();
+  it('거래를 만들고 id 반환 — 금액은 상수로 직접, 계정은 custom_data로', async () => {
+    const res = await POST();
     expect(res.status).toBe(200);
-    expect((await res.json()).url).toBe('https://checkout.stripe.com/pay/cs_test');
-    const args = mockSessionsCreate.mock.calls[0][0];
-    expect(args.discounts).toEqual([{ coupon: 'coupon_test123' }]);
-    expect(args.metadata).toEqual({ google_sub: 'test-sub' });
-    expect(args.customer_email).toBe('buyer@example.com');
-    expect(args.mode).toBe('payment');
-    // Price ID 없이 금액을 직접 넘긴다 — 키와 다른 계정의 Price ID로 막히는 일이 없게
-    expect(args.line_items).toEqual([
-      expect.objectContaining({
-        quantity: 1,
-        price_data: expect.objectContaining({ currency: 'krw', unit_amount: 9900 }),
-      }),
-    ]);
+    expect((await res.json()).transactionId).toBe('txn_abc');
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe('https://sandbox-api.paddle.com/transactions'); // 샌드박스 키 → 샌드박스
+    expect(init.headers.authorization).toBe('Bearer pdl_sdbx_apikey_test');
+    const body = JSON.parse(init.body);
+    expect(body.custom_data).toEqual({ google_sub: 'test-sub' });
+    expect(body.items[0].price.unit_price).toEqual({ amount: '9900', currency_code: 'KRW' });
+    expect(body.items[0].price.tax_mode).toBe('internal'); // 세금 포함 — 손님은 정확히 ₩9,900
   });
 
-  it('Stripe가 세션 생성을 거절하면 503 (500으로 터지지 않는다)', async () => {
-    mockSessionsCreate.mockRejectedValue(new Error('No such price'));
-    const res = await post();
+  it('라이브 키면 라이브 API로', async () => {
+    process.env.PADDLE_API_KEY = 'pdl_live_apikey_test';
+    await POST();
+    expect(mockFetch.mock.calls[0][0]).toBe('https://api.paddle.com/transactions');
+  });
+
+  it('Paddle이 거절하면 503 (500으로 터지지 않는다)', async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ error: { code: 'forbidden', detail: 'x' } }), { status: 403 }),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await POST();
     expect(res.status).toBe(503);
-    expect((await res.json()).error).toBe('PAYMENT_UNAVAILABLE');
-  });
-
-  it('쿠폰이 소진됐으면 정가로 진행 (discounts 없음)', async () => {
-    mockCouponsRetrieve.mockResolvedValue({ valid: true, times_redeemed: 100, max_redemptions: 100 });
-    const res = await post();
-    expect(res.status).toBe(200);
-    const args = mockSessionsCreate.mock.calls[0][0];
-    expect(args.discounts).toBeUndefined();
-  });
-
-  it('쿠폰 조회 실패해도 정가로 진행 (결제를 막지 않는다)', async () => {
-    mockCouponsRetrieve.mockRejectedValue(new Error('stripe down'));
-    const res = await post();
-    expect(res.status).toBe(200);
-    expect(mockSessionsCreate).toHaveBeenCalled();
   });
 });

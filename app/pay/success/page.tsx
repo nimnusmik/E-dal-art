@@ -1,39 +1,28 @@
 import Link from 'next/link';
-import { getStripe } from '@/lib/stripe';
+import { getTransaction, isPaidTransaction } from '@/lib/paddle';
 import { PACK_CREDITS, markPaid } from '@/lib/payments';
 
 /**
- * /pay/success — Stripe Checkout 복귀 페이지.
+ * /pay/success — Paddle 결제창이 닫힌 뒤 오는 페이지.
  *
- * webhook(/api/stripe/webhook)이 횟수를 지급하는 게 정식 경로지만,
- * webhook이 늦거나 실패해도 여기서 세션을 직접 조회해 지급한다.
- * Stripe API로 확인한 paid 세션만 처리하므로 위조가 불가능하다.
+ * webhook(/api/paddle/webhook)이 횟수를 지급하는 게 정식 경로지만,
+ * webhook이 늦거나 실패해도 여기서 거래를 직접 조회해 지급한다.
+ * Paddle API로 확인한 결제 완료 거래만 처리하므로 위조가 불가능하다.
  * markPaid는 멱등이라 webhook과 동시에 달려도 안전하다.
  */
 export default async function PaySuccess({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id?: string }>;
+  searchParams: Promise<{ txn?: string }>;
 }) {
-  const { session_id } = await searchParams;
-  const stripe = getStripe();
+  const { txn } = await searchParams;
   let ok = false;
 
-  if (stripe && session_id) {
-    try {
-      const s = await stripe.checkout.sessions.retrieve(session_id);
-      const sub = s.metadata?.google_sub;
-      if (s.payment_status === 'paid' && sub) {
-        // DB 기록이 실패하면 "열렸어요"라고 거짓말하지 않는다 — webhook 재시도가 마저 처리한다
-        ok = await markPaid({
-          googleSub: sub,
-          email: s.customer_email ?? s.customer_details?.email ?? '',
-            sessionId: s.id,
-        });
-      }
-    } catch {
-      ok = false;
-    }
+  const t = txn ? await getTransaction(txn) : null;
+  const sub = t?.custom_data?.google_sub;
+  if (t && isPaidTransaction(t) && typeof sub === 'string') {
+    // DB 기록이 실패하면 "들어왔어요"라고 거짓말하지 않는다 — webhook 재전송이 마저 처리한다
+    ok = await markPaid({ googleSub: sub, email: '', paymentRef: t.id });
   }
 
   return (

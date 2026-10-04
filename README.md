@@ -29,27 +29,26 @@ npm run typecheck
 | `TREND_KEYWORDS` | 쉼표 구분 트렌드 키워드. 비우면 `config/trends.ts` 기본값 | (없음) |
 | `IMAGE_MOCK` / `GEMINI_MOCK` / `SEEDREAM_MOCK` | `1`이면 이미지 호출 없이 `ref/` 샘플 이미지로 목 응답. API 결제 전 전체 흐름 확인용. **로컬 전용 — 운영 환경에서는 무시된다** | (없음) |
 | `CRON_SECRET` | Vercel Cron이 `/api/cron/reaper` 호출 시 쓰는 Bearer 토큰. 플랫폼 타임아웃/OOM으로 환불 안 된 쿼터를 10분 간격으로 회수 | (없음) |
-| `STRIPE_SECRET_KEY` | Stripe 결제용 시크릿 키. 없으면 결제 라우트가 503 (랜딩은 계속 동작) | (없음) |
-| `STRIPE_WEBHOOK_SECRET` | Stripe 대시보드에서 webhook 엔드포인트(`/api/stripe/webhook`) 등록 시 발급 | (없음) |
-| `STRIPE_EARLYBIRD_COUPON_ID` | 얼리버드 쿠폰 ID (5,000원 할인 → 4,900원, 최대 100회). 비우면 정가로만 판매 | (없음) |
+| `PADDLE_API_KEY` | Paddle 서버 API 키. 접두사로 샌드박스/라이브 자동 판별. 없으면 결제 라우트가 503 (랜딩은 계속 동작) | (없음) |
+| `PADDLE_WEBHOOK_SECRET` | Paddle 알림 대상(`/api/paddle/webhook`) 생성 시 발급되는 `pdl_ntfset_…` | (없음) |
+| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | Paddle.js 클라이언트 토큰 (`test_…` = 샌드박스) | (없음) |
 
 > **공급자 차이**: Gemini는 무드 키워드+색상을 함께 반환하지만, Seedream은 이미지만 반환합니다. Seedream 사용 시 무드 칩의 색상 스와치는 생성된 이미지에서 자동 추출하며(키워드는 표시 안 함), 영감 사진은 BytePlus(해외 리전)로 전송되므로 개인정보 처리방침에 반영이 필요합니다.
 
 > **결과 구성 & 비용**: 요청 1회당 이미지 2장을 병렬 생성합니다 — (1) 손 착용샷 콜라주(히어로), (2) 개별 네일 팁 10종이 담긴 플랫레이 세트(레퍼런스식). 즉 하루 총 이미지 수 = `DAILY_TOTAL_LIMIT × 2`. 팁 세트 생성이 실패해도 히어로만 있으면 성공으로 처리하며, 하루 횟수는 요청당 1회만 차감됩니다.
 
-## 결제 (Stripe)
+## 결제 (Paddle)
 
-생성은 이용권이 있어야 한다 — 호출 1건이 곧 실비이므로, 초대 코드 게이트를 걷어내고
-유료 페이월로 바꿨다. 가격은 평생 9,900원, 얼리버드는 4,900원(선착순 100명, 쿠폰 자동 적용).
+10회 이용권 9,900원. Paddle이 판매 기록자(MoR)라 사업자등록 없이 개인으로 판매하고,
+세금·영수증·환불은 Paddle이 처리한다. 국내 카드·카카오페이·네이버페이 지원.
 
-- `POST /api/checkout` — 로그인 필수. Stripe Checkout 세션을 만들고 결제 URL 반환.
-  카드 입력은 전부 Stripe 호스팅 페이지에서 일어나고, 이 앱은 카드번호를 절대 만지지 않는다.
-- `POST /api/stripe/webhook` — `checkout.session.completed`를 서명 검증 후 처리,
-  `users.paid_at`을 찍는다. Stripe는 최소 1회 전달하므로 `markPaid`는 멱등이다.
-- `/pay/success` — webhook이 늦어도 세션을 직접 조회해 이용권을 부여하는 폴백.
-- 생성 3라우트(analyze/variant/hero)는 `paymentGate()`로 막는다:
-  미로그인 → 401, 미결제 → 402. DB(`users`) 스키마 변경은 `db/schema.sql` 적용.
-- 남은 얼리버드 수량은 쿠폰의 `times_redeemed` 기준 (`GET /api/access`).
+- `POST /api/checkout` — 로그인 필수. Paddle 거래를 만들어 id 반환 → 화면이 오버레이 결제창을 연다.
+  카탈로그 가격 id 없이 금액(`lib/pricing.ts`)을 직접 넘긴다.
+- `POST /api/paddle/webhook` — `transaction.completed`를 서명 검증 후 `custom_data.google_sub`에
+  10회 지급. 거래 id가 `payments` 기본키라 재전송이 와도 결제 1건 = 10회.
+- `/pay/success?txn=` — webhook이 늦어도 거래를 직접 조회해 지급하는 폴백.
+- `analyze`가 1회를 차감(실패 시 환불)하고 세션 토큰을 발급한다. variant·hero는 그 토큰으로만
+  열리며 세션당 시안 6장·착용샷 5장까지.
 
 ## 배포 (Vercel)
 

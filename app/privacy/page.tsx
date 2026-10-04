@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const UPDATED = '2026년 9월 15일';
+const UPDATED = '2026년 10월 4일';
 
 export default function PrivacyPage() {
   return (
@@ -39,6 +39,11 @@ export default function PrivacyPage() {
             <tr>
               <td>구글 계정 식별자, 이메일 주소</td>
               <td>로그인, 이용 한도 관리</td>
+              <td>탈퇴 시까지</td>
+            </tr>
+            <tr>
+              <td>결제 기록 (결제 거래 번호, 지급 횟수, 남은 횟수)</td>
+              <td>이용권 지급·환불</td>
               <td>탈퇴 시까지</td>
             </tr>
             <tr>
@@ -91,6 +96,12 @@ export default function PrivacyPage() {
               <td>미국</td>
               <td>접속 IP, 접속 기록</td>
               <td>접속 시점, 서비스 호스팅</td>
+            </tr>
+            <tr>
+              <td>Paddle.com Market Ltd</td>
+              <td>영국</td>
+              <td>이메일, 계정 식별자, 결제 정보(카드 등은 Paddle이 직접 수집)</td>
+              <td>결제 시점, 결제·세금·환불 처리(판매 기록자)</td>
             </tr>
             <tr>
               <td>Upstash, Inc.</td>

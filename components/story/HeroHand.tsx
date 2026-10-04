@@ -16,7 +16,6 @@ const AFTER_SRC = '/hero/hand-after.webp';
 export default function HeroHand() {
   const issue = useIssue();
   const access = useAccess();
-  const earlyBird = access.earlyBirdLeft !== null && access.earlyBirdLeft > 0;
   const stageRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const beadRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -178,9 +177,7 @@ export default function HeroHand() {
           <span className="xp-pill t-green">
             {access.paid
               ? `${access.remaining ?? 0}회 남음`
-              : earlyBird
-                ? '얼리버드 · 선착순 100명'
-                : '10회 이용권 · 구독 아님'}
+              : '10회 이용권 · 구독 아님'}
           </span>
         </div>
         <h1 className="xp-display xp-hero-title">
@@ -198,9 +195,7 @@ export default function HeroHand() {
         <a className="xp-cta" href="#tool">
           {access.paid
             ? '시안 만들기'
-            : earlyBird
-              ? '얼리버드 ₩4,900으로 시작하기'
-              : '₩9,900으로 시작하기'}
+            : '₩9,900으로 시작하기'}
         </a>
       </div>
       {/* ↓↓↓ 이 무대는 heroMorph 타임라인과 1:1로 묶여 있다 — 구조 변경 금지 ↓↓↓ */}

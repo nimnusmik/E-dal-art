@@ -16,19 +16,12 @@ export interface AccessState {
   remaining: number | null;
   /** 로그인한 계정의 이메일. 비로그인이면 null */
   email: string | null;
-  /** 얼리버드 남은 수량. 알 수 없으면 null (그때는 얼리버드가를 보여주지 않는다) */
-  earlyBirdLeft: number | null;
-  priceRegular: number;
-  priceEarly: number;
 }
 
 const UNKNOWN: AccessState = {
   paid: false,
   remaining: null,
   email: null,
-  earlyBirdLeft: null,
-  priceRegular: 9900,
-  priceEarly: 4900,
 };
 
 let cached: Promise<AccessState> | null = null;
@@ -43,11 +36,6 @@ export function fetchAccess(): Promise<AccessState> {
               paid: j.paid === true,
               remaining: typeof j.remaining === 'number' ? j.remaining : null,
               email: typeof j.email === 'string' ? j.email : null,
-              earlyBirdLeft:
-                typeof j.earlyBirdLeft === 'number' ? j.earlyBirdLeft : null,
-              priceRegular:
-                typeof j.priceRegular === 'number' ? j.priceRegular : 9900,
-              priceEarly: typeof j.priceEarly === 'number' ? j.priceEarly : 4900,
             }
           : UNKNOWN,
       )
