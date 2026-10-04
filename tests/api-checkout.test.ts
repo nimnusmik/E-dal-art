@@ -26,7 +26,6 @@ beforeEach(() => {
   mockCouponsRetrieve.mockReset();
   mockSessionsCreate.mockReset();
   mockSessionsCreate.mockResolvedValue({ url: 'https://checkout.stripe.com/pay/cs_test' });
-  process.env.STRIPE_PRICE_ID = 'price_test123';
   process.env.STRIPE_EARLYBIRD_COUPON_ID = 'coupon_test123';
 });
 
@@ -64,6 +63,20 @@ describe('POST /api/checkout', () => {
     expect(args.metadata).toEqual({ google_sub: 'test-sub' });
     expect(args.customer_email).toBe('buyer@example.com');
     expect(args.mode).toBe('payment');
+    // Price ID 없이 금액을 직접 넘긴다 — 키와 다른 계정의 Price ID로 막히는 일이 없게
+    expect(args.line_items).toEqual([
+      expect.objectContaining({
+        quantity: 1,
+        price_data: expect.objectContaining({ currency: 'krw', unit_amount: 9900 }),
+      }),
+    ]);
+  });
+
+  it('Stripe가 세션 생성을 거절하면 503 (500으로 터지지 않는다)', async () => {
+    mockSessionsCreate.mockRejectedValue(new Error('No such price'));
+    const res = await post();
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe('PAYMENT_UNAVAILABLE');
   });
 
   it('쿠폰이 소진됐으면 정가로 진행 (discounts 없음)', async () => {

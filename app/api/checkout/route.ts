@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { getStripe } from '@/lib/stripe';
+import { PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
 
 /**
  * POST /api/checkout — Stripe Checkout 세션 생성 후 결제 URL 반환.
@@ -28,8 +29,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   if (!sub) return NextResponse.json({ error: 'LOGIN_REQUIRED' }, { status: 401 });
 
   const stripe = getStripe();
-  const priceId = process.env.STRIPE_PRICE_ID;
-  if (!stripe || !priceId) {
+  if (!stripe) {
     return NextResponse.json({ error: 'PAYMENT_UNAVAILABLE' }, { status: 503 });
   }
 
@@ -50,15 +50,33 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const origin = new URL(req.url).origin;
-  const checkout = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    customer_email: email ?? undefined,
-    line_items: [{ price: priceId, quantity: 1 }],
-    ...(discounts ? { discounts } : {}),
-    metadata: { google_sub: sub },
-    success_url: `${origin}/pay/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/pay/cancel`,
-  });
+  let checkout;
+  try {
+    checkout = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer_email: email ?? undefined,
+      // 가격을 대시보드 Price ID가 아니라 여기서 직접 넘긴다 — 키와 다른 모드·계정의
+      // Price ID를 넣어 "No such price"로 결제가 전부 막힌 적이 있다. 화면 표시가와
+      // 과금액도 같은 상수에서 나와 갈라질 수 없다. (KRW는 소수점 없는 통화라 9900 = ₩9,900)
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: 'krw',
+            unit_amount: PRICE_REGULAR_KRW,
+            product_data: { name: `이달아 ${PACK_CREDITS}회 이용권` },
+          },
+        },
+      ],
+      ...(discounts ? { discounts } : {}),
+      metadata: { google_sub: sub },
+      success_url: `${origin}/pay/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/pay/cancel`,
+    });
+  } catch (err) {
+    console.error('[checkout] Stripe 세션 생성 실패', err);
+    return NextResponse.json({ error: 'PAYMENT_UNAVAILABLE' }, { status: 503 });
+  }
 
   if (!checkout.url) {
     return NextResponse.json({ error: 'PAYMENT_UNAVAILABLE' }, { status: 503 });

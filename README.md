@@ -31,7 +31,6 @@ npm run typecheck
 | `CRON_SECRET` | Vercel Cron이 `/api/cron/reaper` 호출 시 쓰는 Bearer 토큰. 플랫폼 타임아웃/OOM으로 환불 안 된 쿼터를 10분 간격으로 회수 | (없음) |
 | `STRIPE_SECRET_KEY` | Stripe 결제용 시크릿 키. 없으면 결제 라우트가 503 (랜딩은 계속 동작) | (없음) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe 대시보드에서 webhook 엔드포인트(`/api/stripe/webhook`) 등록 시 발급 | (없음) |
-| `STRIPE_PRICE_ID` | 이용권 Price ID (평생 9,900원) | (없음) |
 | `STRIPE_EARLYBIRD_COUPON_ID` | 얼리버드 쿠폰 ID (5,000원 할인 → 4,900원, 최대 100회). 비우면 정가로만 판매 | (없음) |
 
 > **공급자 차이**: Gemini는 무드 키워드+색상을 함께 반환하지만, Seedream은 이미지만 반환합니다. Seedream 사용 시 무드 칩의 색상 스와치는 생성된 이미지에서 자동 추출하며(키워드는 표시 안 함), 영감 사진은 BytePlus(해외 리전)로 전송되므로 개인정보 처리방침에 반영이 필요합니다.
