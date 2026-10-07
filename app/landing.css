@@ -559,6 +559,15 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 
 .xp-cta-sm { padding: 14px 26px; min-height: 46px; font-size: var(--fs-200); }
 
+/* 섹션 지면 패딩 — 가격·갤러리와 같은 리듬. Services는 sticky 높이 계산을
+   건드리지 않도록 가로만 소유한다 (세로 리듬은 320dvh 스크롤 랩이 만든다) */
+.xp-stats { padding: var(--space-section) clamp(20px, 5vw, 64px); }
+.xp-services { padding: 0 clamp(20px, 5vw, 64px); }
+
+/* 흰 지면 밴드의 마지막 섹션 — xp-paper는 상단 패딩만 소유하므로(위 주석)
+   다크 푸터로 넘어가기 전 하단 여백을 여기서 닫는다 */
+.is-band-end { padding-bottom: var(--space-section); }
+
 .xp-stat-grid {
   display: grid;
   /* 카드가 4장이므로 2열(2×2)로 고정한다 — minmax 하한을 낮추면 넓은 화면에서
@@ -1080,9 +1089,52 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 
 .xp-footer-meta { display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap; justify-content: center; }
 
+/* CTA 아래 횟수권 실체 한 줄 — 다크 그라데이션 위라 흰색 계열 */
+.xp-footer-note {
+  margin-top: 16px;
+  font-size: var(--fs-200);
+  color: rgba(255, 255, 255, 0.72);
+  word-break: keep-all;
+}
+
 /* ─── 랜딩 루트 ──────────────────────────────────────────────── */
 .xp-landing { position: relative; overflow-x: clip; }
 
 /* 구독 수요 측정 — 갤러리(실제 검수 통과작) 직후, 누구나 닿는 자리 */
 .xp-price { padding: var(--space-section) clamp(20px, 5vw, 64px); }
 .xp-price-inner { max-width: 520px; margin: 0 auto; }
+
+/* 가격 카드 — Stats의 .xp-card와 같은 지면·라운드·그림자 언어 */
+.xp-price-card {
+  padding: clamp(28px, 4vw, 40px);
+  border-radius: var(--r-card);
+  background: var(--paper-card);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.xp-price-now {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: clamp(40px, 6vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.xp-price-list {
+  margin: 24px 0 28px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.xp-price-list li {
+  padding: 12px 0;
+  font-size: var(--fs-300);
+  line-height: var(--lh-body);
+  color: var(--text-2);
+  border-top: 1px solid var(--line-quiet);
+  word-break: keep-all;
+}
+.xp-price-list li:first-child { border-top: 0; }
