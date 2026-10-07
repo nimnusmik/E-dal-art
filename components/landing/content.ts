@@ -8,6 +8,8 @@
  *  2) 착용샷의 손은 AI가 생성한 손이다. "내 손"이라고 쓰지 않는다 —
  *     사용자 손 사진을 받는 입력이 아직 없다.
  */
+import { PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
+
 export type Tone = 'pink' | 'blue' | 'yellow' | 'green' | 'purple';
 
 export interface StatCard {
@@ -31,9 +33,9 @@ export const STATS: StatCard[] = [
   {
     // 이전 값은 'Free / no sign-up, no card'였다. 유료 모델이므로 정직하게 바꾼다.
     // 순서: 가장 강한 메시지(가격)를 2번째에 — 모바일 1열에서 4번째로 밀리지 않게.
-    value: '₩9,900',
-    label: '10 runs · no subscription',
-    body: "Ten runs, use them whenever. No monthly bill. Failed runs don't count.",
+    value: `₩${PRICE_REGULAR_KRW.toLocaleString('ko-KR')}`,
+    label: `${PACK_CREDITS} runs · no subscription`,
+    body: `${PACK_CREDITS} runs, use them whenever. No monthly bill. Failed runs don't count.`,
     tone: 'pink',
   },
   {
@@ -153,7 +155,8 @@ export const FAQS: FaqItem[] = [
   },
   {
     q: 'How much does it cost?',
-    a: "A 10-run pass is ₩9,900 — no subscription, top up when you run out. Each run makes a full set of takes plus try-on shots, and failed runs don't count.",
+    // "A/An ${n}-run" 관사 함정을 피해 수사를 뒤로 뺀 문형
+    a: `One pass is ₩${PRICE_REGULAR_KRW.toLocaleString('ko-KR')} for ${PACK_CREDITS} runs — no subscription, top up when you run out. Each run makes a full set of takes plus try-on shots, and failed runs don't count.`,
   },
   {
     q: 'How many runs per day?',

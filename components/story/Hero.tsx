@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAccess } from '@/lib/useAccess';
 import { useIssue } from '@/lib/useIssue';
+import { PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
 import { GALLERY } from '@/components/landing/content';
 import { HERO_INSPO } from './heroInspo';
 
@@ -62,7 +63,7 @@ export default function Hero() {
           <span className="xp-pill">
             {access.paid
               ? `${access.remaining ?? 0} runs left`
-              : '10 runs · no subscription'}
+              : `${PACK_CREDITS} runs · no subscription`}
           </span>
         </div>
         {/* 디스플레이 레이어는 영어, 설득 문장은 한국어 — 이중 레이어 카피 체계 */}
@@ -79,7 +80,7 @@ export default function Hero() {
         <a className="xp-cta" href="#tool">
           {access.paid
             ? 'Create my set'
-            : 'Start — 10 runs ₩9,900'}
+            : `Start — ${PACK_CREDITS} runs ₩${PRICE_REGULAR_KRW.toLocaleString('ko-KR')}`}
         </a>
         <span className="xp-hero-scrollhint" aria-hidden>
           Scroll to create ↓
