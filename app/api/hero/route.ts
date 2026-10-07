@@ -19,7 +19,8 @@ import type { ImagePayload, NailLength, NailShape } from '@/lib/types';
 export const maxDuration = 60; // 생성 1장 + 여유
 
 /** 세션 1회당 착용샷 상한 — 횟수권 1회의 원가 상한을 정한다 */
-const HERO_LIMIT_PER_SESSION = 5;
+// 5→3 (2026-10-07): 착용샷이 high 품질(장당 약 $0.15)이 되면서 원가 상한 통제
+const HERO_LIMIT_PER_SESSION = 3;
 
 type HeroErrorCode =
   | 'INVALID_INPUT'
@@ -86,7 +87,8 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   let outcome;
   try {
-    outcome = await generateImage(refs, prompt);
+    // 착용샷은 고객이 저장·공유하는 최종물 — 시안(medium)과 달리 high로 생성 (하이브리드 품질)
+    outcome = await generateImage(refs, prompt, { quality: 'high' });
   } catch {
     await held.release();
     return errorResponse('GENERATION_FAILED', 502);

@@ -5,5 +5,9 @@
  * 결제창(/api/checkout)이 이 값으로 직접 과금하므로 표시가와 과금액이 갈라지지 않는다.
  */
 export const PRICE_REGULAR_KRW = 9900;
-/** 결제 1건에 지급하는 생성 횟수. 1회 = analyze 1번 + 시안·착용샷 세션 한도 */
-export const PACK_CREDITS = 10;
+/**
+ * 결제 1건에 지급하는 생성 횟수. 1회 = analyze 1번 + 시안·착용샷 세션 한도.
+ * 10→8 (2026-10-07): 착용샷 high 품질(하이브리드) 도입에 따른 원가 보전 —
+ * 헤비 사용(시안 6장 + 착용샷 3장)까지 흑자가 유지되는 최대 횟수.
+ */
+export const PACK_CREDITS = 8;

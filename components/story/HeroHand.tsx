@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useIssue } from '@/lib/useIssue';
 import { useAccess } from '@/lib/useAccess';
+import { PACK_CREDITS } from '@/lib/pricing';
 import { HERO_INSPO } from './heroInspo';
 import { beadLayoutAt, frameAt, MORPH, MORPH_TOTAL, NAIL_Y } from './heroMorph';
 
@@ -177,7 +178,7 @@ export default function HeroHand() {
           <span className="xp-pill t-green">
             {access.paid
               ? `${access.remaining ?? 0}회 남음`
-              : '10회 이용권 · 구독 아님'}
+              : `${PACK_CREDITS}회 이용권 · 구독 아님`}
           </span>
         </div>
         <h1 className="xp-display xp-hero-title">
