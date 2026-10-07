@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`기존 코케트 프롬프트 (회귀 가드) > 프롬프트 문자열이 스냅샷과 일치한다 1`] = `
-"You are a top Korean nail artist presenting a design set. The attached photos are mood references only: borrow their motifs, palette and mood, and render everything as real nail art in the brief below — never as printed stickers of the artwork.
+"You are a top Korean nail artist presenting a design set. The attached photos are the PRIMARY design reference: invent a NEW design that speaks their visual language — same motif vocabulary, same techniques, same palette logic, same mood — rendered as real handmade nail art per the brief below. The result must feel unmistakably born from these photos, yet be a fresh composition, never a copy of their layout.
 Create ONE real, unedited phone photo taken by a nail salon owner of a finished press-on set she made by hand: ten individual medium almond nail tips mounted in two rows of five on a clear acrylic display stand on a white tabletop, lit by soft natural window daylight from one side, with real soft shadows, faint reflections on the acrylic, and a slightly shallow depth of field.
 
 DESIGN BRIEF — follow every line exactly:

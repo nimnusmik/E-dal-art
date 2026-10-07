@@ -276,7 +276,7 @@ export function buildBriefPrompt(brief: NailBrief): string {
     ? `- Exactly one tip carries a single short cursive black script word "${brief.letteringWord}" — written once, on one tip only.`
     : '';
   const textureLine = brief.textureLine ? `- ${brief.textureLine}` : '';
-  return `You are a top Korean nail artist presenting a design set. The attached photos are mood references only: borrow their motifs, palette and mood, and render everything as real nail art in the brief below — never as printed stickers of the artwork.
+  return `You are a top Korean nail artist presenting a design set. The attached photos are the PRIMARY design reference: invent a NEW design that speaks their visual language — same motif vocabulary, same techniques, same palette logic, same mood — rendered as real handmade nail art per the brief below. The result must feel unmistakably born from these photos, yet be a fresh composition, never a copy of their layout.
 ${brief.sceneLine ?? `Create ONE real, unedited phone photo taken by a nail salon owner of a finished press-on set she made by hand: ten individual ${brief.length} ${brief.shape} nail tips mounted in two rows of five on a clear acrylic display stand on a white tabletop, lit by soft natural window daylight from one side, with real soft shadows, faint reflections on the acrylic, and a slightly shallow depth of field.`}
 
 DESIGN BRIEF — follow every line exactly:
@@ -301,7 +301,7 @@ ${PARTS_PHYSICS}
 }
 
 const BRIEF_INSTRUCTION = `You are a veteran Korean nail artist AND a prompt engineer for an image generation model.
-Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. The photos are mood references — often graphics, illustrations or collages, not nails. Take ONLY their motifs, palette and mood, and describe each motif as a nail design element (a drawn flower becomes a nail flower motif, a graphic symbol becomes a small motif or line work). Never plan to copy the artwork as a printed sticker or decal — the execution style is decided later. You are writing generation instructions, not describing the photo.
+Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. Your #1 job is to extract THIS photo's design vocabulary so completely that the finished set is unmistakably born from it — but as a new design, not a copy. Capture the specific motifs, techniques, textures, color relationships, and compositional ideas that make this photo distinctive: which flowers, how sculpted, what kind of droplets, which metallic finishes, how colors meet. Never dilute it into a vague mood ("floral, pink-green" is a failure) — the brief must be so specific that no other photo would produce the same one. If the photo shows nail art, distill each nail's design into reusable elements. If it shows graphics, illustrations or collages, translate their visual ideas into nail-art vocabulary. You are extracting ingredients for new designs, not a blueprint to copy. The execution style is decided later. You are writing generation instructions, not describing the photo.
 
 ## Vocabulary for parts (use ONLY these nouns)
 - painted elements: dots, thin stripes, gingham check, lace-trim line, swirl doodles, script lettering, hand-painted flowers/fruits, animal print (zebra/croc)
@@ -433,7 +433,7 @@ export function fallbackPlans(brief: NailBrief): VariantPlan[] {
     styleId,
     patternLines: [
       ...brief.patternLines,
-      "Render every motif with this style's own techniques, never as a printed copy of the reference artwork.",
+      "Render every motif with this style's own techniques, staying faithful to the reference artwork's motifs, techniques and palette.",
     ],
     partsLine: STYLES[styleId].partsLine,
     letteringWord: i === 0 ? brief.letteringWord : null,
@@ -513,7 +513,7 @@ function variantInstruction(brief: NailBrief): string {
   const styles = STYLE_IDS.map(
     (id, i) => `- v${i + 1} = ${STYLES[id].styleBlock.replace(/\n/g, ' ')} PARTS: ${STYLES[id].partsLine}`,
   ).join('\n');
-  return `You are a veteran Korean nail artist planning THREE nail sets from one mood brief. All three share the brief's motifs, palette and mood, but each is executed in a DIFFERENT nail style, so a salon owner sees three genuinely different sets.
+  return `You are a veteran Korean nail artist planning THREE nail sets from one design brief. All three must speak the SAME design language as the reference photo — same motif vocabulary, same palette logic, same mood — so anyone can tell the three sets were born from one inspiration. But each is a NEW composition in a DIFFERENT nail style: three creative interpretations, neither three copies nor three unrelated sets.
 
 MOOD BRIEF:
 - Palette: ${brief.paletteLine}
