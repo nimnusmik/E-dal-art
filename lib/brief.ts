@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
+import { analyzeGenerate } from './geminiText';
 import { STYLE_IDS, STYLES } from '@/config/styles';
 import type { StyleId } from '@/config/styles';
 import type { ImagePayload, NailLength, NailShape, PartsIntensity, VariantPlan } from './types';
@@ -64,10 +65,7 @@ export async function analyzeToBrief(images: ImagePayload[]): Promise<NailBrief 
 async function analyzeOnce(images: ImagePayload[]): Promise<NailBrief | null> {
   if (isMock()) return mockBrief();
   try {
-    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
-    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model,
+    const response = await analyzeGenerate({
       contents: [
         ...images.map((img) => ({ inlineData: { data: img.data, mimeType: img.mimeType } })),
         { text: BRIEF_INSTRUCTION },
@@ -450,10 +448,7 @@ export async function planVariants(brief: NailBrief): Promise<VariantPlan[]> {
     return fallbackPlans(brief);
   }
   try {
-    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
-    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model,
+    const response = await analyzeGenerate({
       contents: [{ text: variantInstruction(brief) }],
       config: { responseMimeType: 'application/json', responseSchema: PLANS_SCHEMA },
     });

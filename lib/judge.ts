@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
+import { analyzeGenerate } from './geminiText';
 import type { ImagePayload } from './types';
 import type { NailBrief } from './brief';
 import { buildBriefPrompt } from './brief';
@@ -131,10 +132,7 @@ export async function judgeImage(image: ImagePayload, brief: NailBrief): Promise
 async function judgeOnce(image: ImagePayload, brief: NailBrief): Promise<NailJudgement | null> {
   if (isMock()) return mockJudgement();
   try {
-    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
-    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model,
+    const response = await analyzeGenerate({
       contents: [
         { inlineData: { data: image.data, mimeType: image.mimeType } },
         { text: judgeInstruction(brief) },
@@ -468,10 +466,7 @@ async function judgeOnceForCore(
 ): Promise<CoreJudgement | null> {
   if (isMock()) return mockCoreJudgement();
   try {
-    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
-    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model,
+    const response = await analyzeGenerate({
       contents: [
         // 순서가 지시문의 "첫 N장 = 원본, 마지막 1장 = 생성 이미지" 서술과 일치해야 한다.
         ...sourcePhotos.map((img) => ({ inlineData: { data: img.data, mimeType: img.mimeType } })),
