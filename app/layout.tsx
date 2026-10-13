@@ -54,9 +54,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
-        {/* 히어로 오브젝트(폰 스크린 시안 + 네일 손)의 LCP 후보 2장 */}
+        {/* 히어로 LCP 후보 — 모바일 증거 줄·폰 완성본·데스크톱 패널 첫 장이 모두 이 사진 */}
         <link rel="preload" as="image" href="/gallery/pastel-french.jpg" fetchPriority="high" />
-        <link rel="preload" as="image" href="/hero/hand-after.webp" fetchPriority="high" />
       </head>
       <body>{children}</body>
     </html>

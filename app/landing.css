@@ -1,6 +1,6 @@
 /* ─── 랜딩 전용 스타일 (모노크롬+블루 스킨, 2026-09-20 개편) ──── */
 /* 섹션 순서: TopBar → Hero → Stats → Gallery → Services → Tool
-   → Testimonials → FAQ → FooterCta */
+   → FAQ → FooterCta */
 
 /* 구 초원 섹션 공용 — 히어로·푸터 CTA는 다크(#020109), 갤러리·씬은 흰 지면.
    클래스명은 마크업 호환을 위해 유지한다. */
@@ -384,6 +384,20 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .hero-phone[data-state='1'] .phone-drop-hint,
 .hero-phone[data-state='2'] .phone-drop-hint { opacity: 0; }
 .hero-phone[data-state='2'] .phone-drop-check { opacity: 1; transform: none; }
+/* 상태 2: 영감 더미가 빠지고 완성본이 드롭존을 채운다 */
+.phone-drop-result {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 22px;
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.hero-phone[data-state='2'] .phone-drop-stack img { opacity: 0; }
+.hero-phone[data-state='2'] .phone-drop-result { opacity: 1; transform: none; }
 
 /* 상태 문구 — 같은 자리에서 크로스페이드 */
 .phone-status {
@@ -507,18 +521,30 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 }
 .hero-panel-plus:hover { background: var(--brand-hover); transform: scale(1.06); }
 
-/* 좁은 폭: 가로 스크롤 스냅 — 레퍼런스의 "Scroll to Explore" 대응 */
+/* 첫 화면 증거 줄 — 데스크톱은 패널 행이 그 역할을 하므로 숨긴다 */
+.hero-proof { display: none; }
+
+/* 좁은 폭: 패널은 폰 뒤에 반쯤 잘려 보였다 — 히어로 증거 줄로 옮기고 스테이지는 폰만 */
 @media (max-width: 900px) {
-  .hero-panels {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+  .hero-panels { display: none; }
+  .hero-proof {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 420px;
+    margin-top: 8px;
+    list-style: none;
   }
-  .hero-panel {
-    flex: 0 0 min(72vw, 300px);
-    scroll-snap-align: center;
+  .hero-proof img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
   }
+  .hero-scroll-wrap { margin-top: 0; height: 200dvh; }
 }
 
 /* ─── 통계 카드 ──────────────────────────────────────────────── */
@@ -570,9 +596,9 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 
 .xp-stat-grid {
   display: grid;
-  /* 카드가 4장이므로 2열(2×2)로 고정한다 — minmax 하한을 낮추면 넓은 화면에서
-     3열이 되어 마지막 한 장이 홀로 남는다. min()으로 모바일 1열도 함께 처리. */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  /* 카드 3장 — 넓으면 한 줄 3열, 좁으면 1열. 2열이 되면 한 장이 홀로 남으므로
+     하한 220px은 w-narrow 안에 3장이 들어가는 값이다. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: clamp(16px, 2.4vw, 26px);
   max-width: var(--w-narrow);
   margin: 0 auto;
@@ -587,24 +613,6 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   overflow: hidden;
 }
 
-/* 모서리 파스텔 블롭 — 카드 4장을 색으로 구분하는 단일 역할.
-   곡률은 8개 매직넘버 대신 단순 원형으로 정리했다(카드 4장이 전부 같은 형태·
-   같은 위치였으므로 "유기적 무작위성"은 애초에 성립하지 않았다). */
-.xp-card[class*="blob-"]::after {
-  content: '';
-  position: absolute;
-  right: -26px;
-  top: -26px;
-  width: 92px;
-  height: 92px;
-  border-radius: var(--r-round);
-  opacity: 0.95;
-}
-.blob-pink::after   { background: var(--pastel-pink); }
-.blob-blue::after   { background: var(--pastel-blue); }
-.blob-yellow::after { background: var(--pastel-yellow); }
-.blob-green::after  { background: var(--pastel-green); }
-.blob-purple::after { background: var(--pastel-purple); }
 
 /* 숫자는 h3 안에 들어간다(Stats.tsx) — 스크린리더에서 값과 제목이 끊기지 않게 */
 .xp-stat-value {
@@ -804,6 +812,11 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 @media (prefers-reduced-motion: reduce) {
   .js-reveal-ready .xp-service-row { opacity: 1; transform: none; transition: none; }
 }
+@media (max-width: 900px) {
+  .svc-scroll-wrap { height: auto; }
+  .svc-sticky { position: static; min-height: 0; padding-block: var(--space-section); }
+  .js-reveal-ready .xp-service-row { opacity: 1; transform: none; }
+}
 
 .xp-service-list {
   display: flex;
@@ -919,69 +932,6 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   .xp-tool-card .slot-loading { aspect-ratio: 1; }
 }
 
-/* ─── 사용 장면 카드 ─────────────────────────────────────────── */
-.xp-scenes { padding: var(--space-section) clamp(20px, 5vw, 64px); }
-
-.xp-scene-stack {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: clamp(16px, 2.4vw, 26px);
-  max-width: var(--w-mid);
-  margin: 0 auto;
-}
-
-/* 흰 카드 지면을 준다 — 이 섹션이 초원 사진 위로 올라가면서 배경 없는 잉크 텍스트는
-   읽을 수 없게 된다. 폴라로이드와 같은 "인쇄물" 문법이라 갤러리와도 이어진다. */
-.xp-scene {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: clamp(18px, 2.2vw, 24px);
-  border-radius: var(--r-card);
-  background: var(--paper-card);
-  box-shadow: var(--shadow-lift);
-}
-
-.xp-scene-head { display: flex; align-items: center; gap: 10px; }
-
-.xp-scene-avatar {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-round);
-  background: var(--pastel-blue);
-  font-family: var(--font-display);
-  font-size: var(--fs-200);
-  color: var(--ink);
-}
-
-.xp-scene-head strong { display: block; font-size: var(--fs-200); color: var(--ink); }
-.xp-scene-head em { font-style: normal; font-size: var(--fs-150); color: var(--text-3); }
-
-/* 따옴표는 CSS로 그린다 — JSX에 리터럴로 두면 별개 텍스트 노드가 되어
-   스크린리더가 "왼쪽 큰따옴표"를 읽는다 */
-.xp-scene blockquote {
-  font-family: var(--font-display);
-  font-size: clamp(18px, 2vw, 20px);
-  line-height: 1.45;
-  letter-spacing: -0.005em;
-  color: var(--ink);
-  word-break: keep-all;
-}
-/* content의 대체 텍스트를 빈 문자열로 지정해 장식 따옴표가 낭독되지 않게 한다 */
-.xp-scene blockquote::before { content: '“' / ''; }
-.xp-scene blockquote::after { content: '”' / ''; }
-
-.xp-scene > p {
-  /* .xp-card p의 margin-top이 flex gap과 더해져 이 문단만 벌어진다 */
-  margin-top: 0;
-  font-size: var(--fs-300);
-  line-height: var(--lh-body);
-  color: var(--text-2);
-  word-break: keep-all;
-}
-
 /* ─── FAQ ────────────────────────────────────────────────────── */
 /* 질문 6개가 파스텔 알약 + 그림자로 흩뿌려져 "누르라"고 손짓했지만
    답변은 데이터 모델에 아예 없었다. 답이 6개뿐이고 전부 짧으므로
@@ -1090,12 +1040,6 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .xp-footer-meta { display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap; justify-content: center; }
 
 /* CTA 아래 횟수권 실체 한 줄 — 다크 그라데이션 위라 흰색 계열 */
-.xp-footer-note {
-  margin-top: 16px;
-  font-size: var(--fs-200);
-  color: rgba(255, 255, 255, 0.72);
-  word-break: keep-all;
-}
 
 /* ─── 랜딩 루트 ──────────────────────────────────────────────── */
 .xp-landing { position: relative; overflow-x: clip; }

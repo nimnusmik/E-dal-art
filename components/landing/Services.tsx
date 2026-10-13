@@ -51,7 +51,7 @@ export default function Services() {
   const step = useScrollStep(wrapRef, SERVICES.length);
 
   return (
-    <section className="xp-paper xp-services" aria-label="이용 흐름">
+    <section className="xp-paper xp-services" aria-label="How it works">
       <div className="svc-scroll-wrap" ref={wrapRef}>
         <div className="svc-sticky">
           <div className="xp-head">

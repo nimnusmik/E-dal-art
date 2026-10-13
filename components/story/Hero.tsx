@@ -66,7 +66,7 @@ export default function Hero() {
               : `${PACK_CREDITS} runs · no subscription`}
           </span>
         </div>
-        {/* 디스플레이 레이어는 영어, 설득 문장은 한국어 — 이중 레이어 카피 체계 */}
+        {/* 랜딩은 전부 영어 (2026-10-12 사용자 결정) */}
         <h1 className="xp-display xp-hero-title">
           One photo becomes
           <br />
@@ -80,8 +80,17 @@ export default function Hero() {
         <a className="xp-cta" href="#tool">
           {access.paid
             ? 'Create my set'
-            : `Start — ${PACK_CREDITS} runs ₩${PRICE_REGULAR_KRW.toLocaleString('ko-KR')}`}
+            : `Start for ₩${PRICE_REGULAR_KRW.toLocaleString('ko-KR')}`}
         </a>
+        {/* 모바일 첫 화면 증거 줄 — 패널 행은 스크롤 아래라 광고 QR로 들어온 사람이
+            3초 안에 완성본을 못 봤다. 900px 이하에서만 보이고, 그때 스테이지 패널은 숨긴다 */}
+        <ul className="hero-proof" aria-hidden>
+          {GALLERY.map((g) => (
+            <li key={g.src}>
+              <img src={g.src} alt="" width={96} height={96} loading="eager" decoding="async" />
+            </li>
+          ))}
+        </ul>
         <span className="xp-hero-scrollhint" aria-hidden>
           Scroll to create ↓
         </span>
@@ -135,6 +144,16 @@ export default function Hero() {
                     />
                   ))}
                 </div>
+                {/* 이야기의 결말 = 완성본. 영감 사진이 그대로 남으면 "Your set is ready"가 거짓말이 된다 */}
+                <img
+                  className="phone-drop-result"
+                  src={GALLERY[0].src}
+                  alt=""
+                  width={220}
+                  height={220}
+                  loading="eager"
+                  decoding="async"
+                />
                 <span className="phone-drop-hint">Drop your inspo photos</span>
                 <span className="phone-drop-check">✓</span>
               </div>
