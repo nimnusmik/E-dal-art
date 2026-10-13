@@ -120,6 +120,67 @@ export const LOOKS: Look[] = [
     meta: 'Micro dots · gingham check · silver beads',
     issue: 'AUG 2026',
   },
+  // ── 2026-08 · 코케트 파일럿 10세트 ─────────────────────────
+  {
+    src: '/looks/coquette-01.jpg',
+    title: 'Angel Script',
+    meta: 'Lilac dot french · script lettering · anchor',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-02.jpg',
+    title: 'Sailor Rose',
+    meta: 'Yellow & teal stripes · 3D rose · silver beads',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-03.jpg',
+    title: 'Gingham Dot',
+    meta: 'Blue gingham · micro dots · bead belt',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-04.jpg',
+    title: 'Plum Swirl French',
+    meta: 'Plum ombré french · pearl drop · anchor line work',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-05.jpg',
+    title: 'Lace Parade',
+    meta: 'White lace trim · cocoa french · candy dots',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-06.jpg',
+    title: 'Lemon Angel',
+    meta: 'Lemon dots · script lettering · star stud',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-07.jpg',
+    title: 'Black Tip Rose',
+    meta: 'Black-tipped french · pinstripes · 3D roses',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-08.jpg',
+    title: 'Lilac Gingham',
+    meta: 'Lilac gingham ovals · ink outline · bead studs',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-09.jpg',
+    title: 'Cocoa Waves',
+    meta: 'Cocoa french · wave lines · anchor & pearl',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/coquette-10.jpg',
+    title: 'Sailor Coquette',
+    meta: 'Pink dots · lace trim · blue tips · anchor',
+    issue: 'AUG 2026',
+  },
   // ── 2026-07 · 첫 세대 — 올리브·골드 톤과 착용샷 ───────────
   {
     src: '/looks/olive-stiletto-tryon.jpg',
