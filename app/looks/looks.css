@@ -63,6 +63,7 @@
 .lk-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  grid-auto-flow: dense; /* featured 2×2 옆 빈 칸을 뒤 항목이 메운다 */
   gap: clamp(10px, 1.6vw, 18px);
   padding: 0 clamp(16px, 4vw, 56px) clamp(56px, 9vh, 110px);
   max-width: 1480px;
@@ -122,6 +123,57 @@
   letter-spacing: 0.14em;
   color: var(--sky);
 }
+
+/* 월별 챕터 헤더 — "매달 발행"의 서사를 레이아웃이 말한다 */
+.lk-chapter,
+.lk-sketchbook {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 56px);
+}
+.lk-chapter-head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: clamp(36px, 6vh, 64px) 0 18px;
+}
+.lk-chapter-issue {
+  font-size: var(--fs-150);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sky);
+  white-space: nowrap;
+}
+.lk-chapter-rule {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.lk-chapter .lk-grid,
+.lk-sketchbook .lk-grid {
+  padding: 0 0 clamp(16px, 3vh, 32px);
+}
+
+/* Sketchbook — 작은 타일, 캡션도 축소. 간판과 과정의 체급 차이 */
+.lk-sketchbook { padding-bottom: clamp(32px, 6vh, 64px); }
+.lk-sketch-note {
+  margin-bottom: 18px;
+  font-size: var(--fs-200);
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 520px;
+}
+.lk-grid-sketch {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
+  gap: clamp(8px, 1vw, 12px);
+}
+.lk-grid-sketch .lk-card-caption {
+  padding: 26px 10px 8px;
+  gap: 0;
+}
+.lk-grid-sketch .lk-card-caption strong { font-size: var(--fs-150); }
+.lk-grid-sketch .lk-card-caption span,
+.lk-grid-sketch .lk-card-caption em { display: none; }
 
 /* 끝 CTA — 아카이브를 다 본 사람의 다음 행동 */
 .lk-cta {

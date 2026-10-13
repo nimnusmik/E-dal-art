@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LOOKS } from './looks-data';
+import type { Look } from './looks-data';
 import LooksGrid from './LooksGrid';
 import './looks.css';
 
@@ -15,6 +16,16 @@ export const metadata: Metadata = {
 };
 
 export default function LooksPage() {
+  // 메인 월 = 큐레이션(팁 10개·무드 중복 없음), 나머지는 Sketchbook — 둘 다 단일 소스에서 갈라진다
+  const mains = LOOKS.filter((l) => !l.sketch);
+  const sketches = LOOKS.filter((l) => l.sketch);
+  // 월별 챕터 — 같은 달은 데이터상 떨어져 있어도 한 챕터로 모은다 (첫 등장 순 = 최신 먼저)
+  const byIssue = new Map<string, Look[]>();
+  for (const look of mains) {
+    if (!byIssue.has(look.issue)) byIssue.set(look.issue, []);
+    byIssue.get(look.issue)!.push(look);
+  }
+  const chapters = [...byIssue].map(([issue, looks]) => ({ issue, looks }));
   return (
     <div className="lk-page">
       <a className="skip-link" href="#lk-grid">
@@ -37,10 +48,11 @@ export default function LooksPage() {
             born from a photo
           </h1>
           <p className="lk-sub">
-            {LOOKS.length} sets generated from inspiration photos — curated, quality-checked, nothing staged.
+            {mains.length} sets on the wall, {sketches.length} experiments behind them — all generated from
+            inspiration photos. The wall is curated; the sketchbook is everything else, unfiltered.
           </p>
         </section>
-        <LooksGrid looks={LOOKS} />
+        <LooksGrid chapters={chapters} sketches={sketches} />
         <section className="lk-cta" aria-label="Make your own set">
           <h2 className="xp-display lk-cta-title">Your photo is next</h2>
           <a className="xp-cta lk-cta-btn" href="/#tool">

@@ -4,12 +4,42 @@ import { useEffect, useRef, useState } from 'react';
 import type { Look } from './looks-data';
 
 /**
- * 아카이브 그리드 + 확대 보기.
- * featured 항목은 2×2로 크게 — 균일 격자는 "목록"이고, 크기 위계가 있어야
- * "큐레이션"으로 읽힌다 (시안 자체의 주인공 위계와 같은 원칙).
- * 확대는 랜딩 갤러리와 같은 네이티브 <dialog> — 포커스 트랩·Esc가 공짜다.
+ * 메인 월(월별 챕터) + Sketchbook(실험 기록) + 공용 확대 보기.
+ * 메인은 featured 2×2 위계, 스케치북은 작은 등폭 타일 — 간판과 과정의 체급을
+ * 레이아웃으로 구분한다. 확대는 네이티브 <dialog> 하나를 둘이 공유한다.
  */
-export default function LooksGrid({ looks }: { looks: Look[] }) {
+function Card({ look, onZoom, eager }: { look: Look; onZoom: (l: Look) => void; eager?: boolean }) {
+  return (
+    <button
+      type="button"
+      className="lk-card"
+      aria-label={`View larger — ${look.title}`}
+      onClick={() => onZoom(look)}
+    >
+      <img
+        src={look.src}
+        alt={`${look.title} — ${look.meta}`}
+        width={600}
+        height={600}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+      />
+      <span className="lk-card-caption">
+        <strong>{look.title}</strong>
+        <span>{look.meta}</span>
+        <em>{look.issue}</em>
+      </span>
+    </button>
+  );
+}
+
+export default function LooksGrid({
+  chapters,
+  sketches,
+}: {
+  chapters: { issue: string; looks: Look[] }[];
+  sketches: Look[];
+}) {
   const [zoomed, setZoomed] = useState<Look | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -22,32 +52,43 @@ export default function LooksGrid({ looks }: { looks: Look[] }) {
 
   return (
     <>
-      <ul className="lk-grid" id="lk-grid" role="list">
-        {looks.map((look, i) => (
-          <li className={`lk-cell${look.featured ? ' is-featured' : ''}`} key={look.src}>
-            <button
-              type="button"
-              className="lk-card"
-              aria-label={`View larger — ${look.title}`}
-              onClick={() => setZoomed(look)}
-            >
-              <img
-                src={look.src}
-                alt={`${look.title} — ${look.meta}`}
-                width={600}
-                height={600}
-                loading={i < 4 ? 'eager' : 'lazy'}
-                decoding="async"
-              />
-              <span className="lk-card-caption">
-                <strong>{look.title}</strong>
-                <span>{look.meta}</span>
-                <em>{look.issue}</em>
-              </span>
-            </button>
-          </li>
+      <div id="lk-grid">
+        {chapters.map((ch, ci) => (
+          <section className="lk-chapter" key={ch.issue} aria-label={ch.issue}>
+            <h2 className="lk-chapter-head">
+              <span className="lk-chapter-issue">{ch.issue}</span>
+              <span className="lk-chapter-rule" aria-hidden />
+            </h2>
+            <ul className="lk-grid" role="list">
+              {ch.looks.map((look) => (
+                <li className={`lk-cell${look.featured ? ' is-featured' : ''}`} key={look.src}>
+                  <Card look={look} onZoom={setZoomed} eager={ci === 0} />
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-      </ul>
+
+        {sketches.length > 0 && (
+          <section className="lk-sketchbook" aria-label="Sketchbook">
+            <h2 className="lk-chapter-head">
+              <span className="lk-chapter-issue">Sketchbook</span>
+              <span className="lk-chapter-rule" aria-hidden />
+            </h2>
+            {/* 간판이 아니라 과정이다 — 과장 없이 실험 기록으로 표기한다 */}
+            <p className="lk-sketch-note">
+              Experiments, drafts and practice boards behind the wall — unfiltered, imperfections included.
+            </p>
+            <ul className="lk-grid lk-grid-sketch" role="list">
+              {sketches.map((look) => (
+                <li className="lk-cell" key={look.src}>
+                  <Card look={look} onZoom={setZoomed} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
 
       <dialog
         ref={dialogRef}
