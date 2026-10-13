@@ -120,6 +120,55 @@ export const LOOKS: Look[] = [
     meta: 'Micro dots · gingham check · silver beads',
     issue: 'AUG 2026',
   },
+  // ── 2026-09 · 코어 후보 실험 (데코덴·누앙스·텍스처) + run2 ──
+  {
+    src: '/looks/bunny-pastel.jpg',
+    title: 'Bunny Pastel',
+    meta: 'Rabbit relief · lace line · rainbow sheen',
+    issue: 'SEP 2026',
+  },
+  {
+    src: '/looks/heart-chrome.jpg',
+    title: 'Heart Chrome',
+    meta: 'Silver heart frame · pearl drops · pink wash',
+    issue: 'SEP 2026',
+  },
+  {
+    src: '/looks/berry-heart.jpg',
+    title: 'Berry Heart',
+    meta: 'Burgundy ombré · jelly hearts · bead trail',
+    issue: 'SEP 2026',
+  },
+  {
+    src: '/looks/orchid-decoden.jpg',
+    title: 'Orchid Decoden',
+    meta: 'Sculpted orchid & rose · chrome · burgundy',
+    issue: 'SEP 2026',
+  },
+  {
+    src: '/looks/baroque-pearl.jpg',
+    title: 'Baroque Pearl',
+    meta: 'Relief scrolls · pearl rows · gothic letter',
+    issue: 'SEP 2026',
+  },
+  {
+    src: '/looks/agate-zebra.jpg',
+    title: 'Agate Zebra',
+    meta: 'Agate marble · teal & plum · zebra accent',
+    issue: 'SEP 2026',
+  },
+  {
+    src: '/looks/knit-and-leopard.jpg',
+    title: 'Knit & Leopard',
+    meta: 'Gummy knit relief · leopard · chrome letter',
+    issue: 'SEP 2026',
+  },
+  {
+    src: '/looks/cable-knit-french.jpg',
+    title: 'Cable Knit French',
+    meta: 'Cable knit · zebra swirl · pink french',
+    issue: 'SEP 2026',
+  },
   // ── 2026-08 · 코케트 파일럿 10세트 ─────────────────────────
   {
     src: '/looks/coquette-01.jpg',
@@ -181,6 +230,103 @@ export const LOOKS: Look[] = [
     meta: 'Pink dots · lace trim · blue tips · anchor',
     issue: 'AUG 2026',
   },
+  // ── 2026-08 · 코케트 v2·레터링·검수 파일럿 ─────────────────
+  {
+    src: '/looks/confetti-dots.jpg',
+    title: 'Confetti Dots',
+    meta: 'Dotted french · 20-tip board · bead accents',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/stripe-angel.jpg',
+    title: 'Stripe Angel',
+    meta: 'Pin stripes · script lettering · star studs',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/check-and-chain.jpg',
+    title: 'Check & Chain',
+    meta: 'Gingham & grid tips · bead belt line',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/mini-french-grid.jpg',
+    title: 'Mini French Grid',
+    meta: 'Micro french · teal & lemon · 20-tip board',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/plaid-mix.jpg',
+    title: 'Plaid Mix',
+    meta: 'Plaid · pinline french · ink accents',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/gingham-rose.jpg',
+    title: 'Gingham Rose',
+    meta: 'Lilac gingham · 3D rose · sheer stiletto',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/berry-swirl.jpg',
+    title: 'Berry Swirl',
+    meta: 'Swirl doodles · berry french · 20-tip board',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/cherry-lace.jpg',
+    title: 'Cherry Lace',
+    meta: 'Lace trim · cherry & blue french · dots',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/sugar-board.jpg',
+    title: 'Sugar Board',
+    meta: 'Milk french 20 tips · script word · pastel pops',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/honey-french.jpg',
+    title: 'Honey French',
+    meta: 'Ivory french · script word · pastel pinlines',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/cherie-plaid.jpg',
+    title: 'Cherie Plaid',
+    meta: 'Pink plaid · black tips · dotted outline',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/plum-ribbon.jpg',
+    title: 'Plum Ribbon',
+    meta: 'Plum swirl relief 16 tips · tonal french',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/bonbon-dots.jpg',
+    title: 'Bonbon Dots',
+    meta: 'Choco dots · lace french · script word',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/angel-plaid-pastel.jpg',
+    title: 'Angel Plaid Pastel',
+    meta: 'Teal & lemon french · plaid · 3D rose',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/gold-dust-nude.jpg',
+    title: 'Gold Dust Nude',
+    meta: 'Sheer nude · gold dust · moon & star studs',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/tangerine-picnic.jpg',
+    title: 'Tangerine Picnic',
+    meta: 'Tangerine orange · gingham · daisy accents',
+    issue: 'AUG 2026',
+  },
   // ── 2026-07 · 첫 세대 — 올리브·골드 톤과 착용샷 ───────────
   {
     src: '/looks/olive-stiletto-tryon.jpg',
@@ -205,6 +351,30 @@ export const LOOKS: Look[] = [
     src: '/looks/sea-glass-gold.jpg',
     title: 'Sea Glass Gold',
     meta: 'Teal washes · gold bead clusters · water drops',
+    issue: 'JUL 2026',
+  },
+  {
+    src: '/looks/mint-chrome-tryon.jpg',
+    title: 'Mint Chrome',
+    meta: 'Try-on shot · mint & silver · gold beads',
+    issue: 'JUL 2026',
+  },
+  {
+    src: '/looks/silver-petal-tryon.jpg',
+    title: 'Silver Petal',
+    meta: 'Try-on shot · glitter silver · sage ombré',
+    issue: 'JUL 2026',
+  },
+  {
+    src: '/looks/donut-garden.jpg',
+    title: 'Donut Garden',
+    meta: 'Sculpted donut & bow · olive gradient',
+    issue: 'JUL 2026',
+  },
+  {
+    src: '/looks/rose-quartz-set.jpg',
+    title: 'Rose Quartz Set',
+    meta: 'Milky pink · sculpted petal · silver accent',
     issue: 'JUL 2026',
   },
   // ── 랜딩 "Looks of the month"와 공유되는 4점 ───────────────
