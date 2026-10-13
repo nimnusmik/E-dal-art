@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "db:setup": "tsx scripts/db-setup.mts",
     "db:verify": "tsx scripts/db-verify.mts",
-    "db:smoke": "tsx scripts/db-smoke.mts"
+    "db:smoke": "tsx scripts/db-smoke.mts",
+    "exhibit": "./scripts/collect-exhibition.sh"
   },
   "dependencies": {
     "@google/genai": "^1.0.0",
