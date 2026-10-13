@@ -152,17 +152,17 @@ export default function Home() {
 
   const phaseTitle =
     phase === 'analyzing'
-      ? '사진 분석 중'
+      ? 'Analyzing photos'
       : phase === 'generating'
-        ? '시안 생성 중'
+        ? 'Creating your set'
         : phase === 'result'
-          ? '시안 결과'
-          : '오늘 생성 한도 도달';
+          ? 'Your set'
+          : 'Daily limit reached';
 
   // 탭을 여러 개 열어둔 사용자가 어느 탭이 생성 중인지 구분할 수 있게 (2.4.2)
   useEffect(() => {
     document.title =
-      phase === 'start' ? '이달아 — 이달의 네일 아트' : `${phaseTitle} · 이달아`;
+      phase === 'start' ? 'idala — nail sets of the month' : `${phaseTitle} · idala`;
   }, [phase, phaseTitle]);
 
   /** 각 화면 최상단에 두는 시각적 숨김 제목 — 포커스 착지점 겸 헤딩 구조의 뿌리 */
@@ -229,9 +229,9 @@ export default function Home() {
         .map((s) => s.value);
       // 에러를 각각 setError로 덮어쓰면 앞 메시지가 소실된다 — 하나로 합친다
       const notes: string[] = [];
-      if (files.length > freeSlots) notes.push(`사진은 최대 ${MAX_PHOTOS}장까지 올릴 수 있어요`);
+      if (files.length > freeSlots) notes.push(`You can add up to ${MAX_PHOTOS} photos`);
       if (resized.length < incoming.length) {
-        notes.push('불러올 수 없는 사진이 있어요. JPG·PNG로 다시 시도해주세요');
+        notes.push('Some photos couldn\'t be loaded. Try a JPG or PNG');
       }
       if (notes.length) showInline(notes.join(' · '));
       if (resized.length > 0) {
@@ -280,7 +280,7 @@ export default function Home() {
           setSlots((prev) =>
             prev.map((s) => (s.status === 'pending' ? { ...s, status: 'stopped' } : s)),
           );
-          showToast('이번 회차의 시안 한도에 도달했어요. 먼저 완성된 시안은 그대로 볼 수 있어요');
+          showToast('This run hit its limit. Finished takes are still here');
           return;
         }
         // REJECTED/502 등 개별 실패 — 이 슬롯만 재시도 버튼으로 (전체를 죽이지 않는다)
@@ -291,7 +291,7 @@ export default function Home() {
         // 세션이 살아 있는데 AbortError면 사용자 취소가 아니라 타임아웃이다
         // (사용자 취소는 sessionRef를 올린다)
         if ((err as Error)?.name === 'AbortError') {
-          showToast('시간이 초과됐어요. 다시 시도해도 횟수는 차감되지 않아요');
+          showToast('That took too long. Retrying won\'t use a run');
         }
       }
     },
@@ -371,8 +371,8 @@ export default function Home() {
         anchorToolRef.current = true;
         showInline(
           json.error === 'LOGIN_REQUIRED'
-            ? '로그인이 필요해요. 먼저 로그인해주세요.'
-            : '남은 횟수가 없어요. 아래에서 횟수권을 살 수 있어요.',
+            ? 'Please sign in first.'
+            : 'You\'re out of runs. You can get a pass below.',
         );
         return;
       }
@@ -381,8 +381,8 @@ export default function Home() {
       setPhase('start');
       showInline(
         json.error === 'INVALID_INPUT'
-          ? '이 사진으로는 만들기 어려워요. 색과 무드가 잘 보이는 다른 사진으로 시도해주세요'
-          : '사진 분석에 실패했어요. 올린 사진은 그대로 있으니 다시 시도해주세요',
+          ? 'This photo is hard to work with. Try one with clearer color and mood'
+          : 'Photo analysis failed. Your photos are still here — please try again',
       );
     } catch (err) {
       if (sessionRef.current !== session) return;
@@ -390,11 +390,11 @@ export default function Home() {
         if (ac.signal.aborted) return; // 사용자가 취소한 경우는 에러가 아니다
         // 타임아웃 — 서버 쿼터는 선점됐을 수 있으나 실패 시 환불된다
         setPhase('start');
-        showInline('응답이 너무 오래 걸려요. 다시 시도해주세요. 실패한 시도는 횟수가 차감되지 않아요');
+        showInline('That took too long. Please try again — failed runs don\'t count');
         return;
       }
       setPhase('start');
-      showInline('사진 분석에 실패했어요. 올린 사진은 그대로 있으니 다시 시도해주세요');
+      showInline('Photo analysis failed. Your photos are still here — please try again');
     }
   }, [photos, shape, length, partsIntensity, fetchVariant, showInline]);
 
@@ -470,8 +470,8 @@ export default function Home() {
         });
         setHeroError(
           json.error === 'RATE_LIMIT_HERO'
-            ? '이번 회차의 착용샷 한도(5장)에 도달했어요.'
-            : '착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.',
+            ? 'This run hit its try-on limit (5).'
+            : 'Try-on failed. Feel free to retry.',
         );
       } catch (err) {
         if (sessionRef.current !== session) return;
@@ -482,8 +482,8 @@ export default function Home() {
         });
         setHeroError(
           (err as Error)?.name === 'AbortError'
-            ? '착용샷 생성에 시간이 너무 오래 걸려요. 다시 시도해도 괜찮아요.'
-            : '착용샷 생성에 실패했어요. 다시 시도해도 괜찮아요.',
+            ? 'The try-on took too long. Feel free to retry.'
+            : 'Try-on failed. Feel free to retry.',
         );
       } finally {
         heroInflight.current.delete(planId);
@@ -497,7 +497,7 @@ export default function Home() {
     error?.kind === 'inline' ? (
       <div className="error-inline" role="alert">
         <p>{error.text}</p>
-        <button className="error-inline-x" aria-label="알림 닫기" onClick={() => setError(null)}>
+        <button className="error-inline-x" aria-label="Dismiss" onClick={() => setError(null)}>
           ✕
         </button>
       </div>
@@ -589,7 +589,7 @@ export default function Home() {
               {/* 잔여를 숨기면 "아껴 쓰려다 아예 안 누르는" 역효과가 난다.
                   보이면 희소성이 행동을 밀어준다 — 알 수 있을 때는 항상 보여준다. */}
               {paid && (
-                <p className="remaining">{`${remaining ?? 0}회 남음`}</p>
+                <p className="remaining">{`${remaining ?? 0} runs left`}</p>
               )}
               <AccountBar email={accountEmail} />
               {/* 보관함은 로그인한 사람에게만 — 비로그인에게는 빈 영역이 될 뿐이다 */}
@@ -677,12 +677,12 @@ export default function Home() {
 
   const blocked = phase === 'blocked-user'
     ? {
-        title: '오늘의 발행이 마감됐어요',
-        body: '남용을 막기 위해 하루 3회까지 만들 수 있어요. 남은 횟수는 그대로 있고, 한국 시간 자정에 다시 열려요.',
+        title: 'You\'re done for today',
+        body: 'To prevent abuse, you can create up to 3 times a day. Your remaining runs are safe — it reopens at midnight KST.',
       }
     : {
-        title: '이번 호가 매진됐어요',
-        body: '오늘 준비된 생성이 모두 끝났어요. 한국 시간 자정에 다시 열려요.',
+        title: 'This issue is sold out',
+        body: 'Today\'s creations are all used up. It reopens at midnight KST.',
       };
 
   return (
@@ -695,7 +695,7 @@ export default function Home() {
           <h2 className="headline">{blocked.title}</h2>
           <p className="sub">{blocked.body}</p>
           {notifyDone ? (
-            <p className="assurance">알림 신청이 접수됐어요. 다음 호가 열리면 알려드릴게요.</p>
+            <p className="assurance">You&apos;re on the list. We&apos;ll email you when it reopens.</p>
           ) : (
             <form
               className="notify-form"
@@ -711,7 +711,7 @@ export default function Home() {
               }}
             >
               <label className="assurance" htmlFor="notify-email">
-                다시 열리면 알려드릴까요?
+                Want a heads-up when it reopens?
               </label>
               <div className="notify-row">
                 <input
@@ -720,22 +720,22 @@ export default function Home() {
                   type="email"
                   autoComplete="email"
                   required
-                  placeholder="이메일 주소"
+                  placeholder="Email address"
                   value={notifyEmail}
                   onChange={(e) => setNotifyEmail(e.target.value)}
                 />
                 <button className="btn-fill" type="submit">
-                  신청
+                  Notify me
                 </button>
               </div>
             </form>
           )}
           <div className="blocked-actions">
             <button className="btn-outline" onClick={backToStart}>
-              처음으로
+              Back to start
             </button>
             <a className="btn-outline" href="/#top" onClick={backToStart}>
-              시안 예시 보기
+              See example sets
             </a>
           </div>
         </div>

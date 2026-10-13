@@ -71,7 +71,7 @@ export default function Paywall({ email }: { email: string | null }) {
     if (starting) return;
     const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
     if (!token) {
-      setCheckoutError('지금은 결제를 시작할 수 없어요. 잠시 후 다시 시도해주세요.');
+      setCheckoutError('Checkout is unavailable right now. Please try again in a moment.');
       return;
     }
     setStarting(true);
@@ -93,11 +93,11 @@ export default function Paywall({ email }: { email: string | null }) {
       }
       setCheckoutError(
         json?.error === 'PAYMENT_UNAVAILABLE'
-          ? '지금은 결제를 시작할 수 없어요. 잠시 후 다시 시도해주세요.'
-          : '결제 시작에 실패했어요. 다시 시도해주세요.',
+          ? 'Checkout is unavailable right now. Please try again in a moment.'
+          : 'Couldn\'t open checkout. Please try again.',
       );
     } catch {
-      setCheckoutError('결제 시작에 실패했어요. 다시 시도해주세요.');
+      setCheckoutError('Couldn\'t open checkout. Please try again.');
     } finally {
       setStarting(false);
     }
@@ -106,27 +106,25 @@ export default function Paywall({ email }: { email: string | null }) {
   if (!email) {
     return (
       <div className="invite-gate">
-        <p className="invite-label">이용권으로 열리는 이달의 네일</p>
+        <p className="invite-label">Unlock this month&apos;s nails</p>
         <p className="assurance">
-          {PACK_CREDITS}회 이용권 {price}
+          {PACK_CREDITS} runs · {price} · no subscription
         </p>
+        {/* 로그인 버튼은 여기 하나뿐 — 아래 AccountBar는 비로그인일 때 동의 고지만 낸다 */}
         <div className="notify-row">
           <button className="btn-fill" type="button" onClick={() => void signIn('google')}>
-            Google로 로그인하고 시작하기
+            Continue with Google
           </button>
         </div>
-        <p className="assurance">
-          로그인은 누가 결제했는지 확인하기 위해서만 써요. 이름·사진은 받지 않아요.
-        </p>
       </div>
     );
   }
 
   return (
     <div className="invite-gate">
-      <p className="invite-label">이달의 네일 이용권</p>
-      <p className="assurance">{PACK_CREDITS}회 이용권 {price} · 구독 아님, 쓴 만큼만</p>
-      <p className="assurance">1회 = 시안 세트 1번 · 실패한 회차는 차감 안 돼요 · 탈퇴하면 기록과 함께 지워져요</p>
+      <p className="invite-label">This month&apos;s nail pass</p>
+      <p className="assurance">{PACK_CREDITS} runs · {price} · no subscription</p>
+      <p className="assurance">1 run = 1 full set · failed runs don&apos;t count · deleted with your account</p>
       {checkoutError && (
         <div className="error-inline" role="alert">
           <p>{checkoutError}</p>
@@ -134,17 +132,17 @@ export default function Paywall({ email }: { email: string | null }) {
       )}
       <div className="notify-row">
         <button className="btn-fill" type="button" onClick={startCheckout} disabled={starting}>
-          {starting ? '결제창 여는 중…' : `${price}에 시작하기`}
+          {starting ? 'Opening checkout…' : `Start for ${price}`}
         </button>
       </div>
       <p className="assurance">
-        결제는 Paddle이 처리해요 · 카카오페이·국내 카드 가능 ·{' '}
+        Secure checkout by Paddle · KakaoPay &amp; Korean cards ·{' '}
         <a className="legal-link" href="/refund" target="_blank" rel="noopener noreferrer">
-          환불 정책
+          Refunds
         </a>
         {' · '}
         <a className="legal-link" href="/terms" target="_blank" rel="noopener noreferrer">
-          이용약관
+          Terms
         </a>
       </p>
     </div>

@@ -1383,8 +1383,6 @@ label.slot:focus-within .slot-add {
   background: var(--success);
 }
 
-.account-pitch { display: flex; flex-direction: column; gap: var(--sp-2); }
-.account-cta { width: 100%; max-width: 280px; }
 .account-consent { color: var(--text-3); }
 
 /* ─── 보관함 ─────────────────────────────────────────────────── */

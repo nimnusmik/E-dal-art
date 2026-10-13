@@ -1,6 +1,6 @@
 'use client';
 
-import { signIn, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 
 /**
  * 툴 카드 안의 로그인 줄.
@@ -25,14 +25,7 @@ export default function AccountBar({ email }: { email: string | null }) {
 
   return (
     <div className="account-bar is-out">
-      <div className="account-pitch">
-        <button className="btn-outline account-cta" onClick={() => void signIn('google')}>
-          Sign in with Google
-        </button>
-        <p className="assurance">
-          Sign in to start — your remaining runs follow you across devices.
-        </p>
-      </div>
+      {/* 로그인 버튼은 Paywall 하나뿐 — 같은 카드에 구글 버튼이 두 개 있었다 */}
       {/* 동의 고지 — 이메일을 받기 시작하는 순간 필요한 최소 절차 */}
       <p className="assurance account-consent">
         Signing in means you agree to the{' '}

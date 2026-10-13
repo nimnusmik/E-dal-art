@@ -11,7 +11,7 @@ import { PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
 export default function FooterCta() {
   const access = useAccess();
   const price = `₩${PRICE_REGULAR_KRW.toLocaleString('ko-KR')}`;
-  const cta = access.paid ? 'Create my set' : `${price}으로 시작하기`;
+  const cta = access.paid ? 'Create my set' : `Start for ${price}`;
   return (
     <section className="xp-meadow xp-footer-cta" aria-label="Go create a set">
       <div className="xp-footer-inner">
@@ -26,11 +26,6 @@ export default function FooterCta() {
         <a className="xp-cta" href="#tool">
           {cta}
         </a>
-        {!access.paid && (
-          <p className="xp-footer-note">
-            {PACK_CREDITS}회 이용권 {price} · 구독 아님
-          </p>
-        )}
       </div>
     </section>
   );

@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
  */
 export default function ToolSection({ children }: { children: ReactNode }) {
   return (
-    <section className="xp-paper xp-tool" id="tool" aria-label="시안 만들기">
+    <section className="xp-paper xp-tool" id="tool" aria-label="Create a set">
       <div className="xp-tool-card">{children}</div>
     </section>
   );
