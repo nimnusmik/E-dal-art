@@ -39,6 +39,9 @@ export interface NailBrief {
   partsLine: string;
   /** 필기체 레터링 단어 (4~6자, 세트 무드 연동). 없으면 null */
   letteringWord: string | null;
+  /** 주인공 모티프 — 영감 사진에서 가장 강한 그림 요소 하나 (그릴 수 있는 서술, 없으면 빈 문자열).
+   *  참고 구조(2026-10-12 사용자): 호랑이 레퍼런스처럼 포인트 그림은 1~2팁에만 크게, 나머지는 조연. */
+  heroLine: string;
   /** 무드 한 줄 (영문, 생성 프롬프트용) */
   moodLine: string;
   /** 한국어 무드 키워드 2~3개 (상품 텍스트용) */
@@ -150,6 +153,8 @@ export function parseBrief(text: string): NailBrief | null {
     patternLines,
     textureLine: clampLine(b.textureLine as string),
     partsLine: clampLine(b.partsLine as string),
+    // 구버전 브리프(필드 없음) 호환 — 없으면 주인공 없는 세트로 처리
+    heroLine: isStr(b.heroLine) ? clampLine(b.heroLine) : '',
     letteringWord: lettering.length > 0 ? lettering : null,
     moodLine: clampLine(b.moodLine as string),
     keywords: clampList(b.keywords),
@@ -245,8 +250,9 @@ export function applyPlan(brief: NailBrief, plan: VariantPlan): NailBrief {
  * 세트 품질 기준 — 스타일과 무관하게 모든 세트에 적용 (사용자 제시 최소 기준 사진, 2026-09-22).
  * 팁마다 굵은 아이디어 하나 + 세트 통일감. 자잘한 장식을 흩뿌린 팁은 "AI 같다"고 읽혔다.
  */
-export const SET_QUALITY = `- SET QUALITY: each tip carries ONE bold, clearly readable idea that owns its composition (a large sculpted or metal centerpiece, a spiral or lattice of raised chrome line work, a framed cameo motif, bold retro stripes) — confident and graphic, never a scatter of tiny bits. All ten ideas differ.
-- SET COHESION: the same two or three base colors and one metal tone repeat across all ten tips, so ten different designs read as one curated set.
+export const SET_QUALITY = `- SET HIERARCHY: the ten tips form a cast, not a uniform pattern — one or two HERO tips carry the set's single most striking motif, painted or sculpted LARGE so it owns the whole tip; most tips play supporting roles with smaller companion elements; and two or three REST tips stay nearly quiet (plain base color, a subtle sheen or one tiny accent at most), giving the eye room so the hero tips hit harder. Density varies boldly across the set — never ten equally busy tips.
+- SET QUALITY: every designed tip carries ONE bold, clearly readable idea that owns its composition — confident and graphic, never a scatter of tiny bits. All ten tips differ.
+- SET COHESION: the same two or three base colors and one metal tone repeat across all ten tips, so the varied designs read as one curated set.
 - Raised line work is smooth, even and slightly proud of the surface, like piped chrome gel.`;
 
 /**
@@ -282,6 +288,7 @@ DESIGN BRIEF — follow every line exactly:
 - ${brief.structureLine}
 - Palette: ${brief.paletteLine}
 ${LENGTH_RULES[brief.length]}
+${brief.heroLine ? `- HERO MOTIF: ${brief.heroLine} — rendered LARGE on exactly one or two hero tips, filling most of each hero tip like a tiny canvas. This motif appears nowhere else in the set, and the hero tips carry nothing else on their base.` : ''}
 ${brief.patternLines.map((l) => `- ${l}`).join('\n')}
 ${textureLine}
 ${brief.styleBlock ?? ''}
@@ -299,7 +306,7 @@ ${PARTS_PHYSICS}
 }
 
 const BRIEF_INSTRUCTION = `You are a veteran Korean nail artist AND a prompt engineer for an image generation model.
-Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. Your #1 job is to extract THIS photo's design vocabulary so completely that the finished set is unmistakably born from it — but as a new design, not a copy. Capture the specific motifs, techniques, textures, color relationships, and compositional ideas that make this photo distinctive: which flowers, how sculpted, what kind of droplets, which metallic finishes, how colors meet. Never dilute it into a vague mood ("floral, pink-green" is a failure) — the brief must be so specific that no other photo would produce the same one. If the photo shows nail art, distill each nail's design into reusable elements. If it shows graphics, illustrations or collages, translate their visual ideas into nail-art vocabulary. You are extracting ingredients for new designs, not a blueprint to copy. The execution style is decided later. You are writing generation instructions, not describing the photo.
+Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. Your #1 job is to extract THIS photo's design vocabulary so completely that the finished set is unmistakably born from it — but as a new design, not a copy. Capture the specific motifs, techniques, textures, color relationships, and compositional ideas that make this photo distinctive: which flowers, how sculpted, what kind of droplets, which metallic finishes, how colors meet. Never dilute it into a vague mood ("floral, pink-green" is a failure) — the brief must be so specific that no other photo would produce the same one. ALWAYS pick ONE hero motif: the single most striking pictorial element across the photos (an animal, a figure, a flower, a named object — the thing a person would describe first), written in heroLine as a drawable description with its technique and colors (e.g. "a roaring tiger hand-painted in warm orange and black ink-brush strokes"). The hero motif belongs on one or two tips only; everything else in the brief plays a supporting role. If the photos are pure texture or palette with no pictorial element, heroLine is an empty string. If the photo shows nail art, distill each nail's design into reusable elements. If it shows graphics, illustrations or collages, translate their visual ideas into nail-art vocabulary. You are extracting ingredients for new designs, not a blueprint to copy. The execution style is decided later. You are writing generation instructions, not describing the photo.
 
 ## Vocabulary for parts (use ONLY these nouns)
 - painted elements: dots, thin stripes, gingham check, lace-trim line, swirl doodles, script lettering, hand-painted flowers/fruits, animal print (zebra/croc)
@@ -339,6 +346,7 @@ const BRIEF_SCHEMA = {
     patternLines: { type: Type.ARRAY, items: { type: Type.STRING } },
     textureLine: { type: Type.STRING },
     partsLine: { type: Type.STRING },
+    heroLine: { type: Type.STRING },
     letteringWord: { type: Type.STRING },
     moodLine: { type: Type.STRING },
     keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
@@ -348,7 +356,7 @@ const BRIEF_SCHEMA = {
   },
   required: [
     'shape', 'length', 'baseLine', 'structureLine', 'paletteLine', 'patternLines',
-    'textureLine', 'partsLine', 'letteringWord', 'moodLine', 'keywords', 'colors',
+    'textureLine', 'partsLine', 'heroLine', 'letteringWord', 'moodLine', 'keywords', 'colors',
     'difficulty', 'feasibilityNotes',
   ],
 };
@@ -365,6 +373,7 @@ async function mockBrief(): Promise<NailBrief> {
     patternLines: ['Small polka dots inside the tip area, varied in scale and density per tip.'],
     textureLine: '',
     partsLine: 'Exactly one tip carries a single small pearl on its french boundary line. Every other tip is painted gel only — no metal, no gems, no pearls.',
+    heroLine: 'a small hand-painted strawberry with a glossy highlight',
     letteringWord: 'Sugar',
     moodLine: 'kawaii coquette Y2K — sweet, airy, wearable.',
     keywords: ['코케트', '파스텔'],
@@ -512,6 +521,7 @@ function variantInstruction(brief: NailBrief): string {
 
 MOOD BRIEF:
 - Palette: ${brief.paletteLine}
+${brief.heroLine ? `- HERO MOTIF: ${brief.heroLine}` : ''}
 - Motifs and placement: ${brief.patternLines.join(' | ')}
 - Mood: ${brief.moodLine}
 
@@ -522,7 +532,7 @@ ${styles}
 - id: "v1" to "v3"
 - title: short Korean name
 - note: one short Korean sentence
-- patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Every tip gets its OWN distinct design — a different motif, layout or technique from all nine others, like a real handmade set where no two nails match. Each tip line names ONE bold idea that fills the tip (a large centerpiece, a spiral or lattice of raised line work, a framed cameo, bold stripes) rather than several small scattered bits, and the ten lines reuse the same two or three base colors so the set stays cohesive. Distribute this style's parts budget across the ten lines exactly as the style's PARTS line states, and give the plain tips a painted pattern or finish of their own so no tip is blank.
+- patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Build a HIERARCHY, not ten equal tips: exactly one or two HERO tip lines render the hero motif from the brief LARGE, filling most of that tip, with nothing else on its base (if the brief has no hero motif, promote its strongest pictorial element). Two or three REST tip lines stay nearly quiet — plain base color in the set palette with a subtle finish or one tiny accent. Every remaining tip line is a SUPPORTING design: one clear companion idea (a smaller motif, line work, a pattern) that echoes the hero's story without repeating it. No two tips match, the ten lines reuse the same two or three base colors, and density varies boldly across the set. Distribute this style's parts budget across the ten lines exactly as the style's PARTS line states, keeping hero tips free of metal parts.
 - partsLine: empty string (the style decides parts)
 - letteringWord: usually empty string; at most one plan may carry a common 4-6 letter script word
 - paletteLine: empty string

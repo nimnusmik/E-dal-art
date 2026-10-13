@@ -49,6 +49,7 @@ const VALID_BRIEF: NailBrief = {
   textureLine: '',
   partsLine:
     'Exactly one tip carries a single small pearl on its french boundary line. Every other tip is painted gel only — no metal, no gems, no pearls.',
+  heroLine: '',
   letteringWord: null,
   moodLine: 'coquette',
   keywords: ['코케트'],

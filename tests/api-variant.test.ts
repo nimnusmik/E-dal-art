@@ -48,6 +48,7 @@ const VALID_BRIEF: NailBrief = {
   patternLines: ['polka dots'],
   textureLine: '',
   partsLine: 'Every tip is painted gel only — no metal, no gems, no pearls, no 3D parts.',
+  heroLine: '',
   letteringWord: null,
   moodLine: 'coquette',
   keywords: ['코케트'],

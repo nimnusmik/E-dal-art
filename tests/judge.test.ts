@@ -13,6 +13,7 @@ const BRIEF: NailBrief = {
   textureLine: '',
   partsLine:
     'Exactly one tip carries a single small pearl on its french boundary line. Every other tip is painted gel only — no metal, no gems, no pearls.',
+  heroLine: '',
   letteringWord: 'Sugar',
   moodLine: 'coquette',
   keywords: ['코케트'],
@@ -131,7 +132,7 @@ describe('verdictDetail — 검수 근거 노출', () => {
     baseLine: 'sheer milky nude', structureLine: 'deep french',
     paletteLine: 'baby pink', patternLines: ['dots'], textureLine: '',
     partsLine: 'Every tip is painted gel only — no metal, no gems, no pearls, no 3D parts.',
-    letteringWord: null, moodLine: 'coquette', keywords: ['코케트'],
+    heroLine: '', letteringWord: null, moodLine: 'coquette', keywords: ['코케트'],
     colors: ['#f5c8d7'], difficulty: 'medium', feasibilityNotes: '',
   } satisfies NailBrief;
 

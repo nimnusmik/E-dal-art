@@ -5,6 +5,7 @@
  *   npx tsx scripts/pilot-3variants.mts          # 실호출 (분석 1 + 플랜 1 + 생성 3~6)
  *   npx tsx scripts/pilot-3variants.mts --mock
  *   npx tsx scripts/pilot-3variants.mts --run=run2   # 결과를 하위 폴더에 (이전 결과 보존)
+ *   npx tsx scripts/pilot-3variants.mts --shape=almond --length=medium   # 앱 기본 옵션
  *
  * 산출물: ref/results/pilot-3variants/v1~v3.jpg + manifest.json
  */
@@ -17,10 +18,8 @@ const BASE_DIR = resolve(ROOT, 'ref/results/pilot-3variants');
 const run = process.argv.find((a) => a.startsWith('--run='))?.split('=')[1];
 const OUT_DIR = run ? resolve(BASE_DIR, run) : BASE_DIR;
 
-for (const line of readFileSync(resolve(ROOT, '.env.local'), 'utf8').split('\n')) {
-  const m = line.match(/^([A-Z_]+)=(.*)$/);
-  if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^"(.*)"$/, '$1');
-}
+// 내장 로더 — 직접 파싱하면 값 뒤 인라인 주석(# ...)까지 값으로 읽혔다
+process.loadEnvFile(resolve(ROOT, '.env.local'));
 const mock = process.argv.includes('--mock');
 if (mock) {
   process.env.GEMINI_MOCK = '1';
@@ -50,7 +49,13 @@ for (let attempt = 1; attempt <= 3 && !raw; attempt++) {
 }
 if (!raw) throw new Error('분석 실패');
 // 참고 스타일(3D 젤리)은 긴 스틸레토에서 산다 — 앱에서는 손님 옵션이 이 자리를 채운다
-const brief = applyOptions(raw, { shape: 'stiletto', length: 'long', partsIntensity: 'auto' });
+// --shape= --length= 로 앱 기본값(almond·medium) 같은 손님 옵션을 재현할 수 있다
+const arg = (k: string) => process.argv.find((a) => a.startsWith(`--${k}=`))?.split('=')[1];
+const brief = applyOptions(raw, {
+  shape: (arg('shape') ?? 'stiletto') as never,
+  length: (arg('length') ?? 'long') as never,
+  partsIntensity: 'auto',
+});
 const plans = await planVariants(brief);
 console.log('플랜:', plans.map((p) => `${p.id} ${p.title} — ${p.note ?? ''}`).join('\n      '));
 
