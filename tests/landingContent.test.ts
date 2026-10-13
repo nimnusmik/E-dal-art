@@ -1,13 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { STATS, SERVICES, GALLERY, SCENES, FAQS } from '@/components/landing/content';
-
-const TONES = ['pink', 'blue', 'yellow', 'green', 'purple'];
+import { STATS, SERVICES, GALLERY, FAQS } from '@/components/landing/content';
 
 describe('랜딩 콘텐츠', () => {
-  it('통계 카드는 4장이다', () => {
-    expect(STATS).toHaveLength(4);
+  it('통계 카드는 3장이다 (가격은 가격 섹션 한 곳에서만)', () => {
+    expect(STATS).toHaveLength(3);
   });
 
   it('통계 카드의 값과 문구는 비어 있지 않다', () => {
@@ -57,14 +55,6 @@ describe('랜딩 콘텐츠', () => {
     }
   });
 
-  it('사용 장면 카드는 3장이다', () => {
-    expect(SCENES).toHaveLength(3);
-    for (const s of SCENES) {
-      expect(s.quote.trim().length).toBeGreaterThan(0);
-      expect(s.body.trim().length).toBeGreaterThan(0);
-    }
-  });
-
   it('FAQ는 모두 물음표로 끝나고 답변이 비어 있지 않다', () => {
     expect(FAQS.length).toBeGreaterThanOrEqual(6);
     for (const f of FAQS) {
@@ -85,14 +75,9 @@ describe('랜딩 콘텐츠', () => {
     const joined = [
       ...STATS.map((s) => `${s.label} ${s.body}`),
       ...SERVICES.map((s) => `${s.label} ${s.body}`),
-      ...SCENES.map((s) => `${s.quote} ${s.body}`),
       ...FAQS.map((f) => f.q),
     ].join('\n');
     // 영어 카피에서도 같은 규칙 — 착용샷 손은 사용자 손이 아니다
     expect(joined).not.toMatch(/내 손|your own hand(?!s? photo is in the works)/);
-  });
-
-  it('통계 카드 톤은 파스텔 5색 중 하나다', () => {
-    for (const s of STATS) expect(TONES).toContain(s.tone);
   });
 });

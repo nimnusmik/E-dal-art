@@ -10,8 +10,6 @@
  */
 import { PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
 
-export type Tone = 'pink' | 'blue' | 'yellow' | 'green' | 'purple';
-
 export interface StatCard {
   /** 카드 상단 큰 숫자 */
   value: string;
@@ -19,8 +17,6 @@ export interface StatCard {
   label: string;
   /** 설명 두 줄 */
   body: string;
-  /** 모서리 블롭 색 */
-  tone: Tone;
 }
 
 export const STATS: StatCard[] = [
@@ -28,27 +24,16 @@ export const STATS: StatCard[] = [
     value: '5',
     label: 'sets per run',
     body: 'One photo set becomes five takes — different colors, structures, and parts.',
-    tone: 'green',
-  },
-  {
-    // 이전 값은 'Free / no sign-up, no card'였다. 유료 모델이므로 정직하게 바꾼다.
-    // 순서: 가장 강한 메시지(가격)를 2번째에 — 모바일 1열에서 4번째로 밀리지 않게.
-    value: `₩${PRICE_REGULAR_KRW.toLocaleString('ko-KR')}`,
-    label: `${PACK_CREDITS} runs · no subscription`,
-    body: `${PACK_CREDITS} runs, use them whenever. No monthly bill. Failed runs don't count.`,
-    tone: 'pink',
   },
   {
     value: '1',
     label: 'photo to start',
     body: "A screenshot, an outfit, today's sky — start with one, add up to three.",
-    tone: 'yellow',
   },
   {
     value: 'Monthly',
     label: 'a fresh issue',
     body: "Refreshed with this month's mood. Never mixed with last month's sets.",
-    tone: 'purple',
   },
 ];
 
@@ -111,35 +96,6 @@ export const GALLERY: GalleryCut[] = [
   { src: '/gallery/sugar-dot.jpg', title: 'Sugar Dot', meta: 'Burgundy french · lettering', tilt: 3 },
   { src: '/gallery/blue-brown.jpg', title: 'Blue Brown', meta: 'Zebra · marble swirl', tilt: -2 },
   { src: '/gallery/lilac-swirl.jpg', title: 'Lilac Swirl', meta: 'Tone-on-tone relief · lettering', tilt: 5 },
-];
-
-export interface SceneCard {
-  persona: string;
-  role: string;
-  quote: string;
-  body: string;
-}
-
-/** 실제 후기가 아니라 "이렇게 쓰이면 좋겠다"는 예상 장면 — 화면에도 그렇게 표기한다 */
-export const SCENES: SceneCard[] = [
-  {
-    persona: 'Salon owner',
-    role: 'Imagined scene',
-    quote: "This month's art set, sorted in a day",
-    body: 'Upload the inspiration you saved on Pinterest and get a numbered set — ready to post on Instagram.',
-  },
-  {
-    persona: 'Self-nailer',
-    role: 'Imagined scene',
-    quote: 'Preview it on a hand first',
-    body: 'Check your favorite as a try-on shot. Swap lengths and shapes, then run it again.',
-  },
-  {
-    persona: 'Nail lover',
-    role: 'Imagined scene',
-    quote: 'A photo to bring to the salon',
-    body: 'Show the mood you could never explain in words — with the material combo included.',
-  },
 ];
 
 export interface FaqItem {

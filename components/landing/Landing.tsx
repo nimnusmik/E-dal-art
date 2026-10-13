@@ -6,7 +6,6 @@ import Stats from './Stats';
 import Gallery from './Gallery';
 import Services from './Services';
 import ToolSection from './ToolSection';
-import Testimonials from './Testimonials';
 import Faq from './Faq';
 import PriceSection from './PriceSection';
 import FooterCta from './FooterCta';
@@ -48,7 +47,6 @@ export default function Landing({ toolSlot }: { toolSlot: ReactNode }) {
         <PriceSection />
         <Stats />
         <Services />
-        <Testimonials />
         <Faq />
         <FooterCta />
       </main>

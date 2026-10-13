@@ -4,11 +4,11 @@ import type { CSSProperties } from 'react';
 import { STATS } from './content';
 import { useReveal } from './useReveal';
 
-/** 인트로 카피 + 제품 사실 카드 4장. 카드 모서리에 파스텔 블롭이 얹힌다. */
+/** 인트로 카피 + 제품 사실 카드 3장. 가격은 가격 섹션 한 곳에서만 말한다. */
 export default function Stats() {
   const ref = useReveal<HTMLDivElement>();
   return (
-    <section className="xp-paper xp-stats" aria-label="이달아가 만드는 것">
+    <section className="xp-paper xp-stats" aria-label="What idala makes">
       <div className="xp-head">
         <span className="xp-pill t-blue" aria-hidden>About</span>
         {/* 이전 헤드라인("기억에 남는 시안을 만들어요")은 어떤 제품이든 할 수 있는
@@ -24,7 +24,7 @@ export default function Stats() {
       <div className="xp-stat-grid" ref={ref}>
         {STATS.map((s, i) => (
           <article
-            className={`xp-card xp-reveal blob-${s.tone}`}
+            className={`xp-card xp-reveal`}
             style={{ '--d': `${i * 90}ms` } as CSSProperties}
             key={s.label}
           >
