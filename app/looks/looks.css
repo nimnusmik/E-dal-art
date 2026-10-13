@@ -1,0 +1,148 @@
+/* ─── /looks 아카이브 — 다크 에디토리얼 지면 ─────────────────────
+   랜딩 푸터 CTA(#020109)와 같은 다크 레이어의 확장. 토큰은 globals.css 공용. */
+
+.lk-page {
+  min-height: 100dvh;
+  background: var(--brand);
+  color: #fff;
+}
+
+/* 상단 미니 바 — 랜딩 다크 필의 정적 버전 (스크롤 트릭 없음, 아카이브는 읽는 지면) */
+.lk-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px clamp(20px, 5vw, 64px);
+  background: color-mix(in srgb, var(--brand) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.lk-back {
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+}
+.lk-back span { color: var(--sky); margin-left: 2px; }
+.lk-top-cta {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: none;
+  font-weight: 700;
+}
+
+/* 헤더 — 초대형 라이트 디스플레이, 랜딩 히어로와 같은 스케일 문법 */
+.lk-hero {
+  padding: clamp(64px, 12vh, 140px) clamp(20px, 5vw, 64px) clamp(40px, 7vh, 72px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.lk-overline {
+  font-size: var(--fs-150);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--sky);
+}
+.lk-title {
+  color: #fff;
+  font-size: clamp(40px, 7vw, 92px);
+}
+.lk-sub {
+  max-width: 520px;
+  font-size: var(--fs-300);
+  color: rgba(255, 255, 255, 0.64);
+}
+
+/* 그리드 — featured는 2×2. 크기 위계가 큐레이션의 문법이다 */
+.lk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: clamp(10px, 1.6vw, 18px);
+  padding: 0 clamp(16px, 4vw, 56px) clamp(56px, 9vh, 110px);
+  max-width: 1480px;
+  margin: 0 auto;
+  list-style: none;
+}
+.lk-cell.is-featured { grid-column: span 2; grid-row: span 2; }
+@media (max-width: 620px) {
+  /* 1열이 되면 span 2가 격자를 깨뜨린다 — 전부 등폭 */
+  .lk-cell.is-featured { grid-column: auto; grid-row: auto; }
+}
+
+.lk-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-media);
+  overflow: hidden;
+  background: #0d0d16;
+  font: inherit;
+  text-align: left;
+  cursor: zoom-in;
+}
+.lk-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 1;
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.3s ease;
+}
+.lk-cell.is-featured .lk-card img { aspect-ratio: auto; }
+.lk-card:hover img { transform: scale(1.03); }
+.lk-card:focus-visible {
+  outline: 3px solid var(--sky);
+  outline-offset: 3px;
+}
+
+/* 캡션 — 이미지 하단 그라데이션 위. 호버 의존 금지(터치·접근성) — 항상 보인다 */
+.lk-card-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 44px 16px 14px;
+  background: linear-gradient(to top, rgba(2, 1, 9, 0.78), transparent);
+}
+.lk-card-caption strong { font-size: var(--fs-300); color: #fff; }
+.lk-card-caption span { font-size: var(--fs-150); color: rgba(255, 255, 255, 0.72); }
+.lk-card-caption em {
+  font-style: normal;
+  font-size: var(--fs-150);
+  letter-spacing: 0.14em;
+  color: var(--sky);
+}
+
+/* 끝 CTA — 아카이브를 다 본 사람의 다음 행동 */
+.lk-cta {
+  padding: clamp(56px, 10vh, 120px) 24px clamp(72px, 12vh, 140px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+}
+.lk-cta-title { color: #fff; font-size: clamp(32px, 5.4vw, 64px); }
+.lk-cta-btn { background: #fff; color: var(--ink); }
+.lk-cta-btn:hover { background: #e8e8e8; }
+
+.lk-footer {
+  padding: 22px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.lk-footer a { color: rgba(255, 255, 255, 0.6); font-size: var(--fs-200); }
+.lk-footer a:hover { color: #fff; }
+
+/* 라이트박스 캡션은 흰 패널(랜딩 공용) — 다크 지면에서도 그대로 쓴다 */
+.lk-lightbox { max-width: min(94vw, 760px); }

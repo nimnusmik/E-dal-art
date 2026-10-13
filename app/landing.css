@@ -743,6 +743,8 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   cursor: zoom-in;
 }
 
+.xp-gallery-more { margin-top: clamp(22px, 4vh, 40px); text-align: center; }
+
 /* ─── 시안 확대 보기 (네이티브 dialog) ───────────────────────── */
 .xp-lightbox {
   margin: auto;

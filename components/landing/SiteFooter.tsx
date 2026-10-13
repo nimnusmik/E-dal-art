@@ -14,6 +14,7 @@ export default function SiteFooter() {
         <span>idala — AI nail sets, monthly</span>
         <span className="xp-footer-meta">
           <span suppressHydrationWarning>{issue.monthLabel}</span>
+          <a href="/looks">Archive</a>
           <a href="#faq">FAQ</a>
           {/* 처리방침은 어느 화면에서든 닿을 수 있어야 한다 */}
           <a href="/privacy">Privacy</a>

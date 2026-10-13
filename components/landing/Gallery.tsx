@@ -62,6 +62,12 @@ export default function Gallery() {
           </li>
         ))}
       </ul>
+      {/* 4점은 맛보기 — 전체 큐레이션은 /looks 아카이브가 소유한다 */}
+      <p className="xp-gallery-more">
+        <a className="xp-cta xp-cta-sm" href="/looks">
+          Browse the full archive
+        </a>
+      </p>
       <dialog
         className="xp-lightbox"
         ref={dialogRef}
