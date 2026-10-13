@@ -83,6 +83,69 @@ export const LOOKS: Look[] = [
     issue: 'SEP 2026',
     featured: true,
   },
+  // ── 2026-08 · 해석 파일럿 (interpret·coquette·lettering 계열) ──
+  {
+    src: '/looks/angel-lace.jpg',
+    title: 'Angel Lace',
+    meta: 'Burgundy french · white lace · script lettering',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/blue-zebra-french.jpg',
+    title: 'Blue Zebra French',
+    meta: 'Zebra & croc texture · powder blue · deep brown',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/marble-gold.jpg',
+    title: 'Marble & Gold',
+    meta: 'White marble · gold dust · celestial studs',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/tangerine-gingham.jpg',
+    title: 'Tangerine Gingham',
+    meta: 'Hand-painted tangerines · green gingham',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/purple-swirl.jpg',
+    title: 'Purple Swirl',
+    meta: 'Swirl doodles · violet french · diagonal board',
+    issue: 'AUG 2026',
+  },
+  {
+    src: '/looks/dot-check-french.jpg',
+    title: 'Dot Check French',
+    meta: 'Micro dots · gingham check · silver beads',
+    issue: 'AUG 2026',
+  },
+  // ── 2026-07 · 첫 세대 — 올리브·골드 톤과 착용샷 ───────────
+  {
+    src: '/looks/olive-stiletto-tryon.jpg',
+    title: 'Olive Stiletto',
+    meta: 'Try-on shot · olive ombré · gold line work',
+    issue: 'JUL 2026',
+    featured: true,
+  },
+  {
+    src: '/looks/autumn-donut-tryon.jpg',
+    title: 'Autumn Donut',
+    meta: 'Try-on shot · amber ombré · sculpted donut',
+    issue: 'JUL 2026',
+  },
+  {
+    src: '/looks/olive-burgundy.jpg',
+    title: 'Olive & Burgundy',
+    meta: 'Vine painting · pearl drops · silver accent',
+    issue: 'JUL 2026',
+  },
+  {
+    src: '/looks/sea-glass-gold.jpg',
+    title: 'Sea Glass Gold',
+    meta: 'Teal washes · gold bead clusters · water drops',
+    issue: 'JUL 2026',
+  },
   // ── 랜딩 "Looks of the month"와 공유되는 4점 ───────────────
   { src: '/gallery/pastel-french.jpg', title: 'Pastel French', meta: 'Mint & lemon · pearl chain', issue: 'SEP 2026' },
   { src: '/gallery/sugar-dot.jpg', title: 'Sugar Dot', meta: 'Burgundy french · lettering', issue: 'SEP 2026' },
