@@ -28,6 +28,10 @@ export interface NailJudgement {
   paletteMatch: boolean;
   /** 파츠 종류·배치가 브리프를 따르는가 (개수는 별도 카운트) */
   partsMatch: boolean;
+  /** 이미지에 보이는 팁의 총 개수 (제품 불변식: 10개) */
+  tipCount: number;
+  /** 주인공 모티프가 크게 그려진 팁 수 — 브리프에 heroLine이 없으면 0으로 보고 */
+  heroTipCount: number;
   /** 금속·젬·진주가 올라간 팁 수 (검수기가 직접 셈) */
   metalTipCount: number;
   /** 레터링이 등장한 팁 수 */
@@ -96,16 +100,20 @@ export function verdictDetail(j: NailJudgement, brief: NailBrief): QualityReport
   const { min, max } = expectedMetalTips(brief);
   const countOk = j.metalTipCount >= min && j.metalTipCount <= max;
   const letteringOk = brief.letteringWord ? j.letteringCount === 1 : j.letteringCount === 0;
+  const tipCountOk = j.tipCount === 10;
+  const heroOk = !brief.heroLine || (j.heroTipCount >= 1 && j.heroTipCount <= 2);
   const issues: string[] = [];
+  if (!tipCountOk) issues.push(`팁 ${j.tipCount}개 (10개여야 함)`);
   if (!j.physicsOk) issues.push('시술이 어려운 구조');
   if (!j.cleanRender) issues.push('그림이 뭉개진 부분');
+  if (!heroOk) issues.push(`주인공 모티프가 ${j.heroTipCount}팁에 (1~2팁이어야 함)`);
   if (!j.partsMatch) issues.push('파츠 종류·배치 어긋남');
   if (!countOk) issues.push(`파츠 개수 ${j.metalTipCount}개 (기대 ${min}~${max}개)`);
   if (!j.baseMatch) issues.push('베이스·구조 어긋남');
   if (!j.paletteMatch) issues.push('색이 팔레트 밖');
   if (!letteringOk) issues.push('레터링 개수 어긋남');
   const { pass, score } = verdict(j, brief);
-  return { pass, score, maxScore: 6, notes: j.notes, issues };
+  return { pass, score, maxScore: 8, notes: j.notes, issues };
 }
 
 export function verdict(j: NailJudgement, brief: NailBrief): { pass: boolean; score: number } {
@@ -113,11 +121,15 @@ export function verdict(j: NailJudgement, brief: NailBrief): { pass: boolean; sc
   const countOk = j.metalTipCount >= min && j.metalTipCount <= max;
   const letteringOk = brief.letteringWord ? j.letteringCount === 1 : j.letteringCount === 0;
   const partsOk = j.partsMatch && countOk;
-  const checks = [j.baseMatch, j.paletteMatch, partsOk, letteringOk, j.physicsOk, j.cleanRender];
+  const tipCountOk = j.tipCount === 10;
+  // 위계: 주인공은 1~2팁에만 (브리프에 주인공이 없으면 자동 통과)
+  const heroOk = !brief.heroLine || (j.heroTipCount >= 1 && j.heroTipCount <= 2);
+  const checks = [tipCountOk, j.baseMatch, j.paletteMatch, partsOk, letteringOk, heroOk, j.physicsOk, j.cleanRender];
   const score = checks.filter(Boolean).length;
-  // 즉시 탈락 3종: 물리 위반·AI 티(전문가 신뢰 = 결제 방어선) + 파츠 위반(파츠 도배가 1순위 품질 불만).
-  // 나머지(베이스·팔레트·레터링)는 6점 중 5점 이상이면 통과.
-  const pass = j.physicsOk && j.cleanRender && partsOk && score >= 5;
+  // 즉시 탈락 4종: 팁 개수(제품 불변식 — 12팁 세트는 상품이 아님)·물리 위반·AI 티
+  // (전문가 신뢰 = 결제 방어선)·파츠 위반(파츠 도배가 1순위 품질 불만).
+  // 나머지(베이스·팔레트·레터링·위계)는 8점 중 7점 이상이면 통과.
+  const pass = tipCountOk && j.physicsOk && j.cleanRender && partsOk && score >= 7;
   return { pass, score };
 }
 
@@ -157,11 +169,14 @@ export function parseJudgement(text: string): NailJudgement | null {
   const bools = ['baseMatch', 'paletteMatch', 'partsMatch', 'physicsOk', 'cleanRender'] as const;
   for (const k of bools) if (typeof j[k] !== 'boolean') return null;
   if (typeof j.metalTipCount !== 'number' || typeof j.letteringCount !== 'number') return null;
+  if (typeof j.tipCount !== 'number' || typeof j.heroTipCount !== 'number') return null;
   if (typeof j.notes !== 'string') return null;
   return {
     baseMatch: j.baseMatch as boolean,
     paletteMatch: j.paletteMatch as boolean,
     partsMatch: j.partsMatch as boolean,
+    tipCount: j.tipCount,
+    heroTipCount: j.heroTipCount,
     metalTipCount: j.metalTipCount,
     letteringCount: j.letteringCount,
     physicsOk: j.physicsOk as boolean,
@@ -220,8 +235,11 @@ DESIGN BRIEF:
 - Patterns: ${brief.patternLines.join(' | ')}
 - Parts rule: ${brief.partsLine}
 - Lettering: ${brief.letteringWord ? `the cursive word "${brief.letteringWord}" on exactly one tip` : 'none'}
+- Hero motif: ${brief.heroLine || 'none'}
 
 Report:
+- tipCount: the TOTAL number of nail tips visible in the image. Count carefully, one by one, row by row.
+- heroTipCount: on how many tips the hero motif appears rendered LARGE (owning most of that tip). 0 if the brief lists no hero motif.
 - baseMatch: base color/sheerness and french/full structure follow the brief (design contained where specified, negative space preserved).
 - paletteMatch: all colors belong to the brief palette; true only if there is no clearly foreign color (small neutral accents are fine).
 - partsMatch: judge ONLY whether the KIND of parts (stud / pearl / rose / gem) and their PLACEMENT (boundary line / center / etc.) match the parts rule. partsMatch MUST stay true even when there are more or fewer decorated tips than specified — quantity is reported separately in metalTipCount and judged elsewhere.
@@ -238,6 +256,8 @@ const JUDGE_SCHEMA = {
     baseMatch: { type: Type.BOOLEAN },
     paletteMatch: { type: Type.BOOLEAN },
     partsMatch: { type: Type.BOOLEAN },
+    tipCount: { type: Type.NUMBER },
+    heroTipCount: { type: Type.NUMBER },
     metalTipCount: { type: Type.NUMBER },
     letteringCount: { type: Type.NUMBER },
     physicsOk: { type: Type.BOOLEAN },
@@ -245,7 +265,7 @@ const JUDGE_SCHEMA = {
     notes: { type: Type.STRING },
   },
   required: [
-    'baseMatch', 'paletteMatch', 'partsMatch', 'metalTipCount',
+    'baseMatch', 'paletteMatch', 'partsMatch', 'tipCount', 'heroTipCount', 'metalTipCount',
     'letteringCount', 'physicsOk', 'cleanRender', 'notes',
   ],
 };
@@ -256,6 +276,8 @@ async function mockJudgement(): Promise<NailJudgement> {
     baseMatch: true,
     paletteMatch: true,
     partsMatch: true,
+    tipCount: 10,
+    heroTipCount: 1,
     metalTipCount: 1,
     letteringCount: 1,
     physicsOk: true,
@@ -401,6 +423,8 @@ Report:
 - baseMatch: base color/sheerness and structure follow the core rules (design contained where specified, negative space preserved as intended).
 - paletteMatch: all colors in the GENERATED TIP BOARD belong to the intended palette; true only if there is no clearly foreign color (small neutral accents are fine).
 - partsMatch: judge ONLY whether the KIND of parts and their PLACEMENT match the core rules. partsMatch MUST stay true even when there are more or fewer decorated tips than the budget — quantity is reported separately in metalTipCount and judged elsewhere.
+- tipCount: the TOTAL number of nail tips visible in the image. Count carefully, one by one, row by row.
+- heroTipCount: on how many tips the set's single most striking motif appears rendered LARGE (owning most of that tip). 0 if there is no such motif.
 - metalTipCount: how many tips carry any metal stud, gem, pearl, or built-up part. Count carefully, tip by tip.
 - letteringCount: how many tips show script lettering.
 - physicsOk: every part lies flat or is built up from the nail surface and everything is buildable by a human artist with gel — no hanging/dangling pieces, no floating elements, no impossible shapes.
@@ -420,6 +444,8 @@ const CORE_JUDGE_SCHEMA = {
     baseMatch: { type: Type.BOOLEAN },
     paletteMatch: { type: Type.BOOLEAN },
     partsMatch: { type: Type.BOOLEAN },
+    tipCount: { type: Type.NUMBER },
+    heroTipCount: { type: Type.NUMBER },
     metalTipCount: { type: Type.NUMBER },
     letteringCount: { type: Type.NUMBER },
     physicsOk: { type: Type.BOOLEAN },
@@ -433,7 +459,7 @@ const CORE_JUDGE_SCHEMA = {
     notes: { type: Type.STRING },
   },
   required: [
-    'baseMatch', 'paletteMatch', 'partsMatch', 'metalTipCount',
+    'baseMatch', 'paletteMatch', 'partsMatch', 'tipCount', 'heroTipCount', 'metalTipCount',
     'letteringCount', 'physicsOk', 'cleanRender', 'paletteFidelity',
     'motifFidelity', 'coreFidelity', 'raisedVolumeObserved',
     'finishVarietyObserved', 'bareSurfaceShare', 'notes',
@@ -521,6 +547,8 @@ async function mockCoreJudgement(): Promise<CoreJudgement> {
     baseMatch: true,
     paletteMatch: true,
     partsMatch: true,
+    tipCount: 10,
+    heroTipCount: 1,
     metalTipCount: 1,
     letteringCount: 1,
     physicsOk: true,

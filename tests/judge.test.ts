@@ -26,6 +26,8 @@ const CLEAN: NailJudgement = {
   baseMatch: true,
   paletteMatch: true,
   partsMatch: true,
+  tipCount: 10,
+  heroTipCount: 1,
   metalTipCount: 1,
   letteringCount: 1,
   physicsOk: true,
@@ -72,8 +74,8 @@ describe('expectedMetalTips', () => {
 });
 
 describe('verdict', () => {
-  it('전 항목 충족이면 통과 (6/6)', () => {
-    expect(verdict(CLEAN, BRIEF)).toEqual({ pass: true, score: 6 });
+  it('전 항목 충족이면 통과 (8/8)', () => {
+    expect(verdict(CLEAN, BRIEF)).toEqual({ pass: true, score: 8 });
   });
 
   it('파츠 개수 초과(도배)는 즉시 탈락 — 1차 파일럿의 은색 볼 도배 회귀 방지', () => {
@@ -89,21 +91,21 @@ describe('verdict', () => {
     expect(verdict({ ...CLEAN, cleanRender: false }, BRIEF).pass).toBe(false);
   });
 
-  it('레터링 중복(2회)은 감점 — 5/6으로 통과 경계', () => {
+  it('레터링 중복(2회)은 감점 — 7/8로 통과 경계', () => {
     const v = verdict({ ...CLEAN, letteringCount: 2 }, BRIEF);
-    expect(v.score).toBe(5);
+    expect(v.score).toBe(7);
     expect(v.pass).toBe(true); // 레터링은 즉시 탈락 사유가 아님
   });
 
-  it('팔레트 이탈 + 레터링 중복이 겹치면 4/6 탈락', () => {
+  it('팔레트 이탈 + 레터링 중복이 겹치면 6/8 탈락', () => {
     const v = verdict({ ...CLEAN, paletteMatch: false, letteringCount: 2 }, BRIEF);
-    expect(v).toEqual({ pass: false, score: 4 });
+    expect(v).toEqual({ pass: false, score: 6 });
   });
 
   it('레터링 없는 브리프에서 레터링이 등장하면 감점', () => {
     const brief = { ...BRIEF, letteringWord: null };
     const v = verdict({ ...CLEAN, letteringCount: 1 }, brief);
-    expect(v.score).toBe(5);
+    expect(v.score).toBe(7);
   });
 });
 
@@ -138,6 +140,7 @@ describe('verdictDetail — 검수 근거 노출', () => {
 
   const CLEAN = {
     baseMatch: true, paletteMatch: true, partsMatch: true,
+    tipCount: 10, heroTipCount: 0,
     metalTipCount: 0, letteringCount: 0, physicsOk: true, cleanRender: true,
     notes: '깔끔합니다',
   };
@@ -147,7 +150,7 @@ describe('verdictDetail — 검수 근거 노출', () => {
     expect(r.pass).toBe(true);
     expect(r.notes).toBe('깔끔합니다');
     expect(r.issues).toEqual([]);
-    expect(r.maxScore).toBe(6);
+    expect(r.maxScore).toBe(8);
   });
 
   it('낙제작은 "왜 아쉬운지"를 한국어로 알려준다', () => {
@@ -160,5 +163,22 @@ describe('verdictDetail — 검수 근거 노출', () => {
   it('파츠 개수 위반은 기대 범위를 함께 알려준다', () => {
     const r = verdictDetail({ ...CLEAN, metalTipCount: 4 }, BRIEF);
     expect(r.issues.some((i) => i.includes('파츠 개수 4개'))).toBe(true);
+  });
+
+  it('팁이 10개가 아니면 즉시 탈락 — 12팁 세트는 상품이 아니다', () => {
+    const r = verdictDetail({ ...CLEAN, tipCount: 12 }, BRIEF);
+    expect(r.pass).toBe(false);
+    expect(r.issues.some((i) => i.includes('팁 12개'))).toBe(true);
+  });
+
+  it('주인공이 3팁 이상 반복되면 위계 위반으로 감점한다', () => {
+    const hero = { ...BRIEF, heroLine: 'a hand-painted tiger' };
+    const r = verdictDetail({ ...CLEAN, heroTipCount: 4 }, hero);
+    expect(r.issues.some((i) => i.includes('주인공 모티프가 4팁에'))).toBe(true);
+  });
+
+  it('브리프에 주인공이 없으면 heroTipCount는 채점에 안 쓰인다', () => {
+    const r = verdictDetail({ ...CLEAN, heroTipCount: 0 }, BRIEF);
+    expect(r.pass).toBe(true);
   });
 });

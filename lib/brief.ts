@@ -253,6 +253,8 @@ export function applyPlan(brief: NailBrief, plan: VariantPlan): NailBrief {
 export const SET_QUALITY = `- SET HIERARCHY: the ten tips form a cast, not a uniform pattern — one or two HERO tips carry the set's single most striking motif, painted or sculpted LARGE so it owns the whole tip; most tips play supporting roles with smaller companion elements; and two or three REST tips stay nearly quiet (plain base color, a subtle sheen or one tiny accent at most), giving the eye room so the hero tips hit harder. Density varies boldly across the set — never ten equally busy tips.
 - SET QUALITY: every designed tip carries ONE bold, clearly readable idea that owns its composition — confident and graphic, never a scatter of tiny bits. All ten tips differ.
 - SET COHESION: the same two or three base colors and one metal tone repeat across all ten tips, so the varied designs read as one curated set.
+- ANTI-STICKER: on at least two designed tips the motif overlaps or crosses a structure line (the french boundary, a color-block edge) instead of sitting inside it — motifs locked inside their zone read as stickers, crossing ones read as painted by hand.
+- COUNTERPOINT: one of the rest tips may be a plain full coat of a palette accent color (like a single sky-blue tip in a pink set), giving the set one deep breath of contrast.
 - Raised line work is smooth, even and slightly proud of the surface, like piped chrome gel.`;
 
 /**
@@ -307,6 +309,9 @@ ${PARTS_PHYSICS}
 
 const BRIEF_INSTRUCTION = `You are a veteran Korean nail artist AND a prompt engineer for an image generation model.
 Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. Your #1 job is to extract THIS photo's design vocabulary so completely that the finished set is unmistakably born from it — but as a new design, not a copy. Capture the specific motifs, techniques, textures, color relationships, and compositional ideas that make this photo distinctive: which flowers, how sculpted, what kind of droplets, which metallic finishes, how colors meet. Never dilute it into a vague mood ("floral, pink-green" is a failure) — the brief must be so specific that no other photo would produce the same one. ALWAYS pick ONE hero motif: the single most striking pictorial element across the photos (an animal, a figure, a flower, a named object — the thing a person would describe first), written in heroLine as a drawable description with its technique and colors (e.g. "a roaring tiger hand-painted in warm orange and black ink-brush strokes"). The hero motif belongs on one or two tips only; everything else in the brief plays a supporting role. If the photos are pure texture or palette with no pictorial element, heroLine is an empty string. If the photo shows nail art, distill each nail's design into reusable elements. If it shows graphics, illustrations or collages, translate their visual ideas into nail-art vocabulary. You are extracting ingredients for new designs, not a blueprint to copy. The execution style is decided later. You are writing generation instructions, not describing the photo.
+
+## Translate materiality into technique (the master artist's move)
+Do not merely DRAW what you see — translate each motif's PHYSICAL NATURE into a nail technique, the way a master artist would: a necklace or chain becomes a draped line of pearls and beads actually arranged in a hanging curve; embroidered or woven fabric becomes tone-on-tone raised gel line work; watercolor or airbrush art becomes a soft airbrushed wash; jade, sea glass or stone becomes a translucent tinted-gel depth effect; stickers or flat graphics become crisp hand-painted outlines; jewelry stones become real flat-back gems. Write each patternLine as a BUILD instruction (what technique, what material) rather than a picture description. And mirror the photos' surface finish exactly: matte stays matte (velvet top coat), glossy stays glossy — if the photos are illustrations or paper, the set leans matte and hand-painted with few or zero metal parts.
 
 ## Vocabulary for parts (use ONLY these nouns)
 - painted elements: dots, thin stripes, gingham check, lace-trim line, swirl doodles, script lettering, hand-painted flowers/fruits, animal print (zebra/croc)
@@ -527,10 +532,10 @@ ${brief.heroLine ? `- HERO MOTIF: ${brief.heroLine}` : ''}
 - Parts rule to mirror: ${brief.partsLine}
 - Mood: ${brief.moodLine}
 
-THE THREE COMPOSITIONS:
-- v1 = the balanced cut: hero motif on one central tip, supporting motifs spread evenly.
-- v2 = the bold cut: hero motif larger and off-center, denser pattern tips, fewer rest tips.
-- v3 = the quiet cut: hero motif on one tip, more rest tips, the sparsest and most wearable.
+THE THREE COMPOSITIONS (the hero motif must sit on a DIFFERENT tip number in each plan — never tip 1 in all three):
+- v1 = the balanced cut: hero motif on one central tip (tip 3 or 8), supporting motifs spread evenly.
+- v2 = the bold cut: hero motif larger, on a ring-finger tip (tip 4 or 9), denser pattern tips, fewer rest tips.
+- v3 = the quiet cut: hero motif on a thumb or pinky tip (tip 1, 5, 6 or 10), more rest tips, the sparsest and most wearable.
 
 ## Output: exactly 3 plans (v1, v2, v3 in the composition order above), each with
 - id: "v1" to "v3"

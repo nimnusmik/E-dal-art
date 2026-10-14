@@ -69,6 +69,8 @@ const CLEAN_JUDGEMENT: NailJudgement = {
   baseMatch: true,
   paletteMatch: true,
   partsMatch: true,
+  tipCount: 10,
+  heroTipCount: 1,
   metalTipCount: 0,
   letteringCount: 0,
   physicsOk: true,
@@ -131,8 +133,8 @@ describe('POST /api/variant', () => {
     // 배지 하나가 아니라 근거까지 — 심사평·미달 항목이 UI로 나가야 "왜"를 말할 수 있다
     expect(json.quality).toEqual({
       pass: true,
-      score: 6,
-      maxScore: 6,
+      score: 8,
+      maxScore: 8,
       notes: '통과',
       issues: [],
     });
