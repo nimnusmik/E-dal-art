@@ -428,21 +428,26 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
 }
 
 /**
- * 결정적 폴백 플랜 3종 — LLM 없이 코드로 생성. 세 장이 서로 다른 시술 스타일
- * (config/styles.ts)로 같은 모티프를 표현한다. (작은 연산자 5종은 서로 너무 비슷해 보였다)
+ * 결정적 폴백 플랜 3종 — LLM 없이 코드로 생성. 세 장 모두 사진에서 뽑은 언어
+ * (질감·색·파츠)를 그대로 쓰고 구성(배치·밀도)만 달리한다.
  * planVariants 실패 시에도 파이프라인이 빈손이 되지 않게 하는 안전망.
  */
 export function fallbackPlans(brief: NailBrief): VariantPlan[] {
-  return STYLE_IDS.map((styleId, i) => ({
+  const cuts = [
+    { title: '균형 구성', note: '주인공을 가운데 두고 고르게 배치했어요', line: 'Balanced cut: hero motif on one central tip, supporting motifs spread evenly across the rest.' },
+    { title: '대담 구성', note: '주인공을 크게, 패턴을 촘촘하게 넣었어요', line: 'Bold cut: hero motif larger and off-center, denser pattern tips, fewer rest tips.' },
+    { title: '여백 구성', note: '여백을 살려 차분하게 정리했어요', line: 'Quiet cut: hero motif on one tip, more rest tips, the sparsest arrangement.' },
+  ];
+  return cuts.map((c, i) => ({
     id: `v${i + 1}`,
-    title: STYLES[styleId].title,
-    note: STYLES[styleId].note,
-    styleId,
+    title: c.title,
+    note: c.note,
     patternLines: [
       ...brief.patternLines,
-      "Render every motif with this style's own techniques, staying faithful to the reference artwork's motifs, techniques and palette.",
+      c.line,
+      "Stay faithful to the reference photos' motifs, palette, surface finish and mood.",
     ],
-    partsLine: STYLES[styleId].partsLine,
+    partsLine: brief.partsLine,
     letteringWord: i === 0 ? brief.letteringWord : null,
   }));
 }
@@ -482,9 +487,10 @@ export function parsePlans(text: string): VariantPlan[] | null {
   const rawPlans = (parsed as Record<string, unknown>).plans;
   if (!Array.isArray(rawPlans) || rawPlans.length !== VARIANT_COUNT) return null;
   const plans: VariantPlan[] = [];
-  for (const [i, raw] of rawPlans.entries()) {
-    // 스타일은 순서로 고정 — 모델에게 맡기면 3장이 같은 스타일로 수렴할 수 있다
-    const plan = typeof raw === 'object' && raw !== null ? parseVariantPlan({ ...raw, styleId: STYLE_IDS[i] }) : null;
+  for (const raw of rawPlans) {
+    // 스타일 의상을 입히지 않는다 — 플랜은 사진에서 뽑은 언어(질감·색·파츠)를 그대로 쓴다
+    // (2026-10-13 사용자: "사진의 질감·색감·특징을 잘 뽑아 조화롭게"가 제1 원칙)
+    const plan = typeof raw === 'object' && raw !== null ? parseVariantPlan(raw) : null;
     if (!plan) return null;
     const allText = [
       plan.title,
@@ -500,42 +506,40 @@ export function parsePlans(text: string): VariantPlan[] | null {
   return plans.map((plan, i) => {
     const keepLettering = plan.letteringWord !== null && letteringSeen < 1;
     if (plan.letteringWord !== null) letteringSeen += keepLettering ? 1 : 0;
-    const styleId = STYLE_IDS[i];
     return {
       ...plan,
       id: `v${i + 1}`,
-      styleId,
-      title: STYLES[styleId].title,
-      note: STYLES[styleId].note,
-      partsLine: STYLES[styleId].partsLine,
       letteringWord: keepLettering ? plan.letteringWord : null,
     };
   });
 }
 
 function variantInstruction(brief: NailBrief): string {
-  const styles = STYLE_IDS.map(
-    (id, i) => `- v${i + 1} = ${STYLES[id].styleBlock.replace(/\n/g, ' ')} PARTS: ${STYLES[id].partsLine}`,
-  ).join('\n');
-  return `You are a veteran Korean nail artist planning THREE nail sets from one design brief. All three must speak the SAME design language as the reference photo — same motif vocabulary, same palette logic, same mood — so anyone can tell the three sets were born from one inspiration. But each is a NEW composition in a DIFFERENT nail style: three creative interpretations, neither three copies nor three unrelated sets.
+  return `You are a veteran Korean nail artist planning THREE nail sets from one design brief. All three must stay FAITHFUL to the reference photos — the same motif vocabulary, the same palette, the same surface finish and texture, the same mood — so anyone can tell all three were born from these photos. The three sets differ ONLY in composition: which tips the hero and supporting motifs land on, which motifs lead, how dense or quiet the rhythm is, and how the parts are placed. Never invent a new style, never change the finish (a matte reference stays matte, a glossy one stays glossy), never swap the palette.
 
-MOOD BRIEF:
+DESIGN BRIEF (extracted from the photos — follow it in every plan):
+- Base & finish: ${brief.baseLine}
+- Structure: ${brief.structureLine}
+${brief.textureLine ? `- Texture: ${brief.textureLine}` : ''}
 - Palette: ${brief.paletteLine}
 ${brief.heroLine ? `- HERO MOTIF: ${brief.heroLine}` : ''}
 - Motifs and placement: ${brief.patternLines.join(' | ')}
+- Parts rule to mirror: ${brief.partsLine}
 - Mood: ${brief.moodLine}
 
-STYLES (in this order):
-${styles}
+THE THREE COMPOSITIONS:
+- v1 = the balanced cut: hero motif on one central tip, supporting motifs spread evenly.
+- v2 = the bold cut: hero motif larger and off-center, denser pattern tips, fewer rest tips.
+- v3 = the quiet cut: hero motif on one tip, more rest tips, the sparsest and most wearable.
 
-## Output: exactly 3 plans (v1, v2, v3 in the style order above), each with
+## Output: exactly 3 plans (v1, v2, v3 in the composition order above), each with
 - id: "v1" to "v3"
-- title: short Korean name
+- title: short Korean name describing this composition
 - note: one short Korean sentence
-- patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Build a HIERARCHY, not ten equal tips: exactly one or two HERO tip lines render the hero motif from the brief LARGE, filling most of that tip, with nothing else on its base (if the brief has no hero motif, promote its strongest pictorial element). Two or three REST tip lines stay nearly quiet — plain base color in the set palette with a subtle finish or one tiny accent. Every remaining tip line is a SUPPORTING design: one clear companion idea (a smaller motif, line work, a pattern) that echoes the hero's story without repeating it. No two tips match, the ten lines reuse the same two or three base colors, and density varies boldly across the set. Distribute this style's parts budget across the ten lines exactly as the style's PARTS line states, keeping hero tips free of metal parts.
-- partsLine: empty string (the style decides parts)
+- patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Build a HIERARCHY, not ten equal tips: exactly one or two HERO tip lines render the hero motif from the brief LARGE, filling most of that tip, with nothing else on its base (if the brief has no hero motif, promote its strongest pictorial element). Two or three REST tip lines stay nearly quiet — plain base color in the set palette with a subtle finish or one tiny accent. Every remaining tip line is a SUPPORTING design: one clear companion idea (a smaller motif, line work, a pattern) that echoes the hero's story without repeating it. No two tips match, the ten lines reuse the same two or three base colors, and density varies boldly across the set. Distribute the parts across the ten lines exactly as your partsLine states, keeping hero tips free of metal parts, and keep every tip inside the brief's base, finish and palette.
+- partsLine: explicit counts mirroring the brief's parts rule ("Exactly one tip...", ending by excluding the rest); hero tips carry no metal parts
 - letteringWord: usually empty string; at most one plan may carry a common 4-6 letter script word
-- paletteLine: empty string
+- paletteLine: empty string (the brief's palette applies)
 
 ## Writing rules (violations make the generation fail)
 1. Every noun is drawn literally. The words "charm" and "anchor" are forbidden — they draw a hanging pendant and ⚓.

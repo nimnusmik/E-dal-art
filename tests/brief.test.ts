@@ -250,10 +250,15 @@ describe('fallbackPlans — 결정적 폴백 (LLM 없이 동작)', () => {
     expect(plans.map((p) => p.id)).toEqual(['v1', 'v2', 'v3']);
   });
 
-  it('세 장이 서로 다른 스타일이고, 모티프는 원본 패턴을 공유한다', () => {
+  it('세 장이 구성만 다르고, 사진에서 뽑은 언어(패턴·파츠)를 공유한다', () => {
     const plans = fallbackPlans(VALID);
-    expect(plans.map((p) => p.styleId)).toEqual([...STYLE_IDS]);
-    for (const plan of plans) expect(plan.patternLines).toEqual(expect.arrayContaining(VALID.patternLines));
+    // 스타일 의상 없음 — 질감·파츠는 브리프(사진) 것을 그대로 쓴다
+    expect(plans.every((p) => p.styleId === undefined)).toBe(true);
+    expect(new Set(plans.map((p) => p.title)).size).toBe(3);
+    for (const plan of plans) {
+      expect(plan.patternLines).toEqual(expect.arrayContaining(VALID.patternLines));
+      expect(plan.partsLine).toBe(VALID.partsLine);
+    }
   });
 
   it('레터링은 최대 1개 플랜에만', () => {
@@ -284,11 +289,9 @@ describe('parsePlans', () => {
     expect(parsePlans(JSON.stringify({ plans: RAW_PLANS.slice(0, 2) }))).toBeNull();
   });
 
-  it('스타일은 순서로 고정되고, 모델이 비운 partsLine은 스타일 것으로 채운다', () => {
-    const raw = RAW_PLANS.map(({ styleId: _s, ...p }) => ({ ...p, partsLine: '' }));
-    const plans = parsePlans(JSON.stringify({ plans: raw }));
-    expect(plans?.map((p) => p.styleId)).toEqual([...STYLE_IDS]);
-    expect(plans?.[2].partsLine).toBe(STYLES['kitsch-3d'].partsLine);
+  it('partsLine이 빈 플랜은 세트 폐기 — 스타일이 채워주던 시절의 구멍을 막는다', () => {
+    const raw = RAW_PLANS.map((p) => ({ ...p, partsLine: '' }));
+    expect(parsePlans(JSON.stringify({ plans: raw }))).toBeNull();
   });
 
   it('알 수 없는 styleId는 타입가드에서 거부한다', () => {
