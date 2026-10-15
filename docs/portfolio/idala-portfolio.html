@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>idala — AI Nail Set Designer</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --ink: #020109; --sky: #0099ff; --muted: #5a5a66; --line: #e4e4ea;
+  }
+  body {
+    font-family: "Helvetica Neue", Arial, "Apple SD Gothic Neo", sans-serif;
+    color: var(--ink); font-size: 9.6pt; line-height: 1.5;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page { width: 210mm; height: 297mm; padding: 13mm 16mm; page-break-after: always; position: relative; }
+  .page:last-child { page-break-after: auto; }
+
+  .brand { font-weight: 800; font-size: 13pt; letter-spacing: -0.01em; }
+  .brand span { color: var(--sky); }
+  .topline { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--ink); padding-bottom: 7px; }
+  .topline em { font-style: normal; color: var(--muted); font-size: 9pt; }
+
+  h1 { font-size: 21pt; font-weight: 300; letter-spacing: -0.02em; line-height: 1.14; margin: 6.5mm 0 3mm; }
+  h1 b { font-weight: 700; }
+  .lede { font-size: 10.2pt; color: var(--muted); max-width: 150mm; }
+
+  .meta { display: flex; gap: 8mm; margin: 5mm 0 5.5mm; }
+  .meta div { flex: 1; border-top: 1px solid var(--line); padding-top: 2.4mm; }
+  .meta b { display: block; font-size: 8pt; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sky); margin-bottom: 1mm; }
+  .meta span { font-size: 9.4pt; }
+
+  h2 { font-size: 8.6pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sky); margin: 5mm 0 2.2mm; }
+
+  .gallery { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; margin-top: 2mm; }
+  .gallery figure img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 2.5mm; display: block; }
+  .gallery figcaption { font-size: 8pt; color: var(--muted); margin-top: 1.4mm; }
+  .gallery figcaption b { color: var(--ink); font-size: 8.4pt; display: block; }
+
+  .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+  .stage { border: 1px solid var(--line); border-radius: 2.5mm; padding: 2.6mm 3mm 3mm; position: relative; }
+  .stage i { font-style: normal; position: absolute; top: 3mm; right: 3.4mm; font-size: 8pt; color: var(--sky); font-weight: 700; }
+  .stage b { display: block; font-size: 9.6pt; margin-bottom: 1.2mm; padding-right: 8mm; }
+  .stage p { font-size: 7.9pt; color: var(--muted); line-height: 1.45; }
+  .stage em { font-style: normal; display: block; margin-top: 1.6mm; font-size: 7.6pt; color: var(--sky); }
+
+  ul.tight { list-style: none; }
+  ul.tight li { padding-left: 4.2mm; position: relative; margin-bottom: 1.4mm; font-size: 8.9pt; }
+  ul.tight li::before { content: ''; position: absolute; left: 0; top: 2.1mm; width: 2.1mm; height: 2.1mm; border-radius: 50%; background: var(--sky); }
+  ul.tight b { font-weight: 700; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+  .compare figure { border: 1px solid var(--line); border-radius: 2.5mm; overflow: hidden; }
+  .compare img { width: 100%; aspect-ratio: 1.6; object-fit: cover; display: block; }
+  .compare figcaption { padding: 2.2mm 3mm 2.6mm; font-size: 8pt; color: var(--muted); }
+  .compare figcaption b { display: block; color: var(--ink); font-size: 8.6pt; }
+
+  .footer { position: absolute; bottom: 8mm; left: 16mm; right: 16mm; display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 2.4mm; font-size: 8pt; color: var(--muted); }
+
+  .stats { display: flex; gap: 5mm; margin-top: 3.5mm; }
+  .stats div { flex: 1; background: #f5f6f8; border-radius: 2.5mm; padding: 2.4mm 3mm; }
+  .stats b { display: block; font-size: 13pt; font-weight: 700; letter-spacing: -0.02em; }
+  .stats span { font-size: 8pt; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- ─── PAGE 1 ─────────────────────────────────────────────── -->
+<div class="page">
+  <div class="topline">
+    <span class="brand">idala<span>✳</span></span>
+    <em>Sunmin Kim · AI Engineering Portfolio · Jul 2026 – present</em>
+  </div>
+
+  <h1>One photo becomes<br><b>a buildable nail set</b></h1>
+  <p class="lede">
+    idala is a production web service where nail salon owners upload inspiration photos —
+    an outfit, a tattoo flash sheet, a necklace — and receive photorealistic press-on nail
+    set designs that a human artist can actually craft by hand. Solo-built: product,
+    multi-model AI pipeline, payments, and deployment.
+  </p>
+
+  <div class="meta">
+    <div><b>Role</b><span>Solo developer &amp; designer</span></div>
+    <div><b>Stack</b><span>Next.js 15 · TypeScript · Gemini · GPT-Image · Neon Postgres · Redis · Paddle</span></div>
+    <div><b>Status</b><span>Live on Vercel, paid product (₩9,900 / 8 runs)</span></div>
+  </div>
+
+  <h2>The pipeline — four stages, three models</h2>
+  <div class="pipeline">
+    <div class="stage"><i>01</i><b>Vision analysis</b>
+      <p>Gemini reads the photos into a structured design brief (JSON schema): palette, surface finish, motif vocabulary, and one <b>hero motif</b> — the single strongest pictorial element.</p>
+      <em>structured output · vision</em>
+    </div>
+    <div class="stage"><i>02</i><b>Composition planning</b>
+      <p>An LLM expands the brief into three 10-tip plans (balanced / bold / quiet) with an enforced hierarchy: hero on 1–2 tips, supporting tips, 2–3 rest tips.</p>
+      <em>LLM planning · deterministic fallback</em>
+    </div>
+    <div class="stage"><i>03</i><b>Image generation</b>
+      <p>GPT-Image renders each plan behind a provider abstraction (Gemini / Seedream / GPT-Image swappable; mock mode makes the test suite cost $0).</p>
+      <em>provider abstraction</em>
+    </div>
+    <div class="stage"><i>04</i><b>LLM-as-judge</b>
+      <p>A vision judge scores every render on 8 criteria — tip count, hero hierarchy, part counts, palette fidelity, physical buildability. Failures trigger one retry; the better render wins.</p>
+      <em>auto-retry · 8-point rubric</em>
+    </div>
+  </div>
+
+  <h2>Selected output — generated end-to-end from user photos</h2>
+  <div class="gallery">
+    <figure><img src="img-hero.jpg" alt=""><figcaption><b>Winged Heart French</b>Hero-motif hierarchy: the heart owns exactly one tip</figcaption></figure>
+    <figure><img src="img-glass.jpg" alt=""><figcaption><b>Glass Tears</b>Sculpted-gel translation of a jewelry reference</figcaption></figure>
+    <figure><img src="img-tryon.jpg" alt=""><figcaption><b>Olive Stiletto</b>AI try-on shot — preview before committing</figcaption></figure>
+  </div>
+
+  <div class="stats">
+    <div><b>409</b><span>unit tests, incl. prompt snapshot guards</span></div>
+    <div><b>8-criteria</b><span>vision rubric computed in code, not vibes</span></div>
+    <div><b>3 layers</b><span>of quota defense (account / IP / global)</span></div>
+    <div><b>62 sets</b><span>published in the public archive (/looks)</span></div>
+  </div>
+
+  <div class="footer"><span>idala — AI nail sets of the month</span><span>e-dal-art.vercel.app</span></div>
+</div>
+
+<!-- ─── PAGE 2 ─────────────────────────────────────────────── -->
+<div class="page">
+  <div class="topline">
+    <span class="brand">idala<span>✳</span></span>
+    <em>Engineering highlights</em>
+  </div>
+
+  <h2 style="margin-top:6mm">Prompt engineering as an empirical discipline</h2>
+  <div class="cols">
+    <ul class="tight">
+      <li><b>Vocabulary control.</b> Every noun gets drawn literally — "charm" renders a hanging pendant, "anchor" renders ⚓. The system bans trap words and validates plans against them, discarding violating sets before they cost an image.</li>
+      <li><b>Positive phrasing &amp; explicit counts.</b> Negative instructions leak; constraints are rewritten as what IS ("Exactly one tip carries… every other tip is painted gel only"). A regression-tested prompt baseline guards against drift.</li>
+      <li><b>Materiality → technique translation.</b> The analyzer doesn't describe motifs, it translates their physics: a necklace becomes a draped pearl arrangement, woven fabric becomes tone-on-tone raised gel, watercolor becomes an airbrushed wash.</li>
+    </ul>
+    <ul class="tight">
+      <li><b>Hero-motif hierarchy.</b> Uniform-density sets read as "AI-generated" to professionals. The pipeline extracts one hero motif and enforces a cast: 1–2 hero tips, supporting tips, quiet rest tips — verified by the judge.</li>
+      <li><b>Finish fidelity.</b> A matte illustration reference yields a matte velvet set; a glossy jewelry reference yields glass gloss. The variant axis is composition, never a style costume that overrides the photo.</li>
+      <li><b>Calibrated judging.</b> The vision model only reports observations (counts, booleans); verdicts are computed in code. Expected part counts are parsed from the brief itself, so painted-only references are never falsely penalized.</li>
+    </ul>
+  </div>
+
+  <h2>Iteration, measured — same inspiration photos, one week apart</h2>
+  <div class="compare">
+    <figure><img src="img-before.jpg" alt="">
+      <figcaption><b>Before — style-forced</b>A fixed "glass jelly" style overrode the reference's matte illustration texture.</figcaption>
+    </figure>
+    <figure><img src="img-after.jpg" alt="">
+      <figcaption><b>After — photo-faithful</b>The same photos now yield a matte airbrushed set carrying the reference's stamps and hand-drawn motifs.</figcaption>
+    </figure>
+  </div>
+
+  <h2>Production engineering</h2>
+  <div class="cols">
+    <ul class="tight">
+      <li><b>Money-safe quotas.</b> Each generation is real cost, so credits use a reserve → commit / refund protocol on Redis: failed runs never consume a customer's paid credits, and a reaper refunds reservations orphaned by platform timeouts.</li>
+      <li><b>Abuse defense in depth.</b> Per-account, per-IP and global daily limits — account-only limits fall to free Google accounts; the global image cap is the hard ceiling on daily spend.</li>
+      <li><b>Payments without an entity.</b> Paddle as merchant of record (KakaoPay &amp; Korean cards), webhook + direct transaction verification so a late webhook can't lose a purchase.</li>
+    </ul>
+    <ul class="tight">
+      <li><b>Security posture.</b> Signed blob URLs derived server-side and path-bound (verified: cross-path access returns 403); session tokens gate the generation API so the paid analyze step can't be bypassed.</li>
+      <li><b>Testing culture.</b> 409 unit tests; prompts are snapshot-guarded; mock providers make the full pipeline testable at zero API cost; judge rubric changes ship with fixture-level tests.</li>
+      <li><b>Validation-driven product.</b> Market re-validated three times with structured evidence docs; the current target (Korean salon owners) and pricing came from pain-signal mining, not intuition.</li>
+    </ul>
+  </div>
+
+  <div class="footer"><span>Sunmin Kim · gvaidevelop@gmail.com</span><span>github.com/nimnusmik/E-dal-art</span></div>
+</div>
+
+</body>
+</html>
