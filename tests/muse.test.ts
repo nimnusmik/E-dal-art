@@ -47,3 +47,19 @@ describe('noDash', () => {
     expect(noDash('no dash')).toBe('no dash');
   });
 });
+
+describe('mergeMasks', () => {
+  it('박스보다 작은 마스크를 박스 크기로 늘려 찍는다 (큰 물체는 축소된 마스크가 온다)', async () => {
+    const { mergeMasks } = await import('@/lib/sam');
+    // 2×2 마스크(왼쪽 위만 1)를 4×4 박스(1,1)~(5,5)에 — 왼쪽 위 2×2 픽셀이 채워져야 한다
+    const seg = { box: { left: 1, top: 1, right: 5, bottom: 5 }, raster: Uint8Array.from([1, 0, 0, 0]), maskWidth: 2, maskHeight: 2 };
+    const out = mergeMasks([seg], 6, 6);
+    const on = [...out].flatMap((v, i) => (v ? [[i % 6, Math.floor(i / 6)]] : []));
+    expect(on).toEqual([[1, 1], [2, 1], [1, 2], [2, 2]]);
+  });
+  it('크기가 같으면 그대로 (손톱처럼 작은 물체)', async () => {
+    const { mergeMasks } = await import('@/lib/sam');
+    const seg = { box: { left: 0, top: 0, right: 2, bottom: 1 }, raster: Uint8Array.from([0, 1]), maskWidth: 2, maskHeight: 1 };
+    expect([...mergeMasks([seg], 2, 1)]).toEqual([0, 255]);
+  });
+});

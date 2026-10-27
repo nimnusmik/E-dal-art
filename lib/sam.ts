@@ -72,12 +72,18 @@ export async function segment(image: ImagePayload, concept: string): Promise<Seg
 export function mergeMasks(segments: Segment[], width: number, height: number): Uint8Array {
   const out = new Uint8Array(width * height);
   for (const s of segments) {
-    for (let y = 0; y < s.maskHeight; y++) {
+    // 마스크는 박스와 같은 크기가 아닐 수 있다 — 큰 물체는 긴 쪽 1024px로 줄여서 온다
+    // (실측: 손 박스 992×1785 → 마스크 569×1024). 박스 크기로 늘려서(최근접) 찍는다
+    const bw = s.box.right - s.box.left;
+    const bh = s.box.bottom - s.box.top;
+    for (let y = 0; y < bh; y++) {
       const fy = s.box.top + y;
       if (fy < 0 || fy >= height) continue;
-      for (let x = 0; x < s.maskWidth; x++) {
+      const my = Math.min(s.maskHeight - 1, Math.floor((y * s.maskHeight) / bh));
+      for (let x = 0; x < bw; x++) {
         const fx = s.box.left + x;
-        if (fx >= 0 && fx < width && s.raster[y * s.maskWidth + x]) out[fy * width + fx] = 255;
+        const mx = Math.min(s.maskWidth - 1, Math.floor((x * s.maskWidth) / bw));
+        if (fx >= 0 && fx < width && s.raster[my * s.maskWidth + mx]) out[fy * width + fx] = 255;
       }
     }
   }
