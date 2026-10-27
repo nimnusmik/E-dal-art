@@ -217,7 +217,7 @@ export default function ResultScreen({
       {/* 선택된 시안 — 확대 보기 */}
       <div className="result-figure">
         <h2 className="overline" suppressHydrationWarning>
-          Your Pick — {issue.monthLabel}
+          Your Pick · {issue.monthLabel}
         </h2>
         {selected && tipSetUrl ? (
           <>

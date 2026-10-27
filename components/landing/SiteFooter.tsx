@@ -11,7 +11,7 @@ export default function SiteFooter() {
   return (
     <footer className="xp-footer-shell">
       <div className="xp-footer-bar">
-        <span>idala — AI nail sets, monthly</span>
+        <span>idala · AI nail sets, monthly</span>
         <span className="xp-footer-meta">
           <span suppressHydrationWarning>{issue.monthLabel}</span>
           <a href="/looks">Archive</a>

@@ -101,6 +101,11 @@ const FIELD_MAX = {
 } as const;
 
 /** 개행·제어문자는 프롬프트의 줄 구조를 깨뜨리므로 공백으로 접는다 */
+/** 화면에 그대로 나가는 AI 문장에서 대시(—, –)를 쉼표로 — 사용자 요청(2026-10-27), AI 티가 난다 */
+export function noDash(s: string): string {
+  return s.replace(/\s*[—–]\s*/g, ', ').replace(/^, |, $/g, '');
+}
+
 function clampLine(value: string, max: number = FIELD_MAX.line): string {
   return value.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, max);
 }
@@ -160,7 +165,7 @@ export function parseBrief(text: string): NailBrief | null {
     keywords: clampList(b.keywords),
     colors: clampList(b.colors),
     difficulty: b.difficulty as NailBrief['difficulty'],
-    feasibilityNotes: clampLine(b.feasibilityNotes as string),
+    feasibilityNotes: noDash(clampLine(b.feasibilityNotes as string)),
   };
 }
 
@@ -419,10 +424,10 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
   if (patternLines.length === 0) return null;
   const partsLine = clampLine(p.partsLine);
   const paletteLine = typeof p.paletteLine === 'string' ? clampLine(p.paletteLine) : '';
-  const note = typeof p.note === 'string' ? clampLine(p.note, FIELD_MAX.listItem) : '';
+  const note = typeof p.note === 'string' ? noDash(clampLine(p.note, FIELD_MAX.listItem)) : '';
   return {
     id: clampLine(p.id, FIELD_MAX.listItem),
-    title: clampLine(p.title, FIELD_MAX.listItem),
+    title: noDash(clampLine(p.title, FIELD_MAX.listItem)),
     patternLines,
     partsLine,
     letteringWord: lettering.length > 0 ? lettering : null,

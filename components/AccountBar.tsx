@@ -35,7 +35,7 @@ export default function AccountBar({ email }: { email: string | null }) {
         <a className="legal-link" href="/privacy" target="_blank" rel="noopener noreferrer">
           privacy policy
         </a>
-        . We only receive your Google account email — no name, no profile photo. 14+ only.
+        . We only receive your Google account email. No name, no profile photo. 14+ only.
       </p>
     </div>
   );

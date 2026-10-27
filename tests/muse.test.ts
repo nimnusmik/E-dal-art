@@ -37,3 +37,13 @@ describe('sniffMime', () => {
     expect(sniffMime(b64([0x89, 0x50, 0x4e, 0x47]))).toBe('image/png');
   });
 });
+
+describe('noDash', () => {
+  it('대시를 쉼표로 바꾸고 양끝 쉼표는 지운다', async () => {
+    const { noDash } = await import('@/lib/brief');
+    expect(noDash('Bold wings — quiet base')).toBe('Bold wings, quiet base');
+    expect(noDash('A – B')).toBe('A, B');
+    expect(noDash('— lead')).toBe('lead');
+    expect(noDash('no dash')).toBe('no dash');
+  });
+});

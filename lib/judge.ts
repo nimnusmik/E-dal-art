@@ -2,7 +2,7 @@ import { Type } from '@google/genai';
 import { analyzeGenerate } from './geminiText';
 import type { ImagePayload } from './types';
 import type { NailBrief } from './brief';
-import { buildBriefPrompt } from './brief';
+import { buildBriefPrompt, noDash } from './brief';
 import { generateImage } from './provider';
 import type { NailCore } from './core';
 import type { PhotoTake } from './photoTake';
@@ -113,7 +113,7 @@ export function verdictDetail(j: NailJudgement, brief: NailBrief): QualityReport
   if (!j.paletteMatch) issues.push('Colors outside the palette');
   if (!letteringOk) issues.push('Lettering count off');
   const { pass, score } = verdict(j, brief);
-  return { pass, score, maxScore: 8, notes: j.notes, issues };
+  return { pass, score, maxScore: 8, notes: noDash(j.notes), issues };
 }
 
 export function verdict(j: NailJudgement, brief: NailBrief): { pass: boolean; score: number } {

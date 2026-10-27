@@ -13,12 +13,12 @@ function Card({ look, onZoom, eager }: { look: Look; onZoom: (l: Look) => void; 
     <button
       type="button"
       className="lk-card"
-      aria-label={`View larger — ${look.title}`}
+      aria-label={`View larger: ${look.title}`}
       onClick={() => onZoom(look)}
     >
       <img
         src={look.src}
-        alt={`${look.title} — ${look.meta}`}
+        alt={`${look.title}, ${look.meta}`}
         width={600}
         height={600}
         loading={eager ? 'eager' : 'lazy'}
@@ -77,7 +77,7 @@ export default function LooksGrid({
             </h2>
             {/* 간판이 아니라 과정이다 — 과장 없이 실험 기록으로 표기한다 */}
             <p className="lk-sketch-note">
-              Experiments, drafts and practice boards behind the wall — unfiltered, imperfections included.
+              Experiments, drafts and practice boards behind the wall. Unfiltered, imperfections included.
             </p>
             <ul className="lk-grid lk-grid-sketch" role="list">
               {sketches.map((look) => (
@@ -101,7 +101,7 @@ export default function LooksGrid({
       >
         {zoomed && (
           <figure className="xp-lightbox-body">
-            <img src={zoomed.src} alt={`${zoomed.title} — ${zoomed.meta}`} width={1200} height={1200} />
+            <img src={zoomed.src} alt={`${zoomed.title}, ${zoomed.meta}`} width={1200} height={1200} />
             <figcaption>
               <strong>{zoomed.title}</strong>
               <span>

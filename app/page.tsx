@@ -161,7 +161,7 @@ export default function Home() {
   // 탭을 여러 개 열어둔 사용자가 어느 탭이 생성 중인지 구분할 수 있게 (2.4.2)
   useEffect(() => {
     document.title =
-      phase === 'start' ? 'idala — nail sets of the month' : `${phaseTitle} · idala`;
+      phase === 'start' ? 'idala · nail sets of the month' : `${phaseTitle} · idala`;
   }, [phase, phaseTitle]);
 
   /** 각 화면 최상단에 두는 시각적 숨김 제목 — 포커스 착지점 겸 헤딩 구조의 뿌리 */
@@ -381,7 +381,7 @@ export default function Home() {
       showInline(
         json.error === 'INVALID_INPUT'
           ? 'This photo is hard to work with. Try one with clearer color and mood'
-          : 'Photo analysis failed. Your photos are still here — please try again',
+          : 'Photo analysis failed. Your photos are still here, so please try again',
       );
     } catch (err) {
       if (sessionRef.current !== session) return;
@@ -389,11 +389,11 @@ export default function Home() {
         if (ac.signal.aborted) return; // 사용자가 취소한 경우는 에러가 아니다
         // 타임아웃 — 서버 쿼터는 선점됐을 수 있으나 실패 시 환불된다
         setPhase('start');
-        showInline('That took too long. Please try again — failed runs don\'t count');
+        showInline('That took too long. Please try again. Failed runs don\'t count');
         return;
       }
       setPhase('start');
-      showInline('Photo analysis failed. Your photos are still here — please try again');
+      showInline('Photo analysis failed. Your photos are still here, so please try again');
     }
   }, [photos, shape, length, partsIntensity, fetchVariant, showInline]);
 
@@ -558,7 +558,7 @@ export default function Home() {
               </div>
               {/* 이전 문구("사진을 더할수록 진화해요")는 상한만 말해 3장을 다 올려야
                   하는 것으로 읽혔다 — 최소 1장으로 시작할 수 있음을 먼저 말한다 */}
-              <p className="sub">Start with one photo — add up to three.</p>
+              <p className="sub">Start with one photo and add up to three.</p>
               <p className="assurance">
                 Photos are used only while creating and never stored on our servers.
               </p>
@@ -705,7 +705,7 @@ export default function Home() {
   const blocked = phase === 'blocked-user'
     ? {
         title: 'You\'re done for today',
-        body: 'To prevent abuse, you can create up to 3 times a day. Your remaining runs are safe — it reopens at midnight KST.',
+        body: 'To prevent abuse, you can create up to 3 times a day. Your remaining runs are safe, and it reopens at midnight KST.',
       }
     : {
         title: 'This issue is sold out',

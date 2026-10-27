@@ -12,7 +12,7 @@ import './looks.css';
  */
 export const metadata: Metadata = {
   title: 'The Archive · idala',
-  description: 'Every nail set born from an inspiration photo — the idala generation archive.',
+  description: 'Every nail set born from an inspiration photo, in one idala archive.',
 };
 
 export default function LooksPage() {
@@ -48,7 +48,7 @@ export default function LooksPage() {
             born from a photo
           </h1>
           <p className="lk-sub">
-            {mains.length} sets on the wall, {sketches.length} experiments behind them — all generated from
+            {mains.length} sets on the wall, {sketches.length} experiments behind them, all generated from
             inspiration photos. The wall is curated; the sketchbook is everything else, unfiltered.
           </p>
         </section>
