@@ -646,7 +646,8 @@ export default function Home() {
 
   if (phase === 'result') {
     return (
-      <main className="screen">
+      // 결과 화면은 .screen(최대 460px)을 쓰지 않고 화면 전체를 쓴다 (app/studio.css)
+      <main>
         {screenHeading}
         <ResultScreen
           slots={slots}

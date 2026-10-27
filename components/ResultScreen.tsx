@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import OptionsPicker from '@/components/OptionsPicker';
 import SaveToLibrary from '@/components/SaveToLibrary';
-import VariantGrid from '@/components/VariantGrid';
-import { drawCollage, extractColors } from '@/lib/collage';
+import { drawCollage, extractColors, extractVividColors } from '@/lib/collage';
 import { currentIssue } from '@/lib/issue';
 import type { GeneratedImage, HeroEntry, PartsIntensity, TrayPhoto, VariantSlot } from '@/app/page';
 import type { Mood, NailLength, NailShape } from '@/lib/types';
+import '@/app/studio.css';
 
 const DIFFICULTY_LABEL: Record<string, string> = {
   easy: 'Easy',
@@ -142,11 +142,23 @@ export default function ResultScreen({
   restored?: boolean;
 }) {
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
-  // 내 손 입혀보기 — 시안별 결과. 시안을 바꾸면 그 시안의 결과만 보인다
+  // 내 손 입혀보기 — 시안별 결과. before = 사용자가 올린 원본 손 사진(전후 비교 슬라이더용)
   const [tryon, setTryon] = useState<
-    Record<string, { status: 'loading' } | { status: 'done'; image: GeneratedImage } | { status: 'error'; message: string }>
+    Record<
+      string,
+      | { status: 'loading' }
+      | { status: 'done'; image: GeneratedImage; before: string }
+      | { status: 'error'; message: string }
+    >
   >({});
+  // 가운데 무대에 무엇을 보여주나 — 시안(set) / 내 손(hand) / AI 모델 손(model)
+  const [view, setView] = useState<'set' | 'hand' | 'model'>('set');
+  const [cut, setCut] = useState(50);
+  // 손 사진은 사람마다 비율이 달라 고정 틀(3:4)이면 손가락 끝(=손톱)이 잘린다 — 사진 비율 그대로
+  const [handAspect, setHandAspect] = useState(3 / 4);
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
+  // 배경 빛 번짐 색 — 선택 시안에서 선명한 색만 (사진 전체를 흐리면 회색 받침대 때문에 탁해짐)
+  const [glow, setGlow] = useState<string[]>([]);
   // 유료·파괴적 재생성은 2단 확인 — 네이티브 confirm 대신 인라인으로 맥락을 유지한다
   const [confirmRegen, setConfirmRegen] = useState(false);
   // 결과를 만들 때 쓰인 옵션 — 여기서 값이 달라지면 "이 옵션으로 다시 만들기"가 열린다
@@ -162,7 +174,25 @@ export default function ResultScreen({
   const tipSet = selected?.tipSet ?? null;
   const tipSetUrl = tipSet ? `data:${tipSet.mimeType};base64,${tipSet.image}` : null;
   const hero = selected ? (heroMap[selected.plan.id] ?? null) : null;
-  const stillDrawing = slots.some((s) => s.status === 'pending');
+  const t = selected ? tryon[selected.plan.id] : undefined;
+  const doneSlots = slots.filter((s) => s.status === 'done' && s.tipSet);
+  const doneIndex = selected ? doneSlots.indexOf(selected) : -1;
+  const hasAnyDone = doneSlots.length > 0;
+
+  // 시안을 바꾸면 무대는 시안 보기로 돌아간다 (다른 시안의 손 사진이 남아 보이지 않게)
+  useEffect(() => {
+    setView('set');
+    setCut(50);
+  }, [selectedId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!tipSet) return;
+    base64ToBitmap(tipSet.image, tipSet.mimeType)
+      .then((bmp) => { if (!cancelled) setGlow(extractVividColors(bmp, 3)); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [tipSet]);
 
   // 착용샷이 도착하면 히어로 콜라주 합성 + (무드 색상 없으면) 색상 추출
   useEffect(() => {
@@ -185,14 +215,61 @@ export default function ResultScreen({
     return () => { cancelled = true; };
   }, [hero, mood, photos]);
 
-  const shareHero = async () => {
-    if (!collageUrl) return;
-    const ext = collageUrl.startsWith('data:image/png') ? 'png' : 'jpg';
-    const how = await shareOrDownload(
-      collageUrl,
-      `idala-${Date.now()}.${ext}`,
-      'My nail set, made with idala',
-    );
+  // 착용샷이 막 완성되면 그쪽으로 무대를 돌린다
+  useEffect(() => {
+    if (collageUrl) setView('model');
+  }, [collageUrl]);
+
+  // 좌우 이동 — 완성된 시안 사이에서만. 키보드 화살표·스와이프·버튼이 모두 여기로
+  const go = useCallback(
+    (d: number) => {
+      if (doneSlots.length < 2) return;
+      const from = doneIndex < 0 ? 0 : doneIndex;
+      const next = doneSlots[(from + d + doneSlots.length) % doneSlots.length];
+      onSelect(next.plan.id);
+    },
+    [doneSlots, doneIndex, onSelect],
+  );
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // 입력 중(옵션 등)에는 가로채지 않는다
+      if ((e.target as HTMLElement)?.closest('input, textarea, select')) return;
+      if (e.key === 'ArrowRight') go(1);
+      if (e.key === 'ArrowLeft') go(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [go]);
+  const swipe = useRef<number | null>(null);
+
+  const runTryOn = async (file: File) => {
+    if (!selected) return;
+    const planId = selected.plan.id;
+    const before = URL.createObjectURL(file);
+    setTryon((p) => ({ ...p, [planId]: { status: 'loading' } }));
+    try {
+      const image = await onTryOn(planId, file);
+      setTryon((p) => ({ ...p, [planId]: { status: 'done', image, before } }));
+      setView('hand');
+      setCut(50);
+    } catch (e) {
+      URL.revokeObjectURL(before);
+      const message = (e as Error)?.name === 'TimeoutError'
+        ? 'The try-on took too long. Feel free to retry.'
+        : (e as Error).message;
+      setTryon((p) => ({ ...p, [planId]: { status: 'error', message } }));
+    }
+  };
+
+  const tryonUrl = t?.status === 'done' ? `data:${t.image.mimeType};base64,${t.image.image}` : null;
+  // 지금 무대에 떠 있는 이미지 — 공유는 "보고 있는 것"을 보낸다
+  const stageUrl =
+    view === 'hand' && tryonUrl ? tryonUrl : view === 'model' && collageUrl ? collageUrl : tipSetUrl;
+
+  const share = async () => {
+    if (!stageUrl) return;
+    const ext = stageUrl.startsWith('data:image/png') ? 'png' : 'jpg';
+    const how = await shareOrDownload(stageUrl, `idala-${Date.now()}.${ext}`, 'My nail set, made with idala');
     track(how === 'share' ? 'share' : 'save');
   };
 
@@ -210,199 +287,243 @@ export default function ResultScreen({
 
   const keywords = mood?.keywords ?? [];
   const colors = mood?.colors?.length ? mood.colors : extractedColors;
-  const hasAnyDone = slots.some((s) => s.status === 'done');
+  const no = (i: number) => String(i + 1).padStart(2, '0');
+
+  const handPicker = (label: string, primary: boolean) => (
+    <label className={`st-btn ${primary ? 'primary' : 'ghost'}`}>
+      {label}
+      <input
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = ''; // 같은 파일을 다시 골라도 onChange가 오게
+          if (f) void runTryOn(f);
+        }}
+      />
+    </label>
+  );
 
   return (
-    <>
-      {/* 선택된 시안 — 확대 보기 */}
-      <div className="result-figure">
-        <h2 className="overline" suppressHydrationWarning>
-          Your Pick · {issue.monthLabel}
-        </h2>
-        {selected && tipSetUrl ? (
-          <>
-            {/* 길게 눌러 저장(iOS)도 되도록 img로 렌더 */}
-            <img
-              className="result-img"
-              src={tipSetUrl}
-              alt={`Selected nail set: ${selected.plan.title}`}
-            />
-            <div className="pick-head">
-              <h3 className="pick-title">
-                {selectedIndex >= 0 && (
-                  <span className="pick-no" aria-hidden>
-                    {String(selectedIndex + 1).padStart(2, '0')}
-                  </span>
-                )}
-                {selected.plan.title}
-              </h3>
-              {/* 검수 결과는 바로 아래 "시술 정보"가 근거까지 보여준다 — 여기 배지는 중복 */}
-            </div>
-          </>
-        ) : (
-          <div className="blocked-card">
-            <p className="sub">
-              {hasAnyDone
-                ? 'Pick a look below'
-                : 'No finished looks yet. Retry one below.'}
-            </p>
+    <div className="st">
+      {/* 배경 — 선택 시안을 흐려 깔아 화면 전체가 그 세트의 색으로 물든다 */}
+      {(() => {
+        // 선명한 색이 모자라면 무드 색 → 기본 블루로 채운다
+        const g = [...glow, ...(mood?.colors ?? []), '#3b6cff', '#c86bff', '#ff7aa8'].slice(0, 3);
+        return (
+          <div
+            className="st-bg"
+            key={g.join()}
+            style={{ ['--g1' as string]: g[0], ['--g2' as string]: g[1], ['--g3' as string]: g[2] }}
+            aria-hidden
+          />
+        );
+      })()}
+
+      {/* 왼쪽 레일 — 시안 목록. 그리는 중·실패·한도 상태를 칸 단위로 */}
+      <nav className="st-rail" aria-label="Your looks">
+        <span className="st-rail-head">Looks</span>
+        {slots.map((slot, i) => {
+          if (slot.status === 'done' && slot.tipSet) {
+            const on = slot.plan.id === selectedId;
+            return (
+              <button
+                key={slot.plan.id}
+                className={`st-thumb${on ? ' is-on' : ''}`}
+                aria-pressed={on}
+                aria-label={`Look ${no(i)}: ${slot.plan.title}`}
+                onClick={() => onSelect(slot.plan.id)}
+              >
+                <img src={`data:${slot.tipSet.mimeType};base64,${slot.tipSet.image}`} alt="" />
+                <span className="st-thumb-no" aria-hidden>{no(i)}</span>
+                {slot.quality?.pass === false && <span className="st-thumb-flag" title="Rough take" />}
+              </button>
+            );
+          }
+          if (slot.status === 'error') {
+            return (
+              <div key={slot.plan.id} className="st-thumb is-fail">
+                <span>
+                  Couldn&apos;t draw
+                  <br />
+                  <button onClick={() => onRetry(slot.plan.id)}>Retry · free</button>
+                </span>
+              </div>
+            );
+          }
+          if (slot.status === 'stopped') {
+            return (
+              <div key={slot.plan.id} className="st-thumb is-fail">
+                <span>Daily limit</span>
+              </div>
+            );
+          }
+          return <div key={slot.plan.id} className="st-thumb is-pending" aria-label={`Look ${no(i)} is drawing`} />;
+        })}
+        <button className="st-thumb is-new" onClick={onReset} aria-label="Start a new run">
+          New
+        </button>
+      </nav>
+
+      {/* 가운데 무대 */}
+      <section className="st-stage" aria-label="Selected look">
+        {selected && (tryonUrl || collageUrl) && (
+          <div className="st-seg" role="group" aria-label="View">
+            <button aria-pressed={view === 'set'} onClick={() => setView('set')}>Set</button>
+            {tryonUrl && <button aria-pressed={view === 'hand'} onClick={() => setView('hand')}>On my hand</button>}
+            {collageUrl && <button aria-pressed={view === 'model'} onClick={() => setView('model')}>Model hand</button>}
           </div>
         )}
-      </div>
 
-      {/* 시술 정보 — 이 제품이 핀터레스트와 다르다고 주장하는 근거를 실제로 보여주는 자리.
-          검수 심사평(왜 통과/왜 아쉬운지)과 난이도·조정 메모를 함께 둔다. */}
-      {selected && (selected.quality || craft) && (
-        <div className="craft-block">
-          <h3 className="craft-head">Salon notes</h3>
-          {craft && (
-            <p className="craft-row">
-              <span className={`craft-level lv-${craft.difficulty}`}>
-                Difficulty: {DIFFICULTY_LABEL[craft.difficulty] ?? craft.difficulty}
-              </span>
-              {craft.notes && <span className="craft-notes">{craft.notes}</span>}
-            </p>
-          )}
-          {selected.quality && (
-            <div className="craft-judge">
-              <p className="craft-judge-head">
-                {selected.quality.pass ? 'Passed quality check' : 'Quality check flagged a few things'}
-                <span className="craft-score">
-                  {selected.quality.score}/{selected.quality.maxScore}
-                </span>
-              </p>
-              {selected.quality.notes && (
-                <p className="craft-judge-note">{selected.quality.notes}</p>
-              )}
-              {/* 옵셔널 체이닝 — 스키마가 또 바뀌어도 화면이 통째로 죽지는 않게 */}
-              {selected.quality.issues?.length > 0 && (
-                <ul className="craft-issues">
-                  {selected.quality.issues.map((issue) => (
-                    <li key={issue}>{issue}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {(keywords.length > 0 || colors.length > 0) && (
-        <div className="mood-line">
-          {/* 키워드가 없을 땐(색상 추출 모드) 스와치만 덩그러니 놓이지 않게 라벨을 붙인다 */}
-          <span className="mood-keywords">
-            {keywords.length > 0 ? keywords.join(' · ') : 'Colors in this look'}
-          </span>
-          {/* 빈 span에 배경색만 있으면 접근성 트리에서 색 정보가 통째로 사라진다 */}
-          {colors.length > 0 && (
-            <span className="swatches" role="list" aria-label="Colors in this look">
-              {colors.slice(0, 3).map((c, i) => (
-                <span
-                  className="swatch"
-                  role="listitem"
-                  key={i}
-                  style={{ background: c }}
-                  aria-label={c}
-                />
-              ))}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* 착용샷 — 시안당 1회 온디맨드 생성, 결과는 캐시 */}
-      {selected && tipSetUrl && (
-        <div className="hero-block">
-          {!hero && !restored && (
-            <button className="btn-fill" onClick={() => onHero(selected.plan.id)}>
-              See it on a hand
-            </button>
-          )}
-          {heroError && (
-            <p className="assurance hero-error" role="status">
-              {heroError}
-            </p>
-          )}
-          {hero?.status === 'loading' && (
-            <div className="hero-loading" role="status" aria-live="polite">
-              <p className="sub">Putting it on a hand...</p>
-              <div className="progress-track" aria-hidden>
-                <div className="progress-fill" />
-              </div>
-            </div>
-          )}
-          {hero?.status === 'done' &&
-            (collageUrl ? (
-              <>
-                <img className="result-img" src={collageUrl} alt="Nail try-on collage" />
-                {/* "내 손"으로 오해하지 않게 명시한다 — 사용자 손 사진을 받는 입력은 아직 없다 */}
-                <p className="hero-caption">
-                  This hand is AI-drawn. Try it on your own hand below.
-                </p>
-              </>
-            ) : (
-              <div className="result-loading" role="status" aria-live="polite">
-                <p className="sub">Finishing up...</p>
-                <div className="progress-track" aria-hidden>
-                  <div className="progress-fill" />
-                </div>
-              </div>
-            ))}
-        </div>
-      )}
-
-      {/* 내 손에 입혀보기 — SAM이 손톱만 찾아 그 자리에만 디자인을 얹는다. 손은 원본 그대로 */}
-      {selected && tipSetUrl && !restored && (() => {
-        const t = tryon[selected.plan.id];
-        const planId = selected.plan.id;
-        const run = async (file: File) => {
-          setTryon((p) => ({ ...p, [planId]: { status: 'loading' } }));
-          try {
-            const image = await onTryOn(planId, file);
-            setTryon((p) => ({ ...p, [planId]: { status: 'done', image } }));
-          } catch (e) {
-            const message = (e as Error)?.name === 'TimeoutError'
-              ? 'The try-on took too long. Feel free to retry.'
-              : (e as Error).message;
-            setTryon((p) => ({ ...p, [planId]: { status: 'error', message } }));
+        <div
+          className="st-hero"
+          style={
+            view === 'hand' && tryonUrl
+              ? { aspectRatio: handAspect, width: `min(560px, 100%, calc(72dvh * ${handAspect}))` }
+              : undefined
           }
-        };
-        return (
-          <div className="hero-block tryon-block">
-            {t?.status !== 'loading' && (
-              <label className="btn-fill">
-                {t?.status === 'done' ? 'Try another hand photo' : 'Try it on my hand'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = ''; // 같은 파일을 다시 골라도 onChange가 오게
-                    if (f) void run(f);
-                  }}
-                />
-              </label>
-            )}
-            {t?.status === 'loading' && (
-              <div className="hero-loading" role="status" aria-live="polite">
-                <p className="sub">Finding your nails and painting them... (about 20s)</p>
-                <div className="progress-track" aria-hidden>
-                  <div className="progress-fill" />
-                </div>
+          onPointerDown={(e) => { swipe.current = e.clientX; }}
+          onPointerUp={(e) => {
+            // 비교 슬라이더를 끄는 중엔 스와이프로 넘기지 않는다
+            if (swipe.current === null || view === 'hand') return;
+            const dx = e.clientX - swipe.current;
+            swipe.current = null;
+            if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+          }}
+        >
+          {!selected || !tipSetUrl ? (
+            <div className="st-hero-empty">
+              {hasAnyDone ? 'Pick a look on the left' : slots.some((s) => s.status === 'pending') ? 'Drawing your looks...' : 'No finished looks yet. Retry one on the left.'}
+            </div>
+          ) : view === 'hand' && t?.status === 'done' ? (
+            <div className="st-ba" style={{ ['--cut' as string]: `${cut}%` }}>
+              <img
+                src={t.before}
+                alt="Your hand before"
+                onLoad={(e) => {
+                  const im = e.currentTarget;
+                  if (im.naturalWidth) setHandAspect(im.naturalWidth / im.naturalHeight);
+                }}
+              />
+              <img className="st-ba-after" src={tryonUrl!} alt={`${selected.plan.title} on your hand`} />
+              <div className="st-ba-line"><span className="st-ba-knob" aria-hidden>⇆</span></div>
+              <span className="st-ba-tag l">BEFORE</span>
+              <span className="st-ba-tag r">AFTER</span>
+              <input
+                type="range"
+                min={2}
+                max={98}
+                value={cut}
+                onChange={(e) => setCut(Number(e.target.value))}
+                aria-label="Compare before and after"
+              />
+            </div>
+          ) : (
+            // 길게 눌러 저장(iOS)도 되도록 img로 렌더
+            <img key={stageUrl ?? ''} src={stageUrl ?? tipSetUrl} alt={`Selected nail set: ${selected.plan.title}`} />
+          )}
+
+          {t?.status === 'loading' && (
+            <div className="st-busy" role="status" aria-live="polite">
+              <span className="st-spinner" aria-hidden />
+              <span>
+                Finding your nails...
+                <small>About 20 seconds. Only your nails will change.</small>
+              </span>
+            </div>
+          )}
+          {hero?.status === 'loading' && view !== 'hand' && (
+            <div className="st-busy" role="status" aria-live="polite">
+              <span className="st-spinner" aria-hidden />
+              <span>Putting it on a model hand...</span>
+            </div>
+          )}
+        </div>
+
+        {doneSlots.length > 1 && (
+          <div className="st-nav">
+            <button onClick={() => go(-1)} aria-label="Previous look">‹</button>
+            <span className="st-dots" aria-hidden>
+              {doneSlots.map((s) => <i key={s.plan.id} className={s.plan.id === selectedId ? 'on' : ''} />)}
+            </span>
+            <button onClick={() => go(1)} aria-label="Next look">›</button>
+          </div>
+        )}
+        {view === 'hand' && tryonUrl && <p className="st-caption">Drag across to compare. Your hand stays exactly as uploaded.</p>}
+        {view === 'model' && collageUrl && <p className="st-caption">This hand is AI-drawn. Try it on your own hand for the real thing.</p>}
+      </section>
+
+      {/* 오른쪽 유리 패널 */}
+      <aside className="st-panel" aria-label="Look details">
+        {selected ? (
+          <>
+            <div>
+              <p className="st-eyebrow" suppressHydrationWarning>
+                Look {no(selectedIndex)} of {String(slots.length).padStart(2, '0')} · {issue.monthLabel}
+              </p>
+              <h2 className="st-title">{selected.plan.title}</h2>
+            </div>
+            {selected.plan.note && <p className="st-note">{selected.plan.note}</p>}
+
+            {(colors.length > 0 || keywords.length > 0) && (
+              <div className="st-mood">
+                {colors.length > 0 && (
+                  // 빈 span에 배경색만 있으면 접근성 트리에서 색 정보가 통째로 사라진다
+                  <span className="st-swatches" role="list" aria-label="Colors in this look">
+                    {colors.slice(0, 4).map((c, i) => (
+                      <span role="listitem" key={i} style={{ background: c }} aria-label={c} />
+                    ))}
+                  </span>
+                )}
+                {keywords.length > 0 && <span className="st-keywords">{keywords.join(' · ')}</span>}
               </div>
             )}
-            {t?.status === 'error' && (
-              <p className="assurance hero-error" role="status">{t.message}</p>
+
+            <div className="st-meta">
+              {craft && <div>Difficulty<b>{DIFFICULTY_LABEL[craft.difficulty] ?? craft.difficulty}</b></div>}
+              {selected.quality && (
+                <div className={selected.quality.pass ? '' : 'warn'}>
+                  Quality check<b>{selected.quality.score} / {selected.quality.maxScore}</b>
+                </div>
+              )}
+              <div>Shape<b style={{ textTransform: 'capitalize' }}>{baseOptions.shape}</b></div>
+              <div>Length<b style={{ textTransform: 'capitalize' }}>{baseOptions.length}</b></div>
+            </div>
+
+            {/* 시술 정보 — 핀터레스트와 다르다는 근거(검수 심사평·조정 메모)는 접어서 둔다 */}
+            {(craft?.notes || selected.quality?.notes || (selected.quality?.issues?.length ?? 0) > 0) && (
+              <details className="st-details">
+                <summary>Salon notes</summary>
+                <div className="st-details-body">
+                  {craft?.notes && <p>{craft.notes}</p>}
+                  {selected.quality?.notes && <p>{selected.quality.notes}</p>}
+                  {(selected.quality?.issues?.length ?? 0) > 0 && (
+                    <ul>{selected.quality!.issues.map((x) => <li key={x}>{x}</li>)}</ul>
+                  )}
+                </div>
+              </details>
             )}
-            {t?.status === 'done' && (
-              <>
-                <img className="result-img" src={`data:${t.image.mimeType};base64,${t.image.image}`} alt="Nails tried on my hand" />
-                <p className="hero-caption">Your hand stays exactly as uploaded. Only the nails changed.</p>
-                {signedIn && (
+
+            {photos.length > 0 && (
+              <div className="st-source">
+                From
+                {photos.map((p, i) => <img key={i} src={p.previewUrl} alt="" />)}
+                <span>your photo{photos.length > 1 ? 's' : ''}</span>
+              </div>
+            )}
+
+            <div className="st-actions">
+              {t?.status === 'error' && <p className="st-error" role="status">{t.message}</p>}
+              {heroError && <p className="st-error" role="status">{heroError}</p>}
+              {!restored && t?.status !== 'loading' &&
+                handPicker(t?.status === 'done' ? 'Try another hand photo' : 'Try it on my hand', true)}
+
+              {/* 로그인했으면 파일 저장 말고 계정에 남길 수 있다 — 무대에 떠 있는 것을 저장 */}
+              {signedIn && tipSet && (
+                view === 'hand' && t?.status === 'done' ? (
                   <SaveToLibrary
-                    // 시안을 바꿨다 돌아오거나 손 사진을 바꾸면 저장 상태가 새로 시작되게
-                    key={t.image.image.slice(-32)}
+                    key={`hand-${t.image.image.slice(-32)}`}
                     image={t.image.image}
                     mimeType={t.image.mimeType}
                     title={`${selected.plan.title} · on my hand`}
@@ -412,117 +533,79 @@ export default function ResultScreen({
                     quality={null}
                     mood={mood}
                   />
+                ) : (
+                  <SaveToLibrary
+                    key={`set-${selected.plan.id}`}
+                    image={tipSet.image}
+                    mimeType={tipSet.mimeType}
+                    title={selected.plan.title}
+                    note={selected.plan.note ?? null}
+                    shape={shape}
+                    length={length}
+                    quality={selected.quality}
+                    mood={mood}
+                  />
+                )
+              )}
+
+              <div className="st-row">
+                <button className="st-btn ghost" onClick={share} disabled={!stageUrl}>Share</button>
+                <button className="st-btn ghost" onClick={saveTipSet} disabled={!tipSetUrl}>Download</button>
+                {!restored && !hero && (
+                  <button className="st-btn ghost" onClick={() => onHero(selected.plan.id)}>Model hand</button>
                 )}
-              </>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* 결과 화면에서는 가격을 다시 묻지 않는다 — 페이월·랜딩 가격 섹션에서
-          이미 안내했고, 착용샷을 본 직후 결제 의사를 묻는 것은 순서를 뒤집는다.
-          (예전 가짜 가격 버튼 자리) */}
-
-      {/* 시안 3종 그리드 — 아직 그려지는 중이어도 완성분부터 갈아탈 수 있다 */}
-      <div className="tipset-block">
-        <h2 className="overline">Your Looks{stillDrawing ? ' (drawing...)' : ''}</h2>
-        <VariantGrid slots={slots} selectedId={selectedId} onSelect={onSelect} onRetry={onRetry} />
-      </div>
-
-      {/* 쉐입·길이·파츠를 결과에서 바로 바꿔 다시 만든다 —
-          "길이와 쉐입을 바꿔가며 비교할 수 있어요"라는 약속의 실행 경로 */}
-      {hasAnyDone && !restored && (
-        <div className="recut">
-          <p className="recut-head">Want a different shape or length?</p>
-          <OptionsPicker
-            shape={shape}
-            length={length}
-            partsIntensity={partsIntensity}
-            onShape={onShape}
-            onLength={onLength}
-            onPartsIntensity={onPartsIntensity}
-          />
-          {/* 재생성 입구는 여기 하나뿐이다. 예전엔 하단에 "다시 생성" 14px 링크가
-              무료 "새로 시작" 옆 96px에 있어, 확인도 없이 1회를 태우고 시안 5장을
-              지웠다. 유료·파괴적 액션은 입구를 하나로 모으고 확인을 받는다. */}
-          {confirmRegen ? (
-            <div className="confirm-row" role="group" aria-label="Confirm remake">
-              <p className="assurance">
-                This replaces the current looks and uses 1 run. Save anything you want to
-                keep first.
-              </p>
-              <div className="actions-row">
-                <button className="btn-outline" onClick={() => setConfirmRegen(false)}>
-                  Cancel
-                </button>
-                <button className="btn-fill" onClick={onRegenerate}>
-                  Yes, remake
-                </button>
               </div>
+
+              {/* 재생성 입구는 여기 하나뿐 — 유료·파괴적 액션은 입구를 하나로 모으고 확인을 받는다 */}
+              {hasAnyDone && !restored && (
+                <details className="st-details">
+                  <summary>Change shape, length or photos</summary>
+                  <div className="st-details-body">
+                    <OptionsPicker
+                      shape={shape}
+                      length={length}
+                      partsIntensity={partsIntensity}
+                      onShape={onShape}
+                      onLength={onLength}
+                      onPartsIntensity={onPartsIntensity}
+                    />
+                    {confirmRegen ? (
+                      <div role="group" aria-label="Confirm remake">
+                        <p className="assurance">This replaces the current looks and uses 1 run. Save anything you want to keep first.</p>
+                        <div className="st-row">
+                          <button className="st-btn ghost" onClick={() => setConfirmRegen(false)}>Cancel</button>
+                          <button className="st-btn primary" onClick={onRegenerate}>Yes, remake</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button className="st-btn ghost" onClick={() => setConfirmRegen(true)}>
+                        {optionsChanged ? 'Remake with these options' : 'Remake with the same options'}
+                        <span className="cost-tag">1 run</span>
+                      </button>
+                    )}
+                    <button className="st-btn ghost" onClick={evolve}>Add photos & evolve</button>
+                  </div>
+                </details>
+              )}
+
+              {/* 복구본이라 무엇이 되고 무엇이 안 되는지 먼저 밝힌다 */}
+              {restored && (
+                <p className="assurance">
+                  We restored your looks from before the refresh. You can still save them, but try-ons and remakes need your photos again.
+                </p>
+              )}
+              {!signedIn && <p className="assurance">Results vanish when you close the tab, so download the ones you love.</p>}
             </div>
-          ) : (
-            <button className="btn-outline recut-cta" onClick={() => setConfirmRegen(true)}>
-              {optionsChanged ? 'Remake with these options' : 'Remake with the same options'}
-              <span className="cost-tag">1 run</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* 복구본이라 무엇이 되고 무엇이 안 되는지 먼저 밝힌다 */}
-      {restored && (
-        <p className="assurance restored-note">
-          We restored your looks from before the refresh. You can still save them, but try-ons
-          and remakes need your photos again.
-        </p>
-      )}
-
-      {/* 버튼 위계: 화면당 btn-fill은 1개. 비활성 프라이머리를 시선 최상단에 두면
-          "가장 큰 버튼이 안 눌리는" 완료 화면이 된다 — 콜라주가 없으면 저장을 올린다. */}
-      <div className="actions">
-        {collageUrl && (
-          <button className="btn-fill" onClick={shareHero}>
-            Share try-on
-          </button>
+          </>
+        ) : (
+          <p className="st-note">{hasAnyDone ? 'Pick a look to see its details.' : 'Your looks are on their way.'}</p>
         )}
-        <div className="actions-row">
-          <button
-            className={collageUrl ? 'btn-outline' : 'btn-fill'}
-            onClick={saveTipSet}
-            disabled={!tipSetUrl}
-          >
-            Download set
-          </button>
-          {!restored && (
-            <button className="btn-outline" onClick={evolve}>
-              Add photos & evolve
-            </button>
-          )}
+
+        <div className="st-foot">
+          {remaining !== null ? <span>{remaining} runs left</span> : <span />}
+          <button onClick={onReset}>Start over</button>
         </div>
-        {/* 로그인했으면 파일 저장 말고 계정에 남길 수 있다 — 로그인의 실익이 생기는 지점 */}
-        {signedIn && selected?.tipSet && (
-          <SaveToLibrary
-            image={selected.tipSet.image}
-            mimeType={selected.tipSet.mimeType}
-            title={selected.plan.title}
-            note={selected.plan.note ?? null}
-            shape={shape}
-            length={length}
-            quality={selected.quality}
-            mood={mood}
-          />
-        )}
-        <p className="assurance">
-          You can also long-press an image to save it.{' '}
-          {signedIn ? 'Saved looks stay in your library.' : 'Results vanish when you close the tab, so download them.'}
-        </p>
-        <div className="actions-links">
-          <button className="btn-link" onClick={onReset}>
-            Start over
-          </button>
-        </div>
-      </div>
-      {remaining !== null && <p className="remaining">{remaining} runs left</p>}
-    </>
+      </aside>
+    </div>
   );
 }

@@ -65,6 +65,45 @@ export function quantizeColors(data: Uint8ClampedArray, count = 3): string[] {
   return picked.map(bucketToHex);
 }
 
+/**
+ * 선명한 색만 뽑는다 — 결과 화면 배경 빛 번짐용 (2026-10-27).
+ * quantizeColors는 빈도순이라 시안 사진의 회색 받침대가 이겨 배경이 탁해졌다.
+ * 채도 낮은 픽셀(회색·흰색·검정)은 버리고, 채도×빈도로 순위를 매긴다.
+ */
+export function vividColors(data: Uint8ClampedArray, count = 3): string[] {
+  const score = new Map<number, number>();
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 128) continue;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const light = (max + min) / 510;
+    const sat = max === min ? 0 : (max - min) / (255 - Math.abs(max + min - 255));
+    if (sat < 0.22 || light < 0.12 || light > 0.94) continue;
+    const key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+    score.set(key, (score.get(key) ?? 0) + sat);
+  }
+  const sorted = [...score.entries()].sort((a, b) => b[1] - a[1]).map(([k]) => k);
+  const picked: number[] = [];
+  for (const key of sorted) {
+    if (picked.length >= count) break;
+    if (picked.every((p) => bucketDistance(p, key) >= 4)) picked.push(key);
+  }
+  return picked.map(bucketToHex);
+}
+
+/** 브라우저 전용: 이미지에서 선명한 색 추출 */
+export function extractVividColors(bitmap: ImageBitmap, count = 3): string[] {
+  const w = 64;
+  const h = Math.max(1, Math.round((bitmap.height / bitmap.width) * w));
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return [];
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  return vividColors(ctx.getImageData(0, 0, w, h).data, count);
+}
+
 /** 브라우저 전용: 이미지에서 대표 색상 추출 (무드 색상 폴백용) */
 export function extractColors(bitmap: ImageBitmap, count = 3): string[] {
   const w = 64;

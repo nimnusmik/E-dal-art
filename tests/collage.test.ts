@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { collageLayout, coverRect, quantizeColors } from '@/lib/collage';
+import { collageLayout, coverRect, quantizeColors, vividColors } from '@/lib/collage';
 
 const W = 1080;
 const H = 1350;
@@ -92,5 +92,22 @@ describe('quantizeColors', () => {
   it('#RRGGBB 형식', () => {
     const data = pixels([[16, 32, 48]], [3]);
     expect(quantizeColors(data, 1)[0]).toMatch(/^#[0-9a-f]{6}$/);
+  });
+});
+
+describe('vividColors', () => {
+  const px = (rgb: number[][], reps: number[]) => {
+    const out: number[] = [];
+    rgb.forEach((c, i) => { for (let k = 0; k < reps[i]; k++) out.push(c[0], c[1], c[2], 255); });
+    return new Uint8ClampedArray(out);
+  };
+  it('회색이 훨씬 많아도 버리고 선명한 색만 고른다', () => {
+    const data = px([[200, 200, 205], [240, 160, 190], [120, 180, 240]], [900, 40, 30]);
+    const got = vividColors(data, 3);
+    expect(got).toHaveLength(2);
+    expect(got.every((h) => h !== '#c8c8c8')).toBe(true);
+  });
+  it('선명한 색이 없으면 빈 배열', () => {
+    expect(vividColors(px([[128, 128, 128], [255, 255, 255]], [10, 10]), 3)).toEqual([]);
   });
 });
