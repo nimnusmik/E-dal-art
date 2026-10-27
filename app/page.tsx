@@ -630,11 +630,13 @@ export default function Home() {
 
   if (phase === 'analyzing' || phase === 'generating') {
     return (
-      <main className="screen">
+      // 생성 중 화면도 결과 화면과 같은 전체 폭 Studio 틀 (app/studio.css)
+      <main>
         {screenHeading}
         <GeneratingScreen
           stage={phase === 'analyzing' ? 'analyzing' : 'variants'}
           slots={slots}
+          photos={photos}
           onRetry={retrySlot}
           onSelect={selectVariant}
           onCancel={cancelGenerate}

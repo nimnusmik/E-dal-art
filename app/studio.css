@@ -125,7 +125,7 @@
 .st-thumb.is-pending {
   opacity: 1;
   cursor: default;
-  background: linear-gradient(110deg, rgba(255,255,255,.05) 30%, rgba(255,255,255,.16) 50%, rgba(255,255,255,.05) 70%);
+  background: linear-gradient(110deg, rgb(var(--st-ink) / 0.05) 30%, rgb(var(--st-ink) / 0.14) 50%, rgb(var(--st-ink) / 0.05) 70%);
   background-size: 250% 100%;
   animation: st-shimmer 1.6s linear infinite;
 }
@@ -431,3 +431,73 @@
 @media (prefers-reduced-motion: reduce) {
   .st *, .st *::before, .st *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── 생성 중 화면 (GeneratingScreen) ── */
+.st-pop { animation: st-pop 0.5s var(--st-ease); }
+@keyframes st-pop { from { transform: scale(0.8); opacity: 0; } }
+
+/* 영감 사진 부채꼴 + 위아래로 지나가는 스캔 빛 */
+.st-fan { position: relative; width: min(420px, 80%); aspect-ratio: 1; display: grid; place-items: center; }
+.st-fan-card {
+  position: absolute;
+  width: 62%;
+  aspect-ratio: 4 / 5;
+  border-radius: 22px;
+  overflow: hidden;
+  background: rgb(var(--st-ink) / 0.06);
+  box-shadow: var(--st-hero-shadow);
+  transform: translateX(var(--x)) rotate(var(--r));
+  animation: st-breathe 3.2s ease-in-out infinite alternate;
+}
+.st-fan-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@keyframes st-breathe { to { transform: translateX(var(--x)) rotate(var(--r)) translateY(-8px); } }
+.st-scan {
+  position: absolute;
+  inset: 4% 8%;
+  border-radius: 26px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.75) 48%, rgba(120, 160, 255, 0.35) 52%, transparent 60%);
+  background-size: 100% 260%;
+  mix-blend-mode: screen;
+  animation: st-scan 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes st-scan { from { background-position: 0 100%; } to { background-position: 0 -60%; } }
+.st-gen-msg { font-size: 15px; font-weight: 600; color: var(--st-fg); text-align: center; min-height: 1.4em; }
+.st-gen-msg span { display: inline-block; animation: st-in 0.4s var(--st-ease); }
+
+/* 첫 시안이 나오면 무대가 그 시안으로 */
+.st-hero-btn { border: 0; padding: 0; cursor: pointer; animation: st-pop 0.6s var(--st-ease); }
+.st-hero-chip {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #16161e;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 진행 단계 체크리스트 */
+.st-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.st-steps li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; font-weight: 600; color: var(--st-text-3); transition: color 0.3s; }
+.st-steps li small { display: block; font-weight: 400; font-size: 12px; color: var(--st-text-3); margin-top: 3px; }
+.st-steps li.is-active, .st-steps li.is-done { color: var(--st-fg); }
+.st-step-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  border: 2px solid rgb(var(--st-ink) / 0.18);
+  color: var(--st-primary-fg);
+}
+.st-steps li.is-done .st-step-dot { background: var(--st-primary-bg); border-color: var(--st-primary-bg); }
+.st-steps li.is-active .st-step-dot { border-color: var(--st-fg); border-top-color: transparent; animation: st-spin 0.9s linear infinite; }

@@ -25,9 +25,12 @@ export default function Preview() {
   const [slots, setSlots] = useState<VariantSlot[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>('v1');
   // ?state=drawing 이면 마지막 시안을 "그리는 중", ?state=fail 이면 실패 칸으로
-  const state = typeof window !== 'undefined' ? new URLSearchParams(location.search).get('state') : null;
+  // 주소창 값은 마운트 후에 읽는다 (렌더 중에 읽으면 hydration 불일치)
+  const [state, setState] = useState<string | null | undefined>(undefined);
+  useEffect(() => setState(new URLSearchParams(location.search).get('state')), []);
 
   useEffect(() => {
+    if (state === undefined) return;
     Promise.all(PLANS.map((p) => load(p.img))).then((imgs) =>
       setSlots(
         PLANS.map((p, i) => {
