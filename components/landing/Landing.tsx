@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { FAQS } from './content';
-import Hero from '@/components/story/Hero';
+import HeroScene from './HeroScene';
+import HowItWorks from './HowItWorks';
 import TopBar from './TopBar';
 import Stats from './Stats';
 import Gallery from './Gallery';
-import Services from './Services';
 import ToolSection from './ToolSection';
 import Faq from './Faq';
 import PriceSection from './PriceSection';
@@ -41,12 +41,13 @@ export default function Landing({ toolSlot }: { toolSlot: ReactNode }) {
       </a>
       <TopBar />
       <main id="main-content">
-        <Hero />
+        <HeroScene />
+        {/* 히어로 바로 아래에서 원리를 설명 — 5단계 Services는 내용이 겹쳐 뺐다 (2026-10-27) */}
+        <HowItWorks />
         <ToolSection>{toolSlot}</ToolSection>
         <Gallery />
         <PriceSection />
         <Stats />
-        <Services />
         <Faq />
         <FooterCta />
       </main>

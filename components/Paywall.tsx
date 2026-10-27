@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
+import { FREE_CREDITS, PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
 
 /**
  * 페이월 — 이용권이 없는 방문자에게 보여주는 툴 카드 내용.
@@ -106,9 +106,10 @@ export default function Paywall({ email }: { email: string | null }) {
   if (!email) {
     return (
       <div className="invite-gate">
-        <p className="invite-label">Unlock this month&apos;s nails</p>
+        {/* 가입하면 무료 횟수가 들어온다(lib/accounts.ts) — 로그인 전 첫인상이 '유료'면 안 된다 */}
+        <p className="invite-label">Sign in to get {FREE_CREDITS} free runs</p>
         <p className="assurance">
-          {PACK_CREDITS} runs · {price} · no subscription
+          No card needed · then {price} for {PACK_CREDITS} runs
         </p>
         {/* 로그인 버튼은 여기 하나뿐 — 아래 AccountBar는 비로그인일 때 동의 고지만 낸다 */}
         <div className="notify-row">
