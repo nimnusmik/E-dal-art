@@ -623,6 +623,7 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   /* "5종/3장/매월"은 한글이 섞이므로 라틴용 -0.03em은 과하다 */
   letter-spacing: -0.01em;
   color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
 .xp-card h3 {

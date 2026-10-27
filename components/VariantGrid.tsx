@@ -21,7 +21,7 @@ export default function VariantGrid({
     // 카드에 role="listitem"을 직접 붙이면 button의 암묵 역할이 덮여
     // "버튼"으로 낭독되지 않고 aria-pressed(선택 상태)도 무효가 된다.
     // 목록 시맨틱은 li가 갖고, 버튼은 버튼으로 둔다.
-    <ul className="variant-grid" aria-label="시안 3종">
+    <ul className="variant-grid" aria-label="Your looks">
       {slots.map((slot, i) => {
         const no = String(i + 1).padStart(2, '0');
 
@@ -40,12 +40,12 @@ export default function VariantGrid({
                 <span className="variant-no" aria-hidden>{no}</span>
                 <span className="variant-caption">
                   <span className="variant-title">
-                    시안 {no} — {slot.plan.title}
+                    Look {no}: {slot.plan.title}
                   </span>
                   {/* 무엇이 다른 시안인지 한 줄로 — 이름만 있으면 무작위 단어 3개로 읽힌다 */}
                   {note && <span className="variant-note">{note}</span>}
                   {slot.quality?.pass === false && (
-                    <span className="variant-badge warn">아쉬운 컷</span>
+                    <span className="variant-badge warn">Rough take</span>
                   )}
                 </span>
               </button>
@@ -58,10 +58,10 @@ export default function VariantGrid({
             <li key={slot.plan.id}>
               <div className="variant-card is-fail">
                 <div className="variant-fail">
-                  <span className="variant-fail-msg">생성 실패</span>
+                  <span className="variant-fail-msg">Couldn't draw this one</span>
                   {onRetry && (
                     <button className="btn-outline variant-retry" onClick={() => onRetry(slot.plan.id)}>
-                      다시 시도 · 무료
+                      Retry · free
                     </button>
                   )}
                 </div>
@@ -76,8 +76,8 @@ export default function VariantGrid({
             <li key={slot.plan.id}>
               <div className="variant-card is-fail">
                 <div className="variant-fail">
-                  <span className="variant-fail-msg">오늘 한도 도달</span>
-                  <span className="variant-fail-sub">내일 다시 그려드릴게요</span>
+                  <span className="variant-fail-msg">Daily limit reached</span>
+                  <span className="variant-fail-sub">Come back tomorrow</span>
                 </div>
                 <span className="variant-no" aria-hidden>{no}</span>
               </div>
@@ -93,7 +93,7 @@ export default function VariantGrid({
               <span className="variant-no" aria-hidden>{no}</span>
               <span className="variant-caption">
                 <span className="variant-title">{slot.plan.title}</span>
-                <span className="variant-badge soft">그리는 중</span>
+                <span className="variant-badge soft">Drawing</span>
               </span>
             </div>
           </li>

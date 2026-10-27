@@ -31,16 +31,16 @@ export default async function PaySuccess({
         <div className="blocked-card" role="status">
           <p className="overline">{ok ? 'Payment confirmed' : 'Payment pending'}</p>
           <h2 className="headline">
-            {ok ? `${PACK_CREDITS}회 이용권이 들어왔어요` : '결제 확인 중이에요'}
+            {ok ? `${PACK_CREDITS} runs added` : 'Confirming your payment'}
           </h2>
           <p className="sub">
             {ok
-              ? '이제 이달아에서 이달의 네일 세트를 만들 수 있어요. 만들기에 실패한 회차는 차감되지 않아요.'
-              : '결제는 접수됐는데 확인이 늦어지고 있어요. 잠시 후 다시 들어오면 횟수가 들어와 있어요.'}
+              ? 'You can make nail sets now. Failed runs never count.'
+              : 'We got your payment but confirmation is taking a moment. Your runs will show up shortly.'}
           </p>
           <div className="blocked-actions">
             <Link className="btn-fill" href="/#tool">
-              만들러 가기
+              Start making
             </Link>
           </div>
         </div>

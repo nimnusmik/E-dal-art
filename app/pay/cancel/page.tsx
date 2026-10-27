@@ -7,13 +7,13 @@ export default function PayCancel() {
       <div className="blocked">
         <div className="blocked-card" role="status">
           <p className="overline">Payment cancelled</p>
-          <h2 className="headline">결제가 취소됐어요</h2>
+          <h2 className="headline">Payment cancelled</h2>
           <p className="sub">
-            결제된 금액은 없어요. 마음이 바뀌면 언제든 다시 시작할 수 있어요.
+            You weren't charged. Come back any time.
           </p>
           <div className="blocked-actions">
             <Link className="btn-fill" href="/#tool">
-              다시 시작하기
+              Start again
             </Link>
           </div>
         </div>

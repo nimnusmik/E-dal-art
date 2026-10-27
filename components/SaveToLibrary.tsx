@@ -40,19 +40,19 @@ export default function SaveToLibrary(props: {
   };
 
   if (state === 'saved') {
-    return <p className="assurance save-done">보관함에 담았어요. 다음에 와도 남아 있어요.</p>;
+    return <p className="assurance save-done">Saved to your library. It'll be here next time.</p>;
   }
 
   return (
     <div className="save-library">
       <button className="btn-outline" onClick={() => void save()} disabled={state === 'saving'}>
-        {state === 'saving' ? '저장하는 중...' : '보관함에 저장'}
+        {state === 'saving' ? 'Saving...' : 'Save to library'}
       </button>
       {state === 'full' && (
-        <p className="assurance">보관함이 가득 찼어요. 오래된 시안을 지우고 다시 시도해주세요.</p>
+        <p className="assurance">Your library is full. Delete an old look and try again.</p>
       )}
       {state === 'error' && (
-        <p className="assurance">저장에 실패했어요. 잠시 뒤 다시 시도해주세요.</p>
+        <p className="assurance">Couldn't save. Please try again in a moment.</p>
       )}
     </div>
   );

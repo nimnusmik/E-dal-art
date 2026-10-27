@@ -79,11 +79,11 @@ export default function InspirationTray({
       >
         {photos.map((photo, i) => (
           <div className="slot" key={photo.id}>
-            <img src={photo.previewUrl} alt="영감 사진" />
+            <img src={photo.previewUrl} alt="Inspiration photo" />
             <span className="slot-index" aria-hidden>
               {String(i + 1).padStart(2, '0')}
             </span>
-            <button className="slot-x" aria-label="사진 삭제" onClick={() => onRemove(photo.id)}>
+            <button className="slot-x" aria-label="Remove photo" onClick={() => onRemove(photo.id)}>
               ✕
             </button>
           </div>
@@ -96,14 +96,14 @@ export default function InspirationTray({
           <label className="slot">
             <span className="slot-add">
               <span className="plus" aria-hidden>＋</span>
-              <span>{photos.length === 0 ? '사진 추가' : '더 추가'}</span>
+              <span>{photos.length === 0 ? 'Add photo' : 'Add more'}</span>
             </span>
             <input
               type="file"
               accept="image/*"
               multiple
               className="visually-hidden"
-              aria-label="영감 사진 추가"
+              aria-label="Add inspiration photo"
               onChange={(e) => {
                 takeFiles(e.target.files);
                 e.target.value = '';
@@ -114,12 +114,12 @@ export default function InspirationTray({
       </div>
       <p className="tray-hint" aria-live="polite">
         {pendingCount > 0
-          ? '사진 준비 중...'
+          ? 'Preparing photos...'
           : canAdd
             ? photos.length === 0
-              ? '한 장만 올려도 시작할 수 있어요. 끌어다 놓거나 붙여넣어도 돼요.'
-              : `${left}장 더 올릴 수 있어요. 사진을 더하면 색과 무드가 섞여요.`
-            : '3장까지 다 올렸어요.'}
+              ? 'One photo is enough to start. Drag, drop or paste works too.'
+              : `You can add ${left} more. More photos blend their colors and mood.`
+            : 'All 3 photos added.'}
       </p>
     </div>
   );

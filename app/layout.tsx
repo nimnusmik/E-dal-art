@@ -12,9 +12,9 @@ const SITE_URL =
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : 'http://localhost:3000');
-const TITLE = '이달아 — 이달의 네일 아트';
-const DESCRIPTION = '영감 사진을 올리면, 이달의 네일 아트 시안이 나와요';
-const OG_DESCRIPTION = '영감 사진 한 장으로 이달의 네일 시안 3종을 만들어요. 실제로 만들어 검수를 통과한 시안 예시를 볼 수 있어요.';
+const TITLE = 'idala: nail sets from your inspiration photos';
+const DESCRIPTION = 'Drop in an inspiration photo and get a salon-ready nail set, then try it on your own hand.';
+const OG_DESCRIPTION = 'One inspiration photo becomes three nail sets, quality-checked and ready to try on your own hand.';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   // 카카오톡·인스타 공유가 사실상 유일한 유통 경로 — OG가 없으면 URL만 덜렁 나간다
   openGraph: {
     type: 'website',
-    locale: 'ko_KR',
-    siteName: '이달아',
+    locale: 'en_US',
+    siteName: 'idala',
     title: TITLE,
     description: OG_DESCRIPTION,
     url: '/',
@@ -47,7 +47,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <head>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link

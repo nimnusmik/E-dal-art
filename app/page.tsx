@@ -6,7 +6,6 @@ import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
 import ResultScreen from '@/components/ResultScreen';
 import AccountBar from '@/components/AccountBar';
-import Library from '@/components/Library';
 import Landing from '@/components/landing/Landing';
 import { useIssue } from '@/lib/useIssue';
 import { fileToResizedPayload } from '@/lib/resize';
@@ -492,6 +491,35 @@ export default function Home() {
     [slots, heroMap, showToast], // shape·length는 genOptionsRef로 읽으므로 의존성 아님
   );
 
+  /** 내 손에 입혀보기 — 손 사진 파일 + 고른 시안 → 손톱만 바뀐 내 손 사진. 실패는 사용자용 문장으로 던진다 */
+  const requestTryOn = useCallback(
+    async (planId: string, file: File): Promise<GeneratedImage> => {
+      const slot = slots.find((s) => s.plan.id === planId);
+      if (!slot?.tipSet) throw new Error('Pick a finished look first.');
+      const { data, mimeType } = await fileToResizedPayload(file);
+      const res = await fetch('/api/tryon', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          hand: { data, mimeType },
+          tipSet: { image: slot.tipSet.image, mimeType: slot.tipSet.mimeType },
+          variantToken: briefRef.current?.variantToken,
+        }),
+        signal: AbortSignal.timeout(70_000),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) return json.tryon;
+      throw new Error(
+        json.error === 'NO_NAILS'
+          ? "We couldn't find your nails. Try a photo of the back of your hand, fingers spread, in good light."
+          : json.error === 'RATE_LIMIT_TRYON'
+            ? 'This run hit its try-on limit (3).'
+            : 'Try-on failed. Feel free to retry.',
+      );
+    },
+    [slots],
+  );
+
   /** 인라인 배너 — 사용자가 보고 있는 자리에 남는다 */
   const inlineError =
     error?.kind === 'inline' ? (
@@ -592,8 +620,6 @@ export default function Home() {
                 <p className="remaining">{`${remaining ?? 0} runs left`}</p>
               )}
               <AccountBar email={accountEmail} />
-              {/* 보관함은 로그인한 사람에게만 — 비로그인에게는 빈 영역이 될 뿐이다 */}
-              {accountEmail && <Library />}
             </div>
             {toastError}
           </>
@@ -641,6 +667,7 @@ export default function Home() {
           onSelect={setSelectedId}
           onRetry={retrySlot}
           onHero={requestHero}
+          onTryOn={requestTryOn}
           onEvolve={() => {
             anchorToolRef.current = true;
             setPhase('start');

@@ -34,7 +34,7 @@ const PENDING_PREFIX = 'quota:pending:';
 const PENDING_STALE_SECONDS = 600;
 
 /** 범위별 카운터 — save는 주체별 일일, variant·hero는 세션(sid)별 (user/total과 키 공간 분리) */
-export type QuotaScope = 'variant' | 'hero' | 'save';
+export type QuotaScope = 'variant' | 'hero' | 'save' | 'tryon';
 
 /**
  * 쿼터 주체 키. subject는 로그인 시 `u:<구글sub>`, 비로그인 시 `ip:<주소>`다

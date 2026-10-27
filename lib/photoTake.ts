@@ -1,4 +1,5 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { Type } from '@google/genai';
+import { analyzeGenerate } from './geminiText';
 import type { Material } from './core';
 import type { ImagePayload } from './types';
 import { isMock } from './mock';
@@ -155,10 +156,7 @@ export async function extractPhotoTake(images: ImagePayload[]): Promise<PhotoTak
 async function extractOnce(images: ImagePayload[]): Promise<PhotoTake | null> {
   if (isMock()) return mockPhotoTake();
   try {
-    const model = process.env.GEMINI_ANALYZE_MODEL ?? 'gemini-3.5-flash';
-    const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await client.models.generateContent({
-      model,
+    const response = await analyzeGenerate({
       contents: [
         ...images.map((img) => ({ inlineData: { data: img.data, mimeType: img.mimeType } })),
         { text: EXTRACT_INSTRUCTION },

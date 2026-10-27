@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { FREE_CREDITS } from './pricing';
 
 /**
  * 계정 레코드 (Postgres).
@@ -16,7 +17,8 @@ export interface Account {
 }
 
 /**
- * 로그인 시 호출. 처음이면 만들고, 있으면 마지막 접속 시각과 이메일을 갱신한다.
+ * 로그인 시 호출. 처음이면 만들고(무료 횟수 FREE_CREDITS 지급), 있으면 마지막 접속 시각과 이메일만 갱신한다.
+ * on conflict 쪽은 credits를 건드리지 않는다 — 재로그인으로 무료 횟수가 다시 채워지면 안 된다.
  * (이메일은 구글에서 바뀔 수 있으므로 매번 최신값으로 덮는다. 계정의 기준은 google_sub.)
  */
 export async function upsertAccount(googleSub: string, email: string): Promise<Account | null> {
@@ -24,8 +26,8 @@ export async function upsertAccount(googleSub: string, email: string): Promise<A
   if (!sql) return null;
   try {
     const rows = (await sql`
-      insert into users (google_sub, email)
-      values (${googleSub}, ${email})
+      insert into users (google_sub, email, credits)
+      values (${googleSub}, ${email}, ${FREE_CREDITS})
       on conflict (google_sub) do update
         set email = excluded.email,
             last_seen_at = now()

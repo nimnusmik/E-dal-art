@@ -6,13 +6,13 @@ import SaveToLibrary from '@/components/SaveToLibrary';
 import VariantGrid from '@/components/VariantGrid';
 import { drawCollage, extractColors } from '@/lib/collage';
 import { currentIssue } from '@/lib/issue';
-import type { HeroEntry, PartsIntensity, TrayPhoto, VariantSlot } from '@/app/page';
+import type { GeneratedImage, HeroEntry, PartsIntensity, TrayPhoto, VariantSlot } from '@/app/page';
 import type { Mood, NailLength, NailShape } from '@/lib/types';
 
-const DIFFICULTY_KO: Record<string, string> = {
-  easy: '쉬움',
-  medium: '보통',
-  hard: '어려움',
+const DIFFICULTY_LABEL: Record<string, string> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
 };
 
 async function base64ToBitmap(data: string, mimeType: string): Promise<ImageBitmap> {
@@ -103,6 +103,7 @@ export default function ResultScreen({
   onSelect,
   onRetry,
   onHero,
+  onTryOn,
   onEvolve,
   onRegenerate,
   onReset,
@@ -129,6 +130,8 @@ export default function ResultScreen({
   onSelect: (planId: string) => void;
   onRetry: (planId: string) => void;
   onHero: (planId: string) => void;
+  /** 내 손 사진에 입혀보기 (SAM + Muse Image) */
+  onTryOn: (planId: string, file: File) => Promise<GeneratedImage>;
   onEvolve: () => void;
   onRegenerate: () => void;
   onReset: () => void;
@@ -139,6 +142,10 @@ export default function ResultScreen({
   restored?: boolean;
 }) {
   const [collageUrl, setCollageUrl] = useState<string | null>(null);
+  // 내 손 입혀보기 — 시안별 결과. 시안을 바꾸면 그 시안의 결과만 보인다
+  const [tryon, setTryon] = useState<
+    Record<string, { status: 'loading' } | { status: 'done'; image: GeneratedImage } | { status: 'error'; message: string }>
+  >({});
   const [extractedColors, setExtractedColors] = useState<string[]>([]);
   // 유료·파괴적 재생성은 2단 확인 — 네이티브 confirm 대신 인라인으로 맥락을 유지한다
   const [confirmRegen, setConfirmRegen] = useState(false);
@@ -184,7 +191,7 @@ export default function ResultScreen({
     const how = await shareOrDownload(
       collageUrl,
       `idala-${Date.now()}.${ext}`,
-      '이달아에서 만든 이달의 네일 시안이에요',
+      'My nail set, made with idala',
     );
     track(how === 'share' ? 'share' : 'save');
   };
@@ -218,7 +225,7 @@ export default function ResultScreen({
             <img
               className="result-img"
               src={tipSetUrl}
-              alt={`선택한 네일 시안 — ${selected.plan.title}`}
+              alt={`Selected nail set: ${selected.plan.title}`}
             />
             <div className="pick-head">
               <h3 className="pick-title">
@@ -236,8 +243,8 @@ export default function ResultScreen({
           <div className="blocked-card">
             <p className="sub">
               {hasAnyDone
-                ? '아래에서 마음에 드는 시안을 골라주세요'
-                : '완성된 시안이 없어요. 아래에서 다시 시도해주세요'}
+                ? 'Pick a look below'
+                : 'No finished looks yet. Retry one below.'}
             </p>
           </div>
         )}
@@ -247,11 +254,11 @@ export default function ResultScreen({
           검수 심사평(왜 통과/왜 아쉬운지)과 난이도·조정 메모를 함께 둔다. */}
       {selected && (selected.quality || craft) && (
         <div className="craft-block">
-          <h3 className="craft-head">시술 정보</h3>
+          <h3 className="craft-head">Salon notes</h3>
           {craft && (
             <p className="craft-row">
               <span className={`craft-level lv-${craft.difficulty}`}>
-                난이도 {DIFFICULTY_KO[craft.difficulty] ?? craft.difficulty}
+                Difficulty: {DIFFICULTY_LABEL[craft.difficulty] ?? craft.difficulty}
               </span>
               {craft.notes && <span className="craft-notes">{craft.notes}</span>}
             </p>
@@ -259,9 +266,9 @@ export default function ResultScreen({
           {selected.quality && (
             <div className="craft-judge">
               <p className="craft-judge-head">
-                {selected.quality.pass ? '검수 통과' : '검수에서 걸린 부분이 있어요'}
+                {selected.quality.pass ? 'Passed quality check' : 'Quality check flagged a few things'}
                 <span className="craft-score">
-                  {selected.quality.score}/{selected.quality.maxScore}점
+                  {selected.quality.score}/{selected.quality.maxScore}
                 </span>
               </p>
               {selected.quality.notes && (
@@ -284,11 +291,11 @@ export default function ResultScreen({
         <div className="mood-line">
           {/* 키워드가 없을 땐(색상 추출 모드) 스와치만 덩그러니 놓이지 않게 라벨을 붙인다 */}
           <span className="mood-keywords">
-            {keywords.length > 0 ? keywords.join(' · ') : '이 시안의 컬러'}
+            {keywords.length > 0 ? keywords.join(' · ') : 'Colors in this look'}
           </span>
           {/* 빈 span에 배경색만 있으면 접근성 트리에서 색 정보가 통째로 사라진다 */}
           {colors.length > 0 && (
-            <span className="swatches" role="list" aria-label="이 시안의 컬러">
+            <span className="swatches" role="list" aria-label="Colors in this look">
               {colors.slice(0, 3).map((c, i) => (
                 <span
                   className="swatch"
@@ -308,7 +315,7 @@ export default function ResultScreen({
         <div className="hero-block">
           {!hero && !restored && (
             <button className="btn-fill" onClick={() => onHero(selected.plan.id)}>
-              이 시안 착용샷 보기
+              See it on a hand
             </button>
           )}
           {heroError && (
@@ -318,7 +325,7 @@ export default function ResultScreen({
           )}
           {hero?.status === 'loading' && (
             <div className="hero-loading" role="status" aria-live="polite">
-              <p className="sub">손에 얹어보는 중...</p>
+              <p className="sub">Putting it on a hand...</p>
               <div className="progress-track" aria-hidden>
                 <div className="progress-fill" />
               </div>
@@ -327,15 +334,15 @@ export default function ResultScreen({
           {hero?.status === 'done' &&
             (collageUrl ? (
               <>
-                <img className="result-img" src={collageUrl} alt="생성된 네일 착용샷 콜라주" />
+                <img className="result-img" src={collageUrl} alt="Nail try-on collage" />
                 {/* "내 손"으로 오해하지 않게 명시한다 — 사용자 손 사진을 받는 입력은 아직 없다 */}
                 <p className="hero-caption">
-                  AI가 그린 손이에요. 내 손 사진을 올려 합성하는 기능은 준비 중이에요.
+                  This hand is AI-drawn. Try it on your own hand below.
                 </p>
               </>
             ) : (
               <div className="result-loading" role="status" aria-live="polite">
-                <p className="sub">이미지 정리 중...</p>
+                <p className="sub">Finishing up...</p>
                 <div className="progress-track" aria-hidden>
                   <div className="progress-fill" />
                 </div>
@@ -344,13 +351,81 @@ export default function ResultScreen({
         </div>
       )}
 
+      {/* 내 손에 입혀보기 — SAM이 손톱만 찾아 그 자리에만 디자인을 얹는다. 손은 원본 그대로 */}
+      {selected && tipSetUrl && !restored && (() => {
+        const t = tryon[selected.plan.id];
+        const planId = selected.plan.id;
+        const run = async (file: File) => {
+          setTryon((p) => ({ ...p, [planId]: { status: 'loading' } }));
+          try {
+            const image = await onTryOn(planId, file);
+            setTryon((p) => ({ ...p, [planId]: { status: 'done', image } }));
+          } catch (e) {
+            const message = (e as Error)?.name === 'TimeoutError'
+              ? 'The try-on took too long. Feel free to retry.'
+              : (e as Error).message;
+            setTryon((p) => ({ ...p, [planId]: { status: 'error', message } }));
+          }
+        };
+        return (
+          <div className="hero-block tryon-block">
+            {t?.status !== 'loading' && (
+              <label className="btn-fill">
+                {t?.status === 'done' ? 'Try another hand photo' : 'Try it on my hand'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = ''; // 같은 파일을 다시 골라도 onChange가 오게
+                    if (f) void run(f);
+                  }}
+                />
+              </label>
+            )}
+            {t?.status === 'loading' && (
+              <div className="hero-loading" role="status" aria-live="polite">
+                <p className="sub">Finding your nails and painting them... (about 20s)</p>
+                <div className="progress-track" aria-hidden>
+                  <div className="progress-fill" />
+                </div>
+              </div>
+            )}
+            {t?.status === 'error' && (
+              <p className="assurance hero-error" role="status">{t.message}</p>
+            )}
+            {t?.status === 'done' && (
+              <>
+                <img className="result-img" src={`data:${t.image.mimeType};base64,${t.image.image}`} alt="Nails tried on my hand" />
+                <p className="hero-caption">Your hand stays exactly as uploaded. Only the nails changed.</p>
+                {signedIn && (
+                  <SaveToLibrary
+                    // 시안을 바꿨다 돌아오거나 손 사진을 바꾸면 저장 상태가 새로 시작되게
+                    key={t.image.image.slice(-32)}
+                    image={t.image.image}
+                    mimeType={t.image.mimeType}
+                    title={`${selected.plan.title} · on my hand`}
+                    note="Tried on my hand"
+                    shape={shape}
+                    length={length}
+                    quality={null}
+                    mood={mood}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        );
+      })()}
+
       {/* 결과 화면에서는 가격을 다시 묻지 않는다 — 페이월·랜딩 가격 섹션에서
           이미 안내했고, 착용샷을 본 직후 결제 의사를 묻는 것은 순서를 뒤집는다.
           (예전 가짜 가격 버튼 자리) */}
 
       {/* 시안 3종 그리드 — 아직 그려지는 중이어도 완성분부터 갈아탈 수 있다 */}
       <div className="tipset-block">
-        <h2 className="overline">Five Looks{stillDrawing ? ' — 그리는 중' : ''}</h2>
+        <h2 className="overline">Your Looks{stillDrawing ? ' (drawing...)' : ''}</h2>
         <VariantGrid slots={slots} selectedId={selectedId} onSelect={onSelect} onRetry={onRetry} />
       </div>
 
@@ -358,7 +433,7 @@ export default function ResultScreen({
           "길이와 쉐입을 바꿔가며 비교할 수 있어요"라는 약속의 실행 경로 */}
       {hasAnyDone && !restored && (
         <div className="recut">
-          <p className="recut-head">다른 쉐입·길이로도 볼까요?</p>
+          <p className="recut-head">Want a different shape or length?</p>
           <OptionsPicker
             shape={shape}
             length={length}
@@ -371,24 +446,24 @@ export default function ResultScreen({
               무료 "새로 시작" 옆 96px에 있어, 확인도 없이 1회를 태우고 시안 5장을
               지웠다. 유료·파괴적 액션은 입구를 하나로 모으고 확인을 받는다. */}
           {confirmRegen ? (
-            <div className="confirm-row" role="group" aria-label="다시 만들기 확인">
+            <div className="confirm-row" role="group" aria-label="Confirm remake">
               <p className="assurance">
-                지금 시안 5장이 사라지고 오늘 1회를 써요. 저장 안 한 시안이 있으면 먼저
-                받아두세요.
+                This replaces the current looks and uses 1 run. Save anything you want to
+                keep first.
               </p>
               <div className="actions-row">
                 <button className="btn-outline" onClick={() => setConfirmRegen(false)}>
-                  취소
+                  Cancel
                 </button>
                 <button className="btn-fill" onClick={onRegenerate}>
-                  네, 다시 만들기
+                  Yes, remake
                 </button>
               </div>
             </div>
           ) : (
             <button className="btn-outline recut-cta" onClick={() => setConfirmRegen(true)}>
-              {optionsChanged ? '이 옵션으로 다시 만들기' : '같은 옵션으로 새로 뽑기'}
-              <span className="cost-tag">1회</span>
+              {optionsChanged ? 'Remake with these options' : 'Remake with the same options'}
+              <span className="cost-tag">1 run</span>
             </button>
           )}
         </div>
@@ -397,8 +472,8 @@ export default function ResultScreen({
       {/* 복구본이라 무엇이 되고 무엇이 안 되는지 먼저 밝힌다 */}
       {restored && (
         <p className="assurance restored-note">
-          새로고침 전 시안을 되살렸어요. 저장은 되지만 착용샷·다시 만들기는 사진을 다시
-          올려야 해요.
+          We restored your looks from before the refresh. You can still save them, but try-ons
+          and remakes need your photos again.
         </p>
       )}
 
@@ -407,7 +482,7 @@ export default function ResultScreen({
       <div className="actions">
         {collageUrl && (
           <button className="btn-fill" onClick={shareHero}>
-            착용샷 공유하기
+            Share try-on
           </button>
         )}
         <div className="actions-row">
@@ -416,11 +491,11 @@ export default function ResultScreen({
             onClick={saveTipSet}
             disabled={!tipSetUrl}
           >
-            시안 이미지 저장
+            Download set
           </button>
           {!restored && (
             <button className="btn-outline" onClick={evolve}>
-              사진 더해 진화
+              Add photos & evolve
             </button>
           )}
         </div>
@@ -438,16 +513,16 @@ export default function ResultScreen({
           />
         )}
         <p className="assurance">
-          사진을 길게 눌러도 저장할 수 있어요.{' '}
-          {signedIn ? '보관함에 저장하면 다음에 와도 남아 있어요.' : '탭을 닫으면 결과가 사라지니 꼭 받아두세요.'}
+          You can also long-press an image to save it.{' '}
+          {signedIn ? 'Saved looks stay in your library.' : 'Results vanish when you close the tab, so download them.'}
         </p>
         <div className="actions-links">
           <button className="btn-link" onClick={onReset}>
-            새로 시작
+            Start over
           </button>
         </div>
       </div>
-      {remaining !== null && <p className="remaining">{remaining}회 남음</p>}
+      {remaining !== null && <p className="remaining">{remaining} runs left</p>}
     </>
   );
 }

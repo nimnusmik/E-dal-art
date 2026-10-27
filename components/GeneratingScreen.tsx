@@ -6,9 +6,9 @@ import type { VariantSlot } from '@/app/page';
 
 // 1단계(사진 분석) 동안 순환하는 문구 — analyze는 ~10초라 짧게 돈다
 const ANALYZE_MESSAGES = [
-  '사진의 색감을 읽는 중...',
-  '파츠와 기법을 살피는 중...',
-  '다섯 가지 변주를 구상하는 중...',
+  'Reading the colors in your photos...',
+  'Studying charms and techniques...',
+  'Planning your looks...',
 ];
 
 /**
@@ -21,7 +21,7 @@ const ANALYZE_MESSAGES = [
 const SLOW_AFTER_S = 75;
 
 /** 총 소요 약속 — 단계마다 재견적하면 예산이 도중에 늘어나 이탈을 부른다 */
-const TOTAL_ESTIMATE = '보통 1분 안에 끝나요';
+const TOTAL_ESTIMATE = 'usually under a minute';
 
 function useElapsedSeconds(): number {
   const [s, setS] = useState(0);
@@ -82,12 +82,12 @@ export default function GeneratingScreen({
         <div className="progress-fill" />
       </div>
       <p className="progress-meta" aria-hidden>
-        {stage === 'analyzing' ? '1/2 사진 읽는 중' : '2/2 시안 그리는 중'} · {TOTAL_ESTIMATE} ·{' '}
-        {elapsed}초 경과
+        {stage === 'analyzing' ? '1/2 reading photos' : '2/2 drawing looks'} · {TOTAL_ESTIMATE} ·{' '}
+        {elapsed}s
       </p>
       {elapsed >= SLOW_AFTER_S && (
         <p className="progress-slow" role="status" aria-live="polite">
-          조금 더 걸리고 있어요. 화면을 닫지 말아주세요.
+          Taking a little longer. Please keep this screen open.
         </p>
       )}
     </>
@@ -102,9 +102,9 @@ export default function GeneratingScreen({
   const cancel = (
     <div className="generating-cancel">
       <button className="btn-link" onClick={onCancel}>
-        취소하고 돌아가기
+        Cancel and go back
       </button>
-      <p className="assurance">취소해도 오늘 1회는 이미 사용됐어요.</p>
+      <p className="assurance">Canceling won't refund this run.</p>
     </div>
   );
 
@@ -130,11 +130,11 @@ export default function GeneratingScreen({
       <p className="overline">Now Printing</p>
       <div role="status" aria-live="polite">
         <p className="generating-msg">
-          시안 3종 그리는 중 — {announced}/{slots.length}
+          Drawing your looks: {announced}/{slots.length}
         </p>
       </div>
       <p className="sub generating-hint">
-        완성되는 순서대로 나타나요. 먼저 나온 시안은 바로 눌러볼 수 있어요
+        Looks appear as they finish. Tap any one as soon as it shows up.
       </p>
       {meta}
       {cancel}

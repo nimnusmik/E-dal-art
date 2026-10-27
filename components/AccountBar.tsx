@@ -16,6 +16,9 @@ export default function AccountBar({ email }: { email: string | null }) {
           <span className="account-dot" aria-hidden />
           {email}
         </span>
+        <a className="btn-link" href="/library">
+          My Library
+        </a>
         <button className="btn-link" onClick={() => void signOut({ redirectTo: '/' })}>
           Sign out
         </button>

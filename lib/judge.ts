@@ -103,15 +103,15 @@ export function verdictDetail(j: NailJudgement, brief: NailBrief): QualityReport
   const tipCountOk = j.tipCount === 10;
   const heroOk = !brief.heroLine || (j.heroTipCount >= 1 && j.heroTipCount <= 2);
   const issues: string[] = [];
-  if (!tipCountOk) issues.push(`팁 ${j.tipCount}개 (10개여야 함)`);
-  if (!j.physicsOk) issues.push('시술이 어려운 구조');
-  if (!j.cleanRender) issues.push('그림이 뭉개진 부분');
-  if (!heroOk) issues.push(`주인공 모티프가 ${j.heroTipCount}팁에 (1~2팁이어야 함)`);
-  if (!j.partsMatch) issues.push('파츠 종류·배치 어긋남');
-  if (!countOk) issues.push(`파츠 개수 ${j.metalTipCount}개 (기대 ${min}~${max}개)`);
-  if (!j.baseMatch) issues.push('베이스·구조 어긋남');
-  if (!j.paletteMatch) issues.push('색이 팔레트 밖');
-  if (!letteringOk) issues.push('레터링 개수 어긋남');
+  if (!tipCountOk) issues.push(`${j.tipCount} tips (should be 10)`);
+  if (!j.physicsOk) issues.push('Hard to build in a salon');
+  if (!j.cleanRender) issues.push('Some smudged rendering');
+  if (!heroOk) issues.push(`Hero motif on ${j.heroTipCount} tips (should be 1-2)`);
+  if (!j.partsMatch) issues.push('Charm type or placement off');
+  if (!countOk) issues.push(`${j.metalTipCount} charms (expected ${min}-${max})`);
+  if (!j.baseMatch) issues.push('Base or structure off');
+  if (!j.paletteMatch) issues.push('Colors outside the palette');
+  if (!letteringOk) issues.push('Lettering count off');
   const { pass, score } = verdict(j, brief);
   return { pass, score, maxScore: 8, notes: j.notes, issues };
 }
@@ -247,7 +247,7 @@ Report:
 - letteringCount: how many tips show script lettering.
 - physicsOk: every part lies flat on the nail surface and everything is buildable by a human artist with gel — no hanging/dangling pieces, no floating elements, no impossible shapes.
 - cleanRender: crisp edges, no melted or warped tips, no extra objects, no text overlays.
-- notes: one short Korean sentence — the single most important observation.`;
+- notes: one short English sentence — the single most important observation.`;
 }
 
 const JUDGE_SCHEMA = {
@@ -282,7 +282,7 @@ async function mockJudgement(): Promise<NailJudgement> {
     letteringCount: 1,
     physicsOk: true,
     cleanRender: true,
-    notes: '브리프 준수 — 통과.',
+    notes: 'Matches the brief. Passed.',
   };
 }
 
@@ -435,7 +435,7 @@ Report:
 - raisedVolumeObserved: true only if sculpted or raised gel volume is clearly visible standing up off the nail surface (not just flat paint).
 - finishVarietyObserved: true only if more than one distinct surface finish (glossy / matte / chrome / velvet / textured) is visible across the set, not the same finish repeated on every tip.
 - bareSurfaceShare: your best estimate, as a number between 0 and 1, of the fraction of total nail surface across the set that is "bare". Bare means: base color only, with no motif, no texture, and no part on that area — a tip that is fully covered in a single flat color but has no motif/texture/part on it still counts as bare.
-- notes: one short Korean sentence — the single most important observation.`;
+- notes: one short English sentence — the single most important observation.`;
 }
 
 const CORE_JUDGE_SCHEMA = {
@@ -553,7 +553,7 @@ async function mockCoreJudgement(): Promise<CoreJudgement> {
     letteringCount: 1,
     physicsOk: true,
     cleanRender: true,
-    notes: '코어 규칙 준수 — 통과.',
+    notes: 'Follows the core rules. Passed.',
     paletteFidelity: true,
     motifFidelity: 2,
     coreFidelity: true,

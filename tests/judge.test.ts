@@ -153,28 +153,28 @@ describe('verdictDetail — 검수 근거 노출', () => {
     expect(r.maxScore).toBe(8);
   });
 
-  it('낙제작은 "왜 아쉬운지"를 한국어로 알려준다', () => {
+  it('낙제작은 "왜 아쉬운지"를 사람이 읽는 문장으로 알려준다', () => {
     const r = verdictDetail({ ...CLEAN, physicsOk: false, cleanRender: false }, BRIEF);
     expect(r.pass).toBe(false);
-    expect(r.issues).toContain('시술이 어려운 구조');
-    expect(r.issues).toContain('그림이 뭉개진 부분');
+    expect(r.issues).toContain('Hard to build in a salon');
+    expect(r.issues).toContain('Some smudged rendering');
   });
 
   it('파츠 개수 위반은 기대 범위를 함께 알려준다', () => {
     const r = verdictDetail({ ...CLEAN, metalTipCount: 4 }, BRIEF);
-    expect(r.issues.some((i) => i.includes('파츠 개수 4개'))).toBe(true);
+    expect(r.issues.some((i) => i.includes('4 charms'))).toBe(true);
   });
 
   it('팁이 10개가 아니면 즉시 탈락 — 12팁 세트는 상품이 아니다', () => {
     const r = verdictDetail({ ...CLEAN, tipCount: 12 }, BRIEF);
     expect(r.pass).toBe(false);
-    expect(r.issues.some((i) => i.includes('팁 12개'))).toBe(true);
+    expect(r.issues.some((i) => i.includes('12 tips'))).toBe(true);
   });
 
   it('주인공이 3팁 이상 반복되면 위계 위반으로 감점한다', () => {
     const hero = { ...BRIEF, heroLine: 'a hand-painted tiger' };
     const r = verdictDetail({ ...CLEAN, heroTipCount: 4 }, hero);
-    expect(r.issues.some((i) => i.includes('주인공 모티프가 4팁에'))).toBe(true);
+    expect(r.issues.some((i) => i.includes('Hero motif on 4 tips'))).toBe(true);
   });
 
   it('브리프에 주인공이 없으면 heroTipCount는 채점에 안 쓰인다', () => {

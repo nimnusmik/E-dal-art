@@ -56,6 +56,13 @@ export const HeroBodySchema = z.object({
 });
 export type HeroBody = z.infer<typeof HeroBodySchema>;
 
+/** POST /api/tryon — 사용자 손 사진 1장 + 고른 팁셋 */
+export const TryOnBodySchema = z.object({
+  hand: ImagePayloadSchema,
+  tipSet: TipSetSchema,
+  variantToken: z.string().min(1),
+});
+
 /** 저장소 부풀리기 방지 — 클라이언트 JSON 필드 크기 상한 */
 const cappedJson = (maxChars: number) =>
   z.unknown().refine((v) => v == null || JSON.stringify(v).length <= maxChars);

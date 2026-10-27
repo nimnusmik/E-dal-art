@@ -19,7 +19,7 @@ export default function Stats() {
           <br />
           to your fingertips
         </h2>
-        <p>Saved scraps are someone else&apos;s hands. idala re-styles the color and structure — all the way to a try-on.</p>
+        <p>Saved scraps are someone else&apos;s hands. idala re-styles the color and structure, then lets you try it on your own hand.</p>
       </div>
       <div className="xp-stat-grid" ref={ref}>
         {STATS.map((s, i) => (

@@ -338,7 +338,7 @@ Do not merely DRAW what you see — translate each motif's PHYSICAL NATURE into 
 6. patternLines: 2-5 lines describing the per-tip variations like a human artist plans a set (vary scale, density, figure/ground swap, boundary shape).
 7. letteringWord: usually empty string. Only if script lettering is central to the mood, one common 4-6 letter word (e.g. Sugar, Honey). Words printed in the photo are NOT lettering to copy.
 9. Keep it original: no recognizable characters or mascots (Miffy, Sanrio, Disney, etc.) — animals are drawn as simple generic silhouettes or sculpted forms.
-8. moodLine: one short English mood sentence. keywords: 2-3 short Korean mood words. colors: 3 dominant #RRGGBB. feasibilityNotes: one short Korean sentence for the salon artist.`;
+8. moodLine: one short English mood sentence. keywords: 2-3 short English mood words. colors: 3 dominant #RRGGBB. feasibilityNotes: one short English sentence for the salon artist.`;
 
 const BRIEF_SCHEMA = {
   type: Type.OBJECT,
@@ -381,10 +381,10 @@ async function mockBrief(): Promise<NailBrief> {
     heroLine: 'a small hand-painted strawberry with a glossy highlight',
     letteringWord: 'Sugar',
     moodLine: 'kawaii coquette Y2K — sweet, airy, wearable.',
-    keywords: ['코케트', '파스텔'],
+    keywords: ['coquette', 'pastel'],
     colors: ['#f5c8d7', '#b8dde8', '#efe0dc'],
     difficulty: 'medium',
-    feasibilityNotes: '도트는 도트봉으로 시술 가능, 진주는 1개만 경계선 위에 고정하세요.',
+    feasibilityNotes: 'Dots work with a dotting tool; fix just one pearl on the french line.',
   };
 }
 
@@ -439,9 +439,9 @@ export function parseVariantPlan(value: unknown): VariantPlan | null {
  */
 export function fallbackPlans(brief: NailBrief): VariantPlan[] {
   const cuts = [
-    { title: '균형 구성', note: '주인공을 가운데 두고 고르게 배치했어요', line: 'Balanced cut: hero motif on one central tip, supporting motifs spread evenly across the rest.' },
-    { title: '대담 구성', note: '주인공을 크게, 패턴을 촘촘하게 넣었어요', line: 'Bold cut: hero motif larger and off-center, denser pattern tips, fewer rest tips.' },
-    { title: '여백 구성', note: '여백을 살려 차분하게 정리했어요', line: 'Quiet cut: hero motif on one tip, more rest tips, the sparsest arrangement.' },
+    { title: 'Balanced', note: 'Hero motif in the center, the rest spread evenly.', line: 'Balanced cut: hero motif on one central tip, supporting motifs spread evenly across the rest.' },
+    { title: 'Bold', note: 'A bigger hero motif and denser patterns.', line: 'Bold cut: hero motif larger and off-center, denser pattern tips, fewer rest tips.' },
+    { title: 'Quiet', note: 'More open space for a calm, wearable set.', line: 'Quiet cut: hero motif on one tip, more rest tips, the sparsest arrangement.' },
   ];
   return cuts.map((c, i) => ({
     id: `v${i + 1}`,
@@ -539,8 +539,8 @@ THE THREE COMPOSITIONS (the hero motif must sit on a DIFFERENT tip number in eac
 
 ## Output: exactly 3 plans (v1, v2, v3 in the composition order above), each with
 - id: "v1" to "v3"
-- title: short Korean name describing this composition
-- note: one short Korean sentence
+- title: short English name (2-3 words) describing this composition
+- note: one short English sentence
 - patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Build a HIERARCHY, not ten equal tips: exactly one or two HERO tip lines render the hero motif from the brief LARGE, filling most of that tip, with nothing else on its base (if the brief has no hero motif, promote its strongest pictorial element). Two or three REST tip lines stay nearly quiet — plain base color in the set palette with a subtle finish or one tiny accent. Every remaining tip line is a SUPPORTING design: one clear companion idea (a smaller motif, line work, a pattern) that echoes the hero's story without repeating it. No two tips match, the ten lines reuse the same two or three base colors, and density varies boldly across the set. Distribute the parts across the ten lines exactly as your partsLine states, keeping hero tips free of metal parts, and keep every tip inside the brief's base, finish and palette.
 - partsLine: explicit counts mirroring the brief's parts rule ("Exactly one tip...", ending by excluding the rest); hero tips carry no metal parts
 - letteringWord: usually empty string; at most one plan may carry a common 4-6 letter script word

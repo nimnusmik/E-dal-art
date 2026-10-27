@@ -1,7 +1,7 @@
 'use client';
 
 import { useAccess } from '@/lib/useAccess';
-import { PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
+import { FREE_CREDITS, PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
 
 /**
  * 가격 섹션 — 갤러리 바로 뒤.
@@ -18,19 +18,21 @@ export default function PriceSection() {
         <span className="xp-pill t-purple" aria-hidden>
           Pricing
         </span>
-        <h2>{PACK_CREDITS} runs, no subscription</h2>
+        <h2>Start free, pay only if you love it</h2>
       </div>
       <div className="xp-price-inner">
         <div className="xp-price-card">
           <p className="xp-price-now">₩{PRICE_REGULAR_KRW.toLocaleString('ko-KR')}</p>
+          <p className="assurance xp-price-unit">for {PACK_CREDITS} runs</p>
           <ul className="xp-price-list">
-            <li>{PACK_CREDITS} runs — use them whenever, they never expire</li>
-            <li>Each run: a full set of takes + try-on shots</li>
-            <li>Failed runs don&apos;t count</li>
-            <li>Secure checkout via Paddle — KakaoPay &amp; Korean cards</li>
+            <li>Your first {FREE_CREDITS} runs are on us</li>
+            <li>One-time payment, no subscription</li>
+            <li>Runs never expire, and failed ones don&apos;t count</li>
+            <li>Pay with KakaoPay or any Korean card</li>
           </ul>
           <a className="xp-cta" href="#tool">
-            {access.paid ? 'Create my set' : 'Get the pass'}
+            {/* 비로그인 = 가입하면 무료 횟수가 있다. 로그인했는데 0회일 때만 구매 문구 */}
+            {access.paid ? 'Create my set' : access.email ? 'Get the pass' : 'Try it free'}
           </a>
         </div>
       </div>

@@ -61,7 +61,7 @@ export default function Library({ onCountChange }: { onCountChange?: (n: number)
     return (
       <div className="library is-empty">
         <p className="assurance">
-          아직 보관한 시안이 없어요. 시안을 만들고 &lsquo;보관함에 저장&rsquo;을 누르면 여기 쌓여요.
+          Nothing saved yet. Make a set and tap &lsquo;Save to library&rsquo; to keep it here.
         </p>
       </div>
     );
@@ -71,14 +71,14 @@ export default function Library({ onCountChange }: { onCountChange?: (n: number)
     <div className="library">
       <div className="library-head">
         <h2 className="overline">My Library</h2>
-        <span className="assurance">{designs.length}장</span>
+        <span className="assurance">{designs.length} saved</span>
       </div>
 
       {expired && (
         <p className="assurance library-expired" role="status">
-          이미지 주소가 만료됐어요.{' '}
+          Image links expired.{' '}
           <button className="btn-link" onClick={() => void load()}>
-            새로 불러오기
+            Reload
           </button>
         </p>
       )}
@@ -98,7 +98,7 @@ export default function Library({ onCountChange }: { onCountChange?: (n: number)
               </figcaption>
               <button
                 className="library-del"
-                aria-label={`${d.title} 삭제`}
+                aria-label={`Delete ${d.title}`}
                 disabled={busy === d.id}
                 onClick={() => void remove(d.id)}
               >

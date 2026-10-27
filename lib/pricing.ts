@@ -11,3 +11,8 @@ export const PRICE_REGULAR_KRW = 9900;
  * 헤비 사용(시안 6장 + 착용샷 3장)까지 흑자가 유지되는 최대 횟수.
  */
 export const PACK_CREDITS = 8;
+/**
+ * 가입 시 무료 지급 횟수 (2026-10-27). 결제 전에 결과물을 먼저 보여준다 —
+ * 해커톤 심사위원도 결제 없이 써볼 수 있어야 한다. Muse 전환 후 1회 원가 약 50~100원.
+ */
+export const FREE_CREDITS = 3;

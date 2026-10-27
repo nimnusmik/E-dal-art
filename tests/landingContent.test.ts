@@ -71,13 +71,15 @@ describe('랜딩 콘텐츠', () => {
     expect(joined).toMatch(/never stored/i);
   });
 
-  it('카피에 "내 손" 표현을 쓰지 않는다 (사용자 손 사진 입력이 없다)', () => {
+  // 2026-10-27 반전: 예전엔 손 사진 입력이 없어 "내 손" 표현을 금지했다. 이제 /api/tryon(SAM+Muse)이
+  // 실제 사용자 손에 입히므로, 반대로 카피가 그 기능을 말하고 "AI가 그린 손" 같은 낡은 안내가 없어야 한다.
+  it('카피가 내 손 입혀보기를 말하고, 낡은 "준비 중" 안내는 없다', () => {
     const joined = [
       ...STATS.map((s) => `${s.label} ${s.body}`),
       ...SERVICES.map((s) => `${s.label} ${s.body}`),
-      ...FAQS.map((f) => f.q),
+      ...FAQS.map((f) => `${f.q} ${f.a}`),
     ].join('\n');
-    // 영어 카피에서도 같은 규칙 — 착용샷 손은 사용자 손이 아니다
-    expect(joined).not.toMatch(/내 손|your own hand(?!s? photo is in the works)/);
+    expect(joined).toMatch(/your own hand/i);
+    expect(joined).not.toMatch(/AI-generated hand|in the works/i);
   });
 });
