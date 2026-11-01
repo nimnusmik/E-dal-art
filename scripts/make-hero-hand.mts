@@ -63,7 +63,49 @@ const alpha = await sharp(Buffer.from(m), { raw: { width: W, height: H, channels
   .extractChannel(0)
   .raw()
   .toBuffer();
-const tall = await sharp(await sharp(rgb).raw().toBuffer(), { raw: { width: W, height: H, channels: 3 } })
+// 가장자리 색 정리: Muse가 흰 바탕에 그려서 윤곽 몇 px가 '피부+흰색' 섞인 밝은 색이다(+투명 픽셀은 흰 RGB라 축소 때 번짐).
+// 경계 4px 안쪽(확실한 피부)만 '아는 색'으로 두고, 바깥으로 한 칸씩 이웃 평균 색을 밀어낸다(팽창 채색) — 밝은 테두리 제거
+const known = await sharp(Buffer.from(m), { raw: { width: W, height: H, channels: 1 } }).erode(4).extractChannel(0).raw().toBuffer();
+// SAM 마스크가 실제 손보다 몇 px 크다 — 경계 10px 띠 안의 흰색에 가까운 픽셀은 '모르는 색'으로 (바탕이 묻어 들어온 것)
+const core = await sharp(Buffer.from(m), { raw: { width: W, height: H, channels: 1 } }).erode(10).extractChannel(0).raw().toBuffer();
+// 기준 = 밝고 색이 옅음(채도 낮음). 밝기만 보면 손톱 테두리 흰 선이 남고, 노랑·민트 손톱은 채도가 높아 안 걸린다
+for (let i = 0; i < W * H; i++) {
+  if (!known[i] || core[i]) continue;
+  const [r, g, b] = [px[i * 3], px[i * 3 + 1], px[i * 3 + 2]];
+  if (r + g + b > 600 && Math.max(r, g, b) - Math.min(r, g, b) < 45) known[i] = 0;
+}
+// 바탕 흰색 걷어내기: SAM 마스크가 손톱 끝에서 바탕을 10px 넘게 물고 들어온다 (실측: 253,253,253 / 불투명도 200).
+// 투명 영역에서 출발해 '거의 순백' 픽셀로만 번지는 채우기 — 바깥과 이어진 흰색만 지우고, 손톱 안 하이라이트는 남는다
+const isWhite = (i: number) => {
+  const [r, g, b] = [px[i * 3], px[i * 3 + 1], px[i * 3 + 2]];
+  return r + g + b > 720 && Math.max(r, g, b) - Math.min(r, g, b) < 20;
+};
+const queue: number[] = [];
+for (let i = 0; i < W * H; i++) if (!alpha[i]) queue.push(i);
+while (queue.length) {
+  const i = queue.pop()!;
+  const x = i % W;
+  for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) {
+    if (j < 0 || j >= W * H || !alpha[j] || !isWhite(j)) continue;
+    alpha[j] = 0;
+    known[j] = 0;
+    queue.push(j);
+  }
+}
+const fixed = Buffer.from(px);
+for (let step = 0; step < 12; step++) {
+  const next: number[] = [];
+  for (let y = 1; y < H - 1; y++)
+    for (let x = 1; x < W - 1; x++) {
+      const i = y * W + x;
+      if (known[i]) continue;
+      let r = 0, g = 0, b = 0, n = 0;
+      for (const j of [i - 1, i + 1, i - W, i + W]) if (known[j]) { r += fixed[j * 3]; g += fixed[j * 3 + 1]; b += fixed[j * 3 + 2]; n++; }
+      if (n) { fixed[i * 3] = r / n; fixed[i * 3 + 1] = g / n; fixed[i * 3 + 2] = b / n; next.push(i); }
+    }
+  for (const i of next) known[i] = 255;
+}
+const tall = await sharp(fixed, { raw: { width: W, height: H, channels: 3 } })
   .joinChannel(alpha, { raw: { width: W, height: H, channels: 1 } })
   .png()
   .toBuffer();

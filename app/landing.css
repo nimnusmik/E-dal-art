@@ -1150,6 +1150,8 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   mask-image: linear-gradient(to bottom, #000 60%, transparent 84%);
 }
 .hs-hand .hs-after { clip-path: inset(0 0 0 var(--cut)); }
+/* 맨손은 착용 손이 덮은 구간에서 숨긴다 — 착용 손(Muse가 다시 그림) 윤곽이 1~2px 작아 밑의 맨손 가장자리가 테두리로 비쳤다 */
+.hs-hand img:not(.hs-after) { clip-path: inset(0 calc(100% - var(--cut)) 0 0); }
 @property --cut { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
 @keyframes hs-paint { 0%, 12% { --cut: 100%; } 45%, 70% { --cut: 0%; } 92%, 100% { --cut: 100%; } }
 
