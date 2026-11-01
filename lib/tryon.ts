@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { fetchImage, runTask, uploadImage, YouCamError } from './youcam';
 import { isMock } from './mock';
+import { mergeMasks, segment, type Segment } from './sam';
 import type { ImagePayload } from './types';
 
 /**
@@ -12,32 +13,57 @@ import type { ImagePayload } from './types';
 export class NoNailsError extends Error {}
 
 /**
- * 팁셋(팁 10개, 5개×2줄) → YouCam 참고 사진: 첫 줄 5개만 오려 피부색 바탕에 나란히.
- * 실측(2026-11-01): 팁 10개 그대로는 손가락마다 길이가 제각각, 회색 바탕 한 줄은 디자인이 흐려짐,
- * '피부 위에 팁 5개'가 가장 고르게 옮겨졌다. AI 착용샷은 디자인이 바뀌어 와서 못 씀.
+ * 팁셋 사진 → YouCam 참고 사진: SAM으로 팁을 하나씩 오려 윗줄 5개를 피부색 바탕에 나란히.
+ * 실측(2026-11-01): 팁셋 원본(스탠드·그림자 실사)을 그대로 넘기면 손가락마다 디자인이 뒤섞이고,
+ * 'AI 착용샷'은 디자인 자체가 바뀌어 와서 못 씀. 깨끗한 '피부 위 팁 5개'가 가장 충실하게 옮겨졌다.
+ * SAM이 팁을 못 찾으면 원본을 그대로 넘긴다 (품질은 떨어져도 입혀보기는 동작).
  */
 export async function buildReference(tipSet: ImagePayload): Promise<ImagePayload> {
-  const img = sharp(Buffer.from(tipSet.data, 'base64')).rotate().removeAlpha();
-  const { width: W, height: H } = (await img.metadata()) as { width: number; height: number };
-  // ponytail: 팁셋이 항상 2줄이라는 가정. 줄 수가 바뀌면 행 투영으로 줄 경계를 찾을 것
-  const row = await img.extract({ left: 0, top: 0, width: W, height: Math.round(H / 2) }).raw().toBuffer({ resolveWithObject: true });
-  const { width: w, height: h } = row.info;
-  const px = row.data;
-  // 바탕색 = 네 모서리 평균 — 생성 이미지는 단색에 가까운 바탕
-  const corners = [0, w - 1, (h - 1) * w, h * w - 1].map((i) => [px[i * 3], px[i * 3 + 1], px[i * 3 + 2]]);
-  const bg = [0, 1, 2].map((c) => corners.reduce((a, k) => a + k[c], 0) / 4);
-  const alpha = Buffer.alloc(w * h);
-  for (let i = 0; i < w * h; i++) {
-    const d = Math.hypot(px[i * 3] - bg[0], px[i * 3 + 1] - bg[1], px[i * 3 + 2] - bg[2]);
-    alpha[i] = Math.max(0, Math.min(255, (d - 12) * 12)); // 바탕과 거리 12 이하는 투명, 33 이상은 불투명
-  }
-  const tips = await sharp(px, { raw: { width: w, height: h, channels: 3 } })
-    .joinChannel(alpha, { raw: { width: w, height: h, channels: 1 } })
-    .png()
-    .toBuffer();
-  const trimmed = await sharp(tips).trim().png().toBuffer();
-  const out = await sharp({ create: { width: w, height: Math.round(h * 1.3), channels: 3, background: '#d8a98e' } })
-    .composite([{ input: trimmed, gravity: 'center' }])
+  const src = await sharp(Buffer.from(tipSet.data, 'base64')).rotate().removeAlpha().jpeg().toBuffer();
+  const { width: W, height: H } = (await sharp(src).metadata()) as { width: number; height: number };
+  const img = { data: src.toString('base64'), mimeType: 'image/jpeg' };
+  const tips = await segment(img, 'press-on nail tip').catch(() => []);
+  if (tips.length < 3) return img;
+
+  // 윗줄 = 중심 y가 전체 위아래 중간보다 위인 팁 (팁셋은 1~2줄)
+  const cy = (t: Segment) => (t.box.top + t.box.bottom) / 2;
+  const ys = tips.map(cy);
+  const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const top = tips.filter((t) => cy(t) <= mid || ys.every((y) => Math.abs(y - ys[0]) < H * 0.1));
+  const row = top.sort((a, b) => a.box.left - b.box.left).slice(0, 5);
+
+  // 팁마다 마스크로 오려 낸 RGBA 조각
+  const pieces = await Promise.all(
+    row.map(async (t) => {
+      const { left, top: y, right, bottom } = t.box;
+      const w = right - left;
+      const h = bottom - y;
+      // 네모 칸 통째 (둥근 모서리) — 팁 밖으로 튀어나온 입체 장식까지 살린다
+      const r = Math.round(Math.min(w, h) * 0.2);
+      const mask = await sharp(Buffer.from(`<svg width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="${r}" fill="#fff"/></svg>`))
+        .extractChannel(0)
+        .raw()
+        .toBuffer();
+      const rgb = await sharp(src).extract({ left, top: y, width: w, height: h }).raw().toBuffer();
+      const png = await sharp(rgb, { raw: { width: w, height: h, channels: 3 } })
+        .joinChannel(mask, { raw: { width: w, height: h, channels: 1 } })
+        .png()
+        .toBuffer();
+      return { png, w, h };
+    }),
+  );
+  const gap = Math.round(Math.max(...pieces.map((p) => p.w)) * 0.25);
+  const maxH = Math.max(...pieces.map((p) => p.h));
+  const cw = pieces.reduce((a, p) => a + p.w + gap, gap);
+  const ch = maxH + gap * 2;
+  let x = gap;
+  const layers = pieces.map((p) => {
+    const l = { input: p.png, left: x, top: gap + Math.round((maxH - p.h) / 2) };
+    x += p.w + gap;
+    return l;
+  });
+  const out = await sharp({ create: { width: cw, height: ch, channels: 3, background: '#d8a98e' } })
+    .composite(layers)
     .jpeg({ quality: 92 })
     .toBuffer();
   return { data: out.toString('base64'), mimeType: 'image/jpeg' };
