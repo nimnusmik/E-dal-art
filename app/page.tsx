@@ -430,7 +430,7 @@ export default function Home() {
 
   /** 착용샷 온디맨드 — 시안당 1회만 호출하고 캐시 */
   const requestHero = useCallback(
-    async (planId: string) => {
+    async (planId: string): Promise<GeneratedImage | undefined> => {
       const slot = slots.find((s) => s.plan.id === planId);
       if (!slot?.tipSet) return;
       if (heroMap[planId]) return; // 이미 로딩 중이거나 완료 — 중복 호출 방지
@@ -459,7 +459,7 @@ export default function Home() {
         if (sessionRef.current !== session) return;
         if (res.ok) {
           setHeroMap((prev) => ({ ...prev, [planId]: { status: 'done', image: json.hero } }));
-          return;
+          return json.hero as GeneratedImage;
         }
         // 실패는 캐시에서 지워 재시도 가능하게
         setHeroMap((prev) => {
@@ -497,12 +497,17 @@ export default function Home() {
       const slot = slots.find((s) => s.plan.id === planId);
       if (!slot?.tipSet) throw new Error('Pick a finished look first.');
       const { data, mimeType } = await fileToResizedPayload(file);
+      // YouCam Nail Transfer는 참고 사진이 '손에 낀 네일'일 때 손톱 길이·디자인이 고르게 옮겨진다.
+      // 팁만 늘어놓은 사진은 손가락마다 길이가 제각각이 됨 (2026-11-01 실측) — 착용샷을 먼저 확보, 실패 시 팁셋
+      const hero = heroMap[planId];
+      const worn = (hero?.status === 'done' && hero.image) || (await requestHero(planId));
+      const ref = worn || slot.tipSet;
       const res = await fetch('/api/tryon', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           hand: { data, mimeType },
-          tipSet: { image: slot.tipSet.image, mimeType: slot.tipSet.mimeType },
+          tipSet: { image: ref.image, mimeType: ref.mimeType },
           variantToken: briefRef.current?.variantToken,
         }),
         signal: AbortSignal.timeout(70_000),
@@ -517,7 +522,7 @@ export default function Home() {
             : 'Try-on failed. Feel free to retry.',
       );
     },
-    [slots],
+    [slots, heroMap, requestHero],
   );
 
   /** 인라인 배너 — 사용자가 보고 있는 자리에 남는다 */
