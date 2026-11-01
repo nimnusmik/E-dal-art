@@ -935,6 +935,32 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
   .xp-tool-card .slot-loading { aspect-ratio: 1; }
 }
 
+/* ─── 툴 카드 개편 (2026-11-01, YouCam 해커톤) ─── */
+/* 3단계 표시 — 지금 1단계이고 끝에 '내 손에 입혀보기'가 있다는 걸 시작 전에 보여준다 */
+.tool-steps { list-style: none; margin: 10px 0 4px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.tool-steps li { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 16px; opacity: 0.55; }
+.tool-steps li.is-now { opacity: 1; background: linear-gradient(120deg, #fbeef4, #eef0ff); }
+.tool-steps img { width: 52px; height: 52px; flex: 0 0 52px; border-radius: 12px; object-fit: cover; background: linear-gradient(160deg, #fbeef4, #eef0ff); box-shadow: 0 6px 14px rgba(60, 40, 70, 0.14); }
+.tool-steps img.is-tip { object-fit: contain; padding: 4px; transform: rotate(180deg); }
+.tool-steps img.is-hand { object-position: 50% 6%; object-fit: cover; }
+.tool-steps span { display: flex; flex-direction: column; font-size: 13px; color: #77757f; line-height: 1.35; }
+.tool-steps b { font-size: 15px; color: #16161e; }
+/* 빈 드롭존 = 카드의 유일한 행동 — 크게 */
+.tray.is-empty { grid-template-columns: 1fr; }
+.tray.is-empty .slot { aspect-ratio: auto; min-height: 230px; }
+.tray.is-empty .slot-add { gap: 6px; padding: 24px; text-align: center; border-width: 2px; background: linear-gradient(160deg, #fdf5f8, #f3f4ff); }
+.slot-add-title { font-size: 19px; color: #16161e; }
+.sample-btn { align-self: center; background: none; border: 0; padding: 6px 10px; font: inherit; font-size: 14px; color: #77757f; cursor: pointer; }
+.sample-btn b { color: #c0628b; text-decoration: underline; text-underline-offset: 3px; }
+.sample-btn:hover b { color: #16161e; }
+/* 히어로 버튼(#tool)으로 오면 카드 테두리가 두 번 빛난다 — '여기서 하면 된다' */
+.xp-tool:target .xp-tool-card { animation: tool-glow 1.4s ease-in-out 2; }
+@keyframes tool-glow {
+  0%, 100% { box-shadow: 0 24px 64px rgba(0, 0, 0, 0.42), 0 0 0 0 rgba(255, 156, 200, 0); }
+  50% { box-shadow: 0 24px 64px rgba(0, 0, 0, 0.42), 0 0 0 6px rgba(255, 156, 200, 0.75); }
+}
+@media (prefers-reduced-motion: reduce) { .xp-tool:target .xp-tool-card { animation: none; } }
+
 /* ─── FAQ ────────────────────────────────────────────────────── */
 /* 질문 6개가 파스텔 알약 + 그림자로 흩뿌려져 "누르라"고 손짓했지만
    답변은 데이터 모델에 아예 없었다. 답이 6개뿐이고 전부 짧으므로

@@ -58,6 +58,7 @@ export interface HeroEntry {
 type Phase = 'start' | 'analyzing' | 'generating' | 'result' | 'blocked-user' | 'blocked-total';
 
 const MAX_PHOTOS = 3;
+const SAMPLE_PHOTOS = ['/hero/insp/wings.webp', '/hero/insp/fairycore.webp', '/hero/insp/dreamy.webp'];
 
 /** 에러 종류 — 입력 관련은 툴 카드 안 인라인 배너, 시스템 오류는 토스트 */
 type AppError = { text: string; kind: 'inline' | 'toast' } | null;
@@ -117,7 +118,6 @@ export default function Home() {
   // 진행 중 요청 취소용
   const abortRef = useRef<AbortController | null>(null);
   // 파일 선택 트리거 — 사진 0장에서도 CTA가 활성이어야 하므로 버튼이 이 input을 연다
-  const fileInputRef = useRef<HTMLInputElement>(null);
   // 착용샷 중복 호출 가드 — state는 비동기라 더블탭이 둘 다 통과하므로 ref 집합으로 선점한다
   const heroInflight = useRef(new Set<string>());
 
@@ -239,6 +239,17 @@ export default function Home() {
     },
     [photos, showInline],
   );
+
+  /** 예시 영감 사진 3장 — 랜딩 히어로의 폴라로이드와 같은 사진 */
+  const addSamplePhotos = useCallback(async () => {
+    const files = await Promise.all(
+      SAMPLE_PHOTOS.map(async (src) => {
+        const blob = await (await fetch(src)).blob();
+        return new File([blob], src.split('/').pop()!, { type: blob.type });
+      }),
+    );
+    await addPhotos(files);
+  }, [addPhotos]);
 
   const removePhoto = useCallback((id: string) => {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
@@ -549,16 +560,26 @@ export default function Home() {
                 <span className="xp-pill t-yellow" suppressHydrationWarning>
                   {issue.monthLabel}
                 </span>
-                {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2 */}
-                <h2>
-                  Drop your inspiration,
-                  <br />
-                  get this month&apos;s set
-                </h2>
+                {/* h1은 히어로가 차지 — 툴 섹션 헤드라인은 h2.
+                    이전 "get this month's set"은 한국 이달의아트 개념이라 영어권에 낯설고,
+                    핵심 결과(내 손에 입혀보기)가 시작 화면 어디에도 없었다 (2026-11-01) */}
+                <h2>Turn a photo you love into nails on your hand</h2>
               </div>
-              {/* 이전 문구("사진을 더할수록 진화해요")는 상한만 말해 3장을 다 올려야
-                  하는 것으로 읽혔다 — 최소 1장으로 시작할 수 있음을 먼저 말한다 */}
-              <p className="sub">Start with one photo and add up to three.</p>
+              {/* 3단계를 처음부터 보여준다 — 지금 1단계이고, 끝에 내 손에 입혀본다는 것 */}
+              <ol className="tool-steps">
+                <li className="is-now">
+                  <img src="/hero/insp/wings.webp" alt="" />
+                  <span><b>Your photos</b>Start with one, add up to three</span>
+                </li>
+                <li>
+                  <img className="is-tip" src="/hero/cutout/tip-4.webp" alt="" />
+                  <span><b>3 nail sets</b>Ten tips each, about a minute</span>
+                </li>
+                <li>
+                  <img className="is-hand" src="/hero/cutout/hand-after.webp" alt="" />
+                  <span><b>On your own hand</b>YouCam try-on, only the nails change</span>
+                </li>
+              </ol>
               <p className="assurance">
                 Photos are used only while creating and never stored on our servers.
               </p>
@@ -577,6 +598,12 @@ export default function Home() {
                     onAdd={addPhotos}
                     onRemove={removePhoto}
                   />
+                  {/* 심사위원·처음 온 사람은 넣을 영감 사진이 없다 — 한 번에 예시 3장 */}
+                  {!hasPhotos && pendingPhotos === 0 && (
+                    <button className="sample-btn" onClick={() => void addSamplePhotos()}>
+                      No photo handy? <b>Try with sample photos</b>
+                    </button>
+                  )}
                   {hasPhotos && (
                     <OptionsPicker
                       shape={shape}
@@ -592,32 +619,16 @@ export default function Home() {
               {/* 비활성 버튼은 퍼널에서 지운다. 사진이 없으면 버튼이 파일 선택기를 열어
                   "다음에 필요한 행동"으로 직결된다 — 히어로 CTA로 여기 온 사용자가
                   누를 수 없는 회색 버튼을 만나지 않는다. */}
-              {paid && (
-                <button
-                  className="cta"
-                  onClick={hasPhotos ? generate : () => fileInputRef.current?.click()}
-                >
-                  {hasPhotos ? 'Create my set' : 'Pick a photo to start'}
+              {/* 사진이 없을 땐 버튼을 숨긴다 — 드롭존과 버튼이 같은 일을 해 눌러야 할 곳이 둘로 보였다 */}
+              {paid && hasPhotos && (
+                <button className="cta" onClick={generate}>
+                  Create my 3 sets
                 </button>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="visually-hidden"
-                aria-hidden
-                tabIndex={-1}
-                onChange={(e) => {
-                  const list = e.target.files;
-                  if (list?.length) void addPhotos(Array.from(list));
-                  e.target.value = '';
-                }}
-              />
               {/* 잔여를 숨기면 "아껴 쓰려다 아예 안 누르는" 역효과가 난다.
                   보이면 희소성이 행동을 밀어준다 — 알 수 있을 때는 항상 보여준다. */}
               {paid && (
-                <p className="remaining">{`${remaining ?? 0} runs left`}</p>
+                <p className="remaining">{`${remaining ?? 0} ${remaining === 1 ? 'run' : 'runs'} left`}</p>
               )}
               <AccountBar email={accountEmail} />
             </div>

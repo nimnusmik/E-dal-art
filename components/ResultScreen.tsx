@@ -602,7 +602,7 @@ export default function ResultScreen({
         )}
 
         <div className="st-foot">
-          {remaining !== null ? <span>{remaining} runs left</span> : <span />}
+          {remaining !== null ? <span>{remaining} {remaining === 1 ? 'run' : 'runs'} left</span> : <span />}
           <button onClick={onReset}>Start over</button>
         </div>
       </aside>

@@ -59,7 +59,7 @@ export default function InspirationTray({
   return (
     <div className="tray-block">
       <div
-        className={`tray${dropping ? ' is-dropping' : ''}`}
+        className={`tray${dropping ? ' is-dropping' : ''}${used === 0 ? ' is-empty' : ''}`}
         onDragEnter={(e) => {
           e.preventDefault();
           dragDepth.current += 1;
@@ -96,7 +96,15 @@ export default function InspirationTray({
           <label className="slot">
             <span className="slot-add">
               <span className="plus" aria-hidden>＋</span>
-              <span>{photos.length === 0 ? 'Add photo' : 'Add more'}</span>
+              {photos.length === 0 ? (
+                // 빈 상태 = 카드의 유일한 행동. 크게, 무엇을 하면 되는지 문장으로
+                <>
+                  <b className="slot-add-title">Drop a photo you love</b>
+                  <span>Click to choose, or drag and paste. Pinterest saves work great.</span>
+                </>
+              ) : (
+                <span>Add more</span>
+              )}
             </span>
             <input
               type="file"
@@ -117,7 +125,7 @@ export default function InspirationTray({
           ? 'Preparing photos...'
           : canAdd
             ? photos.length === 0
-              ? 'One photo is enough to start. Drag, drop or paste works too.'
+              ? 'One photo is enough to start.'
               : `You can add ${left} more. More photos blend their colors and mood.`
             : 'All 3 photos added.'}
       </p>
