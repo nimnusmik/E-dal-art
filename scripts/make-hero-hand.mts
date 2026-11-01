@@ -17,7 +17,7 @@ const PROMPT =
   'Professional nail salon result photo. The hand from the first image, same pose and framing, now wearing the five press-on gel nails from the second image: ' +
   'left to right in the second image = thumb, index, middle, ring, pinky. Copy each nail design exactly. ' +
   'The nails are real long almond gel extensions that extend clearly past the fingertips (free edge about half the nail bed length) with visible thickness, a glossy top coat with soft specular highlights, ' +
-  'clean cuticle line, slight C-curve, sitting naturally on each fingertip, not flat paint. ' +
+  'clean cuticle line, slight C-curve, sitting naturally on each fingertip, not flat paint. Each nail is exactly as wide as its own nail bed and never overhangs the side of the finger, including the thumb. ' +
   'Keep skin natural. Pure white background, soft studio light.';
 
 // 맨손 원본은 ref/hero에 — public의 hand-before는 이 스크립트가 착용 손과 같은 배율로 만든다(겹쳐 바뀌는 연출)
@@ -58,7 +58,7 @@ for (let i = Math.floor(H * 0.8) * W; i < W * H; i++) {
   if (!nearWhite) m[i] = Math.max(m[i], wrist[i]);
 }
 const alpha = await sharp(Buffer.from(m), { raw: { width: W, height: H, channels: 1 } })
-  .erode(1) // 경계 1px 안쪽으로 — 흰 바탕이 섞인 가장자리 제거
+  .erode(2) // 경계 2px 안쪽으로 — 흰 바탕이 섞인 가장자리 제거
   .blur(0.8)
   .extractChannel(0)
   .raw()
