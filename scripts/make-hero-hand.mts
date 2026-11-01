@@ -16,13 +16,17 @@ const TIPS = ['tip-2', 'tip-3', 'tip-4', 'tip-6', 'tip-7']; // 엄지 → 새끼
 const PROMPT =
   'Professional nail salon result photo. The hand from the first image, same pose and framing, now wearing the five press-on gel nails from the second image: ' +
   'left to right in the second image = thumb, index, middle, ring, pinky. Copy each nail design exactly. ' +
-  'The nails are real medium-length almond gel extensions with visible thickness, a glossy top coat with soft specular highlights, ' +
+  'The nails are real long almond gel extensions that extend clearly past the fingertips (free edge about half the nail bed length) with visible thickness, a glossy top coat with soft specular highlights, ' +
   'clean cuticle line, slight C-curve, sitting naturally on each fingertip, not flat paint. ' +
   'Keep skin natural. Pure white background, soft studio light.';
 
-const before = sharp(`${dir}/hand-before.webp`);
-const { width: W, height: H } = (await before.metadata()) as { width: number; height: number };
-const hand = await before.clone().flatten({ background: '#ffffff' }).jpeg({ quality: 95 }).toBuffer();
+// 맨손 원본은 ref/hero에 — public의 hand-before는 이 스크립트가 착용 손과 같은 배율로 만든다(겹쳐 바뀌는 연출)
+const before = sharp('ref/hero/hand-before-src.webp');
+const { width: W, height: H0 } = (await before.metadata()) as { width: number; height: number };
+// 가운데 손가락이 사진 위끝에 닿아 있어 긴 손톱을 그릴 자리가 없다 — 위에 여백을 붙여 그리고, 끝에 원래 크기로 줄여 넣는다
+const PAD = Math.round(H0 * 0.12);
+const H = H0 + PAD;
+const hand = await before.clone().flatten({ background: '#ffffff' }).extend({ top: PAD, background: '#ffffff' }).jpeg({ quality: 95 }).toBuffer();
 // 팁 사진은 뾰족한 끝(손톱 끝)이 아래 — 손가락은 위를 향하니 180도 돌려야 프렌치·레이스가 손톱 끝에 온다
 const tips = await Promise.all(TIPS.map((n) => sharp(`${dir}/${n}.webp`).rotate(180).flatten({ background: '#ffffff' }).toBuffer()));
 const set = await sharp({ create: { width: 220 * 5 + 60, height: 420, channels: 3, background: '#ffffff' } })
@@ -41,21 +45,37 @@ if (!res.image) throw new Error('Muse 결과 없음');
 const raw = Buffer.from(res.image.data, 'base64');
 writeFileSync('ref/hero-hand-raw.png', raw); // 누끼만 다시 할 때 재사용
 const rgb = await sharp(raw).resize(W, H, { fit: 'fill' }).removeAlpha().jpeg({ quality: 95 }).toBuffer();
-// SAM 'hand'는 손톱과 손목을 뺀다 → 손 ∪ 손톱 ∪ 원래 누끼의 아래 35%(손목, 자세가 같아 그대로 맞음)
+// SAM 'hand'는 손톱과 손목을 뺀다 → 손 ∪ 손톱 ∪ 원래 누끼의 아래 20%(손목, 자세가 같아 그대로 맞음)
 const img = { data: rgb.toString('base64'), mimeType: 'image/jpeg' };
 const [hands, nails] = await Promise.all([segment(img, 'hand'), segment(img, 'fingernail')]);
 if (hands.length === 0) throw new Error('SAM이 손을 못 찾음');
 const m = mergeMasks([...hands, ...nails], W, H);
-const wrist = await before.clone().extractChannel(3).raw().toBuffer();
-for (let i = Math.floor(H * 0.65) * W; i < W * H; i++) m[i] = Math.max(m[i], wrist[i]);
+const wrist = await before.clone().extractChannel(3).extend({ top: PAD, background: '#000000' }).raw().toBuffer();
+const px = await sharp(rgb).raw().toBuffer();
+for (let i = Math.floor(H * 0.8) * W; i < W * H; i++) {
+  // Muse 팔이 원래보다 살짝 가늘면 그 틈이 흰 띠로 남는다 — 흰색에 가까운 픽셀은 제외
+  const nearWhite = px[i * 3] + px[i * 3 + 1] + px[i * 3 + 2] > 720;
+  if (!nearWhite) m[i] = Math.max(m[i], wrist[i]);
+}
 const alpha = await sharp(Buffer.from(m), { raw: { width: W, height: H, channels: 1 } })
   .erode(1) // 경계 1px 안쪽으로 — 흰 바탕이 섞인 가장자리 제거
   .blur(0.8)
   .extractChannel(0)
   .raw()
   .toBuffer();
-await sharp(await sharp(rgb).raw().toBuffer(), { raw: { width: W, height: H, channels: 3 } })
+const tall = await sharp(await sharp(rgb).raw().toBuffer(), { raw: { width: W, height: H, channels: 3 } })
   .joinChannel(alpha, { raw: { width: W, height: H, channels: 1 } })
-  .webp({ quality: 90 })
-  .toFile(out);
+  .png()
+  .toBuffer();
+// 원래 크기(W×H0)에 맞춰 줄이고 좌우를 투명으로 채움 — 히어로 레이아웃이 이 크기를 가정
+const w = Math.round((W * H0) / H);
+const fit = async (img: Buffer, file: string) =>
+  sharp(await sharp(img).resize(w, H0).toBuffer())
+    .extend({ left: Math.floor((W - w) / 2), right: Math.ceil((W - w) / 2), background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .webp({ quality: 90 })
+    .toFile(file);
+await fit(tall, out);
+// 맨손도 같은 여백·배율로 — 두 장이 정확히 겹쳐야 손톱만 바뀌어 보인다
+const bare = await before.clone().extend({ top: PAD, background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+await fit(bare, out.replace('hand-after', 'hand-before'));
 console.log('OK →', out);
