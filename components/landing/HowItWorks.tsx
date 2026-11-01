@@ -1,17 +1,20 @@
 /**
- * How it works — 히어로 바로 아래 (2026-10-27).
- * 2026-11-01 개편: 카드 바탕 통일, 2단계 팁 부채꼴, 3단계 맨손|착용 손 반반 비교.
- * 1단계 사진 3장 위로 지나가는 스캔 빛은 생성 중 화면(GeneratingScreen)과 같은 효과 —
- * 랜딩에서 본 장면이 실제 앱에서 그대로 나온다.
+ * How it works — 히어로 바로 아래.
+ * 2026-11-01 개편(시안 A '한 장면 무대'): 카드 박스 없이 영감 사진 → 떠 있는 팁 → 손이 한 줄로 이어진다.
+ * 히어로의 폴라로이드·팁 누끼·착용 손을 그대로 써서 같은 세계관이 이어지게. 비교 시안: ref/hiw-options.html
  */
-const PHOTOS = ['/hero/insp/wings.webp', '/hero/insp/fairycore.webp', '/hero/insp/dreamy.webp'];
-/** 2단계: 히어로에 떠 있던 팁 누끼를 부채꼴로 — 네모 사진 격자 대신 '세트가 나왔다'를 한 장면으로 */
-const FAN = [
-  { n: 7, r: -34 },
-  { n: 3, r: -17 },
-  { n: 5, r: 0 }, // Angel(2)은 뒤집으면 글씨가 거꾸로라 뺌
-  { n: 4, r: 17 },
-  { n: 6, r: 34 },
+const PHOTOS = [
+  { src: '/hero/insp/wings.webp', style: { left: '4%', top: '12%', rotate: '-8deg' } },
+  { src: '/hero/insp/fairycore.webp', style: { left: '40%', top: '2%', rotate: '4deg', zIndex: 2 } },
+  { src: '/hero/insp/dreamy.webp', style: { left: '22%', top: '34%', rotate: '-2deg', zIndex: 3 } },
+];
+/** 팁 사진은 손톱 끝이 아래 — 150~200도 돌려 끝이 위(손가락 방향)를 향하게 */
+const TIPS = [
+  { n: 7, style: { left: '6%', top: '14%', rotate: '160deg' } },
+  { n: 3, style: { left: '20%', top: '40%', rotate: '200deg' } },
+  { n: 4, style: { left: '52%', top: '4%', rotate: '170deg' } },
+  { n: 1, style: { left: '38%', top: '50%', rotate: '190deg' } },
+  { n: 6, style: { left: '72%', top: '36%', rotate: '150deg' } },
 ];
 
 export default function HowItWorks() {
@@ -29,42 +32,35 @@ export default function HowItWorks() {
           them.
         </p>
       </div>
-      <ol className="hw-flow">
-        <li className="hw-step">
-          <span className="hw-num" aria-hidden>01</span>
-          <div className="hw-card hw-stack" aria-hidden>
-            {PHOTOS.map((src) => <img key={src} src={src} alt="" loading="lazy" decoding="async" />)}
-            <span className="hw-scan" />
-            <span className="hw-pill">up to 3 photos</span>
-          </div>
-          <h3>Drop up to 3 photos</h3>
-          <p>We read color, motifs and parts across all of them.</p>
-        </li>
-        <li className="hw-step">
-          <span className="hw-num" aria-hidden>02</span>
-          <div className="hw-card hw-fan" aria-hidden>
-            {FAN.map((t) => (
-              <span key={t.n} style={{ ['--r' as string]: `${t.r}deg` }}>
-                <img src={`/hero/cutout/tip-${t.n}.webp`} alt="" loading="lazy" decoding="async" />
-              </span>
+      <ol className="hw-stage">
+        <span className="hw-trail" aria-hidden />
+        <li className="hw-zone">
+          <div className="hw-art" aria-hidden>
+            {PHOTOS.map((p) => (
+              <img key={p.src} className="hw-photo" src={p.src} style={p.style} alt="" loading="lazy" decoding="async" />
             ))}
-            <span className="hw-pill">3 sets × 10 tips</span>
           </div>
-          <h3>Get three designed sets</h3>
-          <p>Each one quality checked, in about a minute.</p>
+          <span className="hw-n">01</span>
+          <h3>Drop up to 3 photos</h3>
+          <p>Colors and motifs, read across all of them.</p>
         </li>
-        <li className="hw-step">
-          <span className="hw-num" aria-hidden>03</span>
-          <div className="hw-card hw-hand" aria-hidden>
-            {/* 맨손|착용 손 반반 — 두 장은 같은 배율로 만들어져(scripts/make-hero-hand.mts) 정확히 겹친다 */}
-            <img src="/hero/cutout/hand-before.webp" alt="" loading="lazy" decoding="async" />
-            <img className="hw-after" src="/hero/cutout/hand-after.webp" alt="" loading="lazy" decoding="async" />
-            <span className="hw-split" />
-            <span className="hw-pill">before</span>
-            <span className="hw-pill is-right">after · YouCam try-on</span>
+        <li className="hw-zone">
+          <div className="hw-art" aria-hidden>
+            {TIPS.map((t) => (
+              <img key={t.n} className="hw-tip" src={`/hero/cutout/tip-${t.n}.webp`} style={t.style} alt="" loading="lazy" decoding="async" />
+            ))}
           </div>
-          <h3>Try it on your own hand</h3>
-          <p>Upload a hand photo. Only the nails change.</p>
+          <span className="hw-n">02</span>
+          <h3>Get three designed sets</h3>
+          <p>Ten tips each, quality checked, in about a minute.</p>
+        </li>
+        <li className="hw-zone is-hand">
+          <div className="hw-art" aria-hidden>
+            <img className="hw-handimg" src="/hero/cutout/hand-after.webp" alt="" loading="lazy" decoding="async" />
+          </div>
+          <span className="hw-n">03</span>
+          <h3>See them on your own hand</h3>
+          <p>YouCam try-on puts each tip on its finger. Only the nails change.</p>
         </li>
       </ol>
     </section>

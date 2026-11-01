@@ -1192,38 +1192,39 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .hw-title { font-family: 'New York', 'Iowan Old Style', Georgia, serif; font-weight: 400; font-size: clamp(38px, 5vw, 60px); line-height: 0.98; letter-spacing: -0.03em; margin: 0; color: #16161e; }
 .hw-title em { font-style: italic; color: #c0628b; }
 .hw-lede { flex: 0 0 auto; max-width: 320px; font-size: 15px; line-height: 1.55; color: #55535c; margin: 0; }
-.hw-flow { list-style: none; padding: 0; margin: 48px auto 0; max-width: 1060px; display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px, 3vw, 44px); }
-.hw-num { display: block; font-family: 'New York', Georgia, serif; font-size: 13px; color: #9a958c; margin-bottom: 10px; }
-/* 세 카드 모두 같은 바탕·그림자 — 카드마다 흰 바탕·테두리가 달라 따로 노는 느낌이었다 */
-.hw-card { position: relative; aspect-ratio: 1; border-radius: 22px; background: linear-gradient(160deg, #fbeef4, #eef0ff); box-shadow: 0 26px 60px rgba(60, 40, 70, 0.14); overflow: hidden; }
-.hw-step h3 { font-size: 17px; margin: 16px 0 4px; letter-spacing: -0.01em; color: #16161e; }
-.hw-step p { font-size: 14px; color: #77757f; margin: 0; line-height: 1.5; }
-.hw-stack { display: grid; place-items: center; }
-.hw-stack img { position: absolute; width: 56%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 14px; border: 3px solid #fff; box-shadow: 0 12px 26px rgba(40, 30, 60, 0.18); }
-.hw-stack img:nth-child(1) { transform: rotate(-11deg) translateX(-26%); }
-.hw-stack img:nth-child(2) { transform: rotate(1deg); z-index: 2; }
-.hw-stack img:nth-child(3) { transform: rotate(11deg) translateX(26%); }
-.hw-scan {
-  position: absolute; inset: 0; z-index: 3; pointer-events: none;
-  /* 흰 빛이 세면 사진이 하얗게 바래 보인다 — 얇은 파란 선 위주로 */
-  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.22) 49%, rgba(120, 160, 255, 0.3) 51%, transparent 56%);
-  background-size: 100% 260%; mix-blend-mode: screen; animation: hw-scan 2.4s ease-in-out infinite;
+/* 시안 A '한 장면 무대' (2026-11-01) — 박스 없이 사진 → 팁 → 손이 한 줄로. 손은 무대 아래로 흘러넘친다 */
+.hw-stage { position: relative; list-style: none; padding: 0; margin: 40px auto 0; max-width: 1100px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+.hw-trail { position: absolute; left: 16%; right: 30%; top: 190px; height: 2px; background: linear-gradient(90deg, transparent, rgba(192, 98, 139, 0.35), transparent); }
+.hw-zone { position: relative; display: flex; flex-direction: column; }
+.hw-art { position: relative; height: 380px; margin-bottom: 22px; }
+.hw-photo { position: absolute; width: 46%; aspect-ratio: 4 / 5; object-fit: cover; border: 6px solid #fff; border-bottom-width: 24px; border-radius: 4px; box-shadow: 0 18px 34px rgba(60, 40, 70, 0.18); }
+.hw-tip { position: absolute; width: 19%; filter: drop-shadow(0 14px 16px rgba(60, 40, 70, 0.25)); animation: hs-bob 5s ease-in-out infinite alternate; }
+.hw-tip:nth-child(2n) { animation-duration: 6.5s; }
+.hw-zone.is-hand { text-align: right; }
+/* 손은 무대보다 커서 아래 캡션 뒤까지 내려온다 — 캡션이 손 위에 얹힌다 */
+.hw-zone.is-hand .hw-art { overflow: visible; }
+.hw-handimg {
+  position: absolute; right: -2%; top: -70px; height: 560px; max-width: none;
+  /* 히어로처럼 아래로 흐려져 사라짐 — 캡션이 손 위에 겹치지 않게 */
+  -webkit-mask-image: linear-gradient(to bottom, #000 52%, transparent 78%);
+  mask-image: linear-gradient(to bottom, #000 52%, transparent 78%);
 }
-@keyframes hw-scan { from { background-position: 0 100%; } to { background-position: 0 -60%; } }
-/* 알약 라벨도 span이라 :not(.hw-pill) — 빠뜨리면 라벨이 부채꼴 자리로 끌려간다 */
-.hw-fan span:not(.hw-pill) {
-  position: absolute; left: 50%; bottom: 16%; width: 23%; margin-left: -11.5%;
-  transform-origin: 50% 190%; transform: rotate(var(--r));
-  filter: drop-shadow(0 12px 14px rgba(60, 40, 70, 0.22));
+.hw-zone.is-hand h3, .hw-zone.is-hand p, .hw-zone.is-hand .hw-n { position: relative; z-index: 2; }
+.hw-n { font-family: 'New York', Georgia, serif; font-size: 15px; color: #c0628b; }
+.hw-zone h3 { font-size: 17px; margin: 6px 0 4px; letter-spacing: -0.01em; color: #16161e; }
+.hw-zone p { font-size: 14px; color: #77757f; margin: 0; line-height: 1.5; }
+.hw-zone.is-hand p { margin-left: auto; max-width: 260px; }
+.hw { overflow: hidden; }
+/* 휴대폰: 세 장면을 위아래로, 무대 높이를 줄인다 */
+@media (max-width: 760px) {
+  .hw-stage { grid-template-columns: 1fr; max-width: 420px; gap: 36px; }
+  .hw-trail { display: none; }
+  .hw-art { height: 300px; }
+  .hw-photo { width: 36%; }
+  .hw-tip { width: 15%; }
+  .hw-zone.is-hand { text-align: left; }
+  .hw-zone.is-hand p { margin-left: 0; }
+  .hw-handimg { right: auto; left: 50%; transform: translateX(-50%); top: -10px; height: 420px; }
+  .hw-zone.is-hand .hw-art { overflow: hidden; border-radius: 22px; }
 }
-/* 팁 사진은 손톱 끝이 아래 — 뒤집어 끝이 바깥(위)을 향하게 */
-.hw-fan img { display: block; width: 100%; transform: rotate(180deg); }
-/* 손가락 쪽을 크게: 손톱이 보이도록 위쪽을 채운다 */
-.hw-hand img { position: absolute; left: 50%; top: -9%; height: 175%; transform: translateX(-50%); }
-.hw-hand .hw-after { clip-path: inset(0 0 0 50%); }
-.hw-hand img:not(.hw-after) { clip-path: inset(0 50% 0 0); }
-.hw-split { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: #fff; z-index: 3; box-shadow: 0 0 12px rgba(60, 40, 70, 0.25); }
-.hw-pill { position: absolute; left: 10px; bottom: 10px; z-index: 4; font-size: 10px; font-weight: 700; background: rgba(255, 255, 255, 0.92); padding: 4px 9px; border-radius: 999px; color: #16161e; }
-.hw-pill.is-right { left: auto; right: 10px; }
-@media (max-width: 760px) { .hw-flow { grid-template-columns: 1fr; max-width: 420px; } }
-@media (prefers-reduced-motion: reduce) { .hw-scan { animation: none; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hw-tip { animation: none; } }
