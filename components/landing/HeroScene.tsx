@@ -64,7 +64,7 @@ export default function HeroScene() {
           {!access.email && <small>no card needed</small>}
         </a>
         <p className="hs-trust">
-          Powered by Meta Muse and SAM 3.1 · Then ₩{PRICE_REGULAR_KRW.toLocaleString('ko-KR')} for {PACK_CREDITS} runs
+          Try-on by YouCam AI · Designs by Meta Muse · Then ₩{PRICE_REGULAR_KRW.toLocaleString('ko-KR')} for {PACK_CREDITS} runs
         </p>
       </div>
 
