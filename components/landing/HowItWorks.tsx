@@ -1,10 +1,18 @@
 /**
  * How it works — 히어로 바로 아래 (2026-10-27).
+ * 2026-11-01 개편: 카드 바탕 통일, 2단계 팁 부채꼴, 3단계 맨손|착용 손 반반 비교.
  * 1단계 사진 3장 위로 지나가는 스캔 빛은 생성 중 화면(GeneratingScreen)과 같은 효과 —
  * 랜딩에서 본 장면이 실제 앱에서 그대로 나온다.
  */
 const PHOTOS = ['/hero/insp/wings.webp', '/hero/insp/fairycore.webp', '/hero/insp/dreamy.webp'];
-const LOOKS = ['/looks/angel-plaid-pastel.jpg', '/looks/angel-lace.jpg', '/looks/cherry-lace.jpg'];
+/** 2단계: 히어로에 떠 있던 팁 누끼를 부채꼴로 — 네모 사진 격자 대신 '세트가 나왔다'를 한 장면으로 */
+const FAN = [
+  { n: 7, r: -34 },
+  { n: 3, r: -17 },
+  { n: 5, r: 0 }, // Angel(2)은 뒤집으면 글씨가 거꾸로라 뺌
+  { n: 4, r: 17 },
+  { n: 6, r: 34 },
+];
 
 export default function HowItWorks() {
   return (
@@ -34,8 +42,13 @@ export default function HowItWorks() {
         </li>
         <li className="hw-step">
           <span className="hw-num" aria-hidden>02</span>
-          <div className="hw-card hw-trio" aria-hidden>
-            {LOOKS.map((src) => <img key={src} src={src} alt="" loading="lazy" decoding="async" />)}
+          <div className="hw-card hw-fan" aria-hidden>
+            {FAN.map((t) => (
+              <span key={t.n} style={{ ['--r' as string]: `${t.r}deg` }}>
+                <img src={`/hero/cutout/tip-${t.n}.webp`} alt="" loading="lazy" decoding="async" />
+              </span>
+            ))}
+            <span className="hw-pill">3 sets × 10 tips</span>
           </div>
           <h3>Get three designed sets</h3>
           <p>Each one quality checked, in about a minute.</p>
@@ -43,8 +56,12 @@ export default function HowItWorks() {
         <li className="hw-step">
           <span className="hw-num" aria-hidden>03</span>
           <div className="hw-card hw-hand" aria-hidden>
-            <img src="/hero/cutout/hand-after.webp" alt="" loading="lazy" decoding="async" />
-            <span className="hw-pill">your hand</span>
+            {/* 맨손|착용 손 반반 — 두 장은 같은 배율로 만들어져(scripts/make-hero-hand.mts) 정확히 겹친다 */}
+            <img src="/hero/cutout/hand-before.webp" alt="" loading="lazy" decoding="async" />
+            <img className="hw-after" src="/hero/cutout/hand-after.webp" alt="" loading="lazy" decoding="async" />
+            <span className="hw-split" />
+            <span className="hw-pill">before</span>
+            <span className="hw-pill is-right">after · YouCam try-on</span>
           </div>
           <h3>Try it on your own hand</h3>
           <p>Upload a hand photo. Only the nails change.</p>
