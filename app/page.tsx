@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { sampleFiles } from '@/components/landing/HeroScene';
 import GeneratingScreen from '@/components/GeneratingScreen';
 import InspirationTray from '@/components/InspirationTray';
 import OptionsPicker from '@/components/OptionsPicker';
@@ -58,7 +59,6 @@ export interface HeroEntry {
 type Phase = 'start' | 'analyzing' | 'generating' | 'result' | 'blocked-user' | 'blocked-total';
 
 const MAX_PHOTOS = 3;
-const SAMPLE_PHOTOS = ['/hero/insp/wings.webp', '/hero/insp/fairycore.webp', '/hero/insp/dreamy.webp'];
 
 /** 에러 종류 — 입력 관련은 툴 카드 안 인라인 배너, 시스템 오류는 토스트 */
 type AppError = { text: string; kind: 'inline' | 'toast' } | null;
@@ -241,14 +241,13 @@ export default function Home() {
   );
 
   /** 예시 영감 사진 3장 — 랜딩 히어로의 폴라로이드와 같은 사진 */
-  const addSamplePhotos = useCallback(async () => {
-    const files = await Promise.all(
-      SAMPLE_PHOTOS.map(async (src) => {
-        const blob = await (await fetch(src)).blob();
-        return new File([blob], src.split('/').pop()!, { type: blob.type });
-      }),
-    );
-    await addPhotos(files);
+  const addSamplePhotos = useCallback(async () => addPhotos(await sampleFiles()), [addPhotos]);
+
+  // 히어로 업로드 칸·예시 사진 → 작업 카드 (components/landing/HeroScene.tsx handOff)
+  useEffect(() => {
+    const onAdd = (e: Event) => void addPhotos((e as CustomEvent<File[]>).detail);
+    window.addEventListener('idala:add-photos', onAdd);
+    return () => window.removeEventListener('idala:add-photos', onAdd);
   }, [addPhotos]);
 
   const removePhoto = useCallback((id: string) => {

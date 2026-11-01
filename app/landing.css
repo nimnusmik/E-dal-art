@@ -1142,6 +1142,36 @@ a.xp-pill::after, button.xp-pill::after { content: ''; position: absolute; inset
 .hs-dot { width: 7px; height: 7px; border-radius: 50%; background: #34c759; }
 .hs-title { font-size: clamp(42px, 5.4vw, 72px); line-height: 0.98; letter-spacing: -0.045em; font-weight: 500; margin: 18px 0; color: #16161e; }
 .hs-title em { font-style: normal; background: linear-gradient(90deg, #ff6fa8, #7a8cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* H4: 단계 칩 · 업로드 칸 · 예시 사진 · YouCam 라벨 (2026-11-01) */
+.hs-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 20px 0 24px; }
+.hs-steps li { font-size: 13px; font-weight: 600; background: #fff; border-radius: 999px; padding: 7px 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); color: #16161e; }
+.hs-steps i { font-style: normal; color: #c0628b; margin-right: 6px; }
+.hs-drop {
+  display: flex; align-items: center; gap: 16px; max-width: 470px; padding: 18px 20px; cursor: pointer;
+  border: 2px dashed #c8bfd3; border-radius: 22px; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(6px);
+  color: #16161e; text-decoration: none; transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.hs-drop:hover, .hs-drop.is-dropping { border-color: #c0628b; background: #fff; }
+.hs-drop:active { transform: scale(0.99); }
+.hs-drop:focus-within { outline: 2px solid #c0628b; outline-offset: 3px; }
+.hs-drop-plus { width: 46px; height: 46px; flex: 0 0 46px; border-radius: 14px; display: grid; place-items: center; background: #16161e; color: #fff; font-size: 24px; }
+.hs-drop b { display: block; font-size: 17px; }
+.hs-drop small { font-size: 13px; color: #6f6c78; }
+.hs-samples { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 13px; color: #6f6c78; }
+.hs-samples button { padding: 0; border: 0; background: none; cursor: pointer; }
+.hs-samples img { width: 52px; height: 64px; object-fit: cover; border-radius: 10px; border: 3px solid #fff; box-shadow: 0 6px 14px rgba(60, 40, 70, 0.16); transition: transform 0.15s; }
+.hs-samples button:hover img { transform: translateY(-3px) rotate(-2deg); }
+.hs-copy .hs-trust { margin-top: 16px; }
+.hs-trust b { color: #16161e; }
+.hs-yc {
+  position: absolute; left: 62%; top: 44%; z-index: 3; display: flex; align-items: center; gap: 8px;
+  background: #fff; border-radius: 999px; padding: 8px 14px 8px 10px; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+  box-shadow: 0 10px 26px rgba(60, 40, 70, 0.18); opacity: 0; animation: hs-yc 7s ease-in-out infinite;
+}
+.hs-yc::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #2ec36b; box-shadow: 0 0 0 4px rgba(46, 195, 107, 0.18); }
+@keyframes hs-yc { 0%, 40% { opacity: 0; translate: 0 8px; } 48%, 70% { opacity: 1; translate: 0 0; } 80%, 100% { opacity: 0; } }
+.xp-tool-card.is-glow { animation: tool-glow 1.4s ease-in-out 2; }
+@media (prefers-reduced-motion: reduce) { .hs-yc { animation: none; opacity: 1; } .xp-tool-card.is-glow { animation: none; } }
 .hs-sub { font-size: 17px; line-height: 1.55; color: #55535c; max-width: 460px; margin: 0 0 28px; }
 .hs-cta {
   display: inline-flex; align-items: center; gap: 10px; border-radius: 999px; padding: 16px 26px;

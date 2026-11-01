@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useAccess } from '@/lib/useAccess';
 import { FREE_CREDITS, PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
@@ -12,7 +12,39 @@ import { FREE_CREDITS, PACK_CREDITS, PRICE_REGULAR_KRW } from '@/lib/pricing';
  *
  * 이미지: public/hero/cutout — 팁은 시안 사진에서 SAM 3.1("fingernail")로 낱개 추출,
  * 손은 흰 배경 색 기준 누끼(SAM "hand"는 실행마다 손톱 포함 여부가 달라 손끝이 잘렸다).
+ *
+ * 2026-11-01 (YouCam 해커톤, 시안 H4 = remove.bg식 업로드 + 단계 칩 + YouCam 라벨):
+ * 버튼 대신 업로드 칸과 예시 사진을 히어로에 — 성공한 AI 제품처럼 첫 화면에서 바로 시작.
+ * 사진은 'idala:add-photos' 이벤트로 작업 카드(app/page.tsx)에 넘기고 카드로 스크롤한다.
+ * 로그인 전에는 파일 창을 열지 않고 카드(구글 로그인)로 보낸다 — 로그인 새로고침에 사진이 날아간다.
  */
+
+export const SAMPLE_PHOTOS = ['/hero/insp/wings.webp', '/hero/insp/fairycore.webp', '/hero/insp/dreamy.webp'];
+
+/** 작업 카드로 내려가며 테두리를 빛나게 — '여기서 이어서 하면 된다' */
+export function goToTool() {
+  const tool = document.getElementById('tool');
+  tool?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const card = tool?.querySelector('.xp-tool-card');
+  if (!card) return;
+  card.classList.remove('is-glow');
+  void (card as HTMLElement).offsetWidth; // 애니메이션 재시작
+  card.classList.add('is-glow');
+}
+
+function handOff(files: File[]) {
+  window.dispatchEvent(new CustomEvent<File[]>('idala:add-photos', { detail: files }));
+  goToTool();
+}
+
+export async function sampleFiles(): Promise<File[]> {
+  return Promise.all(
+    SAMPLE_PHOTOS.map(async (src) => {
+      const blob = await (await fetch(src)).blob();
+      return new File([blob], src.split('/').pop()!, { type: blob.type });
+    }),
+  );
+}
 
 const TIPS: Array<{ n: number; style: CSSProperties; far?: boolean; top?: boolean; z: number }> = [
   { n: 1, z: 14, style: { left: '10%', top: '52%', width: 62, ['--r' as string]: '-24deg', ['--d' as string]: '4.6s' } },
@@ -34,7 +66,11 @@ export default function HeroScene() {
   const access = useAccess();
   const sceneRef = useRef<HTMLDivElement>(null);
   // 비로그인 = 가입하면 무료. 로그인했는데 0회일 때만 구매 문구
-  const cta = access.paid ? 'Create my set' : access.email ? 'Get the pass' : `Try ${FREE_CREDITS} runs free`;
+  const [dropping, setDropping] = useState(false);
+  const takeFiles = (list: FileList | null | undefined) => {
+    const files = Array.from(list ?? []).filter((f) => f.type.startsWith('image/'));
+    if (files.length) handOff(files);
+  };
 
   const onMove = (e: React.MouseEvent) => {
     const el = sceneRef.current;
@@ -51,20 +87,47 @@ export default function HeroScene() {
   return (
     <section className="hs" id="top" aria-label="idala: nail sets from your photos" onMouseMove={onMove} onMouseLeave={onLeave} ref={sceneRef}>
       <div className="hs-copy">
-        <span className="hs-chip"><span className="hs-dot" aria-hidden />Up to 3 photos in · 3 nail sets out</span>
+        <span className="hs-chip"><span className="hs-dot" aria-hidden />{access.email ? 'Up to 3 photos in · 3 nail sets out' : `${FREE_CREDITS} free runs · no card needed`}</span>
         <h1 className="hs-title">
           Turn your photos into nails, <em>on your own hand</em>
         </h1>
-        <p className="hs-sub">
-          Drop up to three photos you love. idala blends them into three nail sets, then paints your favorite onto a
-          photo of your hand. Only the nails change.
-        </p>
-        <a className="hs-cta" href="#tool">
-          {cta}
-          {!access.email && <small>no card needed</small>}
-        </a>
+        <ol className="hs-steps" aria-label="How it works">
+          <li><i>1</i>Your photos</li>
+          <li><i>2</i>3 nail sets</li>
+          <li><i>3</i>On your hand</li>
+        </ol>
+        {access.paid ? (
+          <label
+            className={`hs-drop${dropping ? ' is-dropping' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setDropping(true); }}
+            onDragLeave={() => setDropping(false)}
+            onDrop={(e) => { e.preventDefault(); setDropping(false); takeFiles(e.dataTransfer?.files); }}
+          >
+            <span className="hs-drop-plus" aria-hidden>+</span>
+            <span><b>Drop a photo you love</b><small>Click, drag or paste · Pinterest saves work great</small></span>
+            <input type="file" accept="image/*" multiple className="visually-hidden" onChange={(e) => { takeFiles(e.target.files); e.target.value = ''; }} />
+          </label>
+        ) : (
+          // 로그인 전: 파일 창 대신 작업 카드(구글 로그인)로 — 로그인 새로고침에 사진이 날아간다
+          <a className="hs-drop" href="#tool" onClick={(e) => { e.preventDefault(); goToTool(); }}>
+            <span className="hs-drop-plus" aria-hidden>+</span>
+            <span><b>Drop a photo you love</b><small>Sign in with Google for {FREE_CREDITS} free runs</small></span>
+          </a>
+        )}
+        <div className="hs-samples">
+          <span>or try one:</span>
+          {SAMPLE_PHOTOS.map((src) => (
+            <button
+              key={src}
+              aria-label="Use sample photos"
+              onClick={async () => (access.paid ? handOff(await sampleFiles()) : goToTool())}
+            >
+              <img src={src} alt="" />
+            </button>
+          ))}
+        </div>
         <p className="hs-trust">
-          Try-on by YouCam AI · Designs by Meta Muse · Then ₩{PRICE_REGULAR_KRW.toLocaleString('ko-KR')} for {PACK_CREDITS} runs
+          Try-on by <b>YouCam AI</b> · Designs by Meta Muse · Then ₩{PRICE_REGULAR_KRW.toLocaleString('ko-KR')} for {PACK_CREDITS} runs
         </p>
       </div>
 
@@ -86,6 +149,8 @@ export default function HeroScene() {
             <img src="/hero/cutout/hand-before.webp" alt="" loading="eager" decoding="async" />
             <img className="hs-after" src="/hero/cutout/hand-after.webp" alt="" loading="eager" decoding="async" />
           </div>
+          {/* 맨손이 다 바뀐 순간에만 떠오름 — 손 쓸기(hs-paint)와 같은 7초 주기 */}
+          <span className="hs-yc" aria-hidden>YouCam try-on</span>
         </div>
         {[14, 24].map((z) => (
           <div className="hs-layer" style={{ ['--z' as string]: z }} key={z}>
