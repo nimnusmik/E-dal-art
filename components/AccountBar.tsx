@@ -8,13 +8,16 @@ import { signOut } from 'next-auth/react';
  * 전용 로그인 페이지를 만들지 않는다 — 툴 카드 안에서 바로 누르게 한다.
  * 생성에는 로그인+이용권이 필요하므로, 비로그인 상태의 문구도 그에 맞춘다.
  */
+/** 화면에는 앞 2글자만 — 화면 녹화·공유 때 이메일이 그대로 찍혔다 (2026-11-01) */
+const maskEmail = (email: string) => email.replace(/^(.{2})[^@]*/, '$1•••');
+
 export default function AccountBar({ email }: { email: string | null }) {
   if (email) {
     return (
       <div className="account-bar">
         <span className="account-who">
           <span className="account-dot" aria-hidden />
-          {email}
+          <span title="Signed in">{maskEmail(email)}</span>
         </span>
         <a className="btn-link" href="/library">
           My Library
