@@ -64,7 +64,9 @@ export function expectedMetalTips(brief: NailBrief): { min: number; max: number 
   // ('all tips carry painted art only' 같은 무파츠 문장의 carry에 속지 않기 위함)
   const mentionsParts =
     /carr(?:y|ies)\b[^.]{0,80}\b(studs?|pearls?|gems?|metal|rhinestones?|beads?|3d)\b/.test(line);
-  if (!hasExplicitCount && !mentionsParts && /zero metal|no metal|painted gel only\b/.test(line)) {
+  // 무파츠 표현은 모델마다 다르다 — "Zero tips carry parts", "no parts", "painted finish only"까지 (2026-11-01 실측 오판)
+  const saysZero = /zero (metal|tips|parts)|no (metal|parts)\b|painted (gel|finish) only\b/.test(line);
+  if (!hasExplicitCount && !mentionsParts && saysZero) {
     return { min: 0, max: 0 };
   }
   const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };

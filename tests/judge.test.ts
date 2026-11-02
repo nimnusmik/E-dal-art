@@ -67,6 +67,11 @@ describe('expectedMetalTips', () => {
     expect(expectedMetalTips(brief)).toEqual({ min: 0, max: 0 });
   });
 
+  it('모델이 다르게 쓴 무파츠 문장도 0으로 읽는다', () => {
+    const brief = { ...BRIEF, partsLine: 'Zero tips carry parts with all ten tips wearing hand-painted gel, remaining tips wearing painted finish only.' };
+    expect(expectedMetalTips(brief)).toEqual({ min: 0, max: 0 });
+  });
+
   it('명시 개수는 무파츠 문구보다 우선한다', () => {
     const brief = { ...BRIEF, partsLine: 'Exactly two tips carry pearls. Every other tip has no metal.' };
     expect(expectedMetalTips(brief)).toEqual({ min: 1, max: 3 });
@@ -174,7 +179,13 @@ describe('verdictDetail — 검수 근거 노출', () => {
   it('주인공이 3팁 이상 반복되면 위계 위반으로 감점한다', () => {
     const hero = { ...BRIEF, heroLine: 'a hand-painted tiger' };
     const r = verdictDetail({ ...CLEAN, heroTipCount: 4 }, hero);
-    expect(r.issues.some((i) => i.includes('Hero motif on 4 tips'))).toBe(true);
+    expect(r.issues.some((i) => i.includes('Photo motifs on 4 tips'))).toBe(true);
+  });
+
+  it('사진 3장이면 주인공 팁 3~6개까지 정상', () => {
+    const hero = { ...BRIEF, heroLine: 'Photo 1: wings; Photo 2: a white rabbit; Photo 3: a lilac vase' };
+    expect(verdictDetail({ ...CLEAN, heroTipCount: 3 }, hero).issues.some((i) => i.includes('Photo motifs'))).toBe(false);
+    expect(verdictDetail({ ...CLEAN, heroTipCount: 2 }, hero).issues.some((i) => i.includes('Photo motifs'))).toBe(true);
   });
 
   it('브리프에 주인공이 없으면 heroTipCount는 채점에 안 쓰인다', () => {
