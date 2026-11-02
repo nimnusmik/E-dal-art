@@ -65,6 +65,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ tryon: { image: image.data, mimeType: image.mimeType } });
   } catch (e) {
     await held.release();
+    // 실패 이유가 로그에 안 남아 YouCam 잔액 0(CreditInsufficiency)을 늦게 알았다 (2026-11-01)
+    console.error('[tryon] failed:', (e as { code?: string })?.code ?? '', (e as Error)?.message?.slice(0, 300));
     // 손톱을 못 찾은 건 사용자가 고칠 수 있는 문제 — 다른 사진을 올리라고 안내하게 따로 알린다
     if (e instanceof NoNailsError) return errorResponse('NO_NAILS', 422);
     return errorResponse('GENERATION_FAILED', 502);
