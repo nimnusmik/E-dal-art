@@ -272,7 +272,7 @@ export default function ResultScreen({
   };
 
   const trySample = async () => {
-    const blob = await fetch('/hero/sample-hand.jpg').then((r) => r.blob());
+    const blob = await fetch('/hero/sample-hand-v2.jpg').then((r) => r.blob());
     void runTryOn(new File([blob], 'sample-hand.jpg', { type: 'image/jpeg' }));
   };
 
