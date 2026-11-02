@@ -524,7 +524,9 @@ export default function Home() {
           ? "We couldn't find your nails. Try a photo of the back of your hand, fingers spread, in good light."
           : json.error === 'RATE_LIMIT_TRYON'
             ? 'This run hit its try-on limit (3).'
-            : 'Try-on failed. Feel free to retry.',
+            : json.error === 'RATE_LIMIT_TOTAL'
+              ? 'Try-on is at its daily limit. It reopens at midnight KST.'
+              : 'Try-on failed. Feel free to retry.',
       );
     },
     [slots],
