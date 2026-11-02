@@ -39,8 +39,9 @@ export interface NailBrief {
   partsLine: string;
   /** 필기체 레터링 단어 (4~6자, 세트 무드 연동). 없으면 null */
   letteringWord: string | null;
-  /** 주인공 모티프 — 영감 사진에서 가장 강한 그림 요소 하나 (그릴 수 있는 서술, 없으면 빈 문자열).
-   *  참고 구조(2026-10-12 사용자): 호랑이 레퍼런스처럼 포인트 그림은 1~2팁에만 크게, 나머지는 조연. */
+  /** 주인공 모티프 — 사진마다 메인 사물 하나씩, "Photo 1: ...; Photo 2: ..." 형식 (없으면 빈 문자열).
+   *  2026-11-01 사용자: 사진 3장 중 1장의 주인공만 남고 나머지(토끼·꽃병)는 사라져 "이 사진이 쓰였구나"가 안 보였다.
+   *  참고 구조(2026-10-12): 호랑이 레퍼런스처럼 포인트 그림은 그 사진 몫 1~2팁에만 크게, 나머지는 조연. */
   heroLine: string;
   /** 무드 한 줄 (영문, 생성 프롬프트용) */
   moodLine: string;
@@ -159,7 +160,7 @@ export function parseBrief(text: string): NailBrief | null {
     textureLine: clampLine(b.textureLine as string),
     partsLine: clampLine(b.partsLine as string),
     // 구버전 브리프(필드 없음) 호환 — 없으면 주인공 없는 세트로 처리
-    heroLine: isStr(b.heroLine) ? clampLine(b.heroLine) : '',
+    heroLine: isStr(b.heroLine) ? clampLine(b.heroLine, 700) : '',
     letteringWord: lettering.length > 0 ? lettering : null,
     moodLine: clampLine(b.moodLine as string),
     keywords: clampList(b.keywords),
@@ -295,7 +296,7 @@ DESIGN BRIEF — follow every line exactly:
 - ${brief.structureLine}
 - Palette: ${brief.paletteLine}
 ${LENGTH_RULES[brief.length]}
-${brief.heroLine ? `- HERO MOTIF: ${brief.heroLine} — rendered LARGE on exactly one or two hero tips, filling most of each hero tip like a tiny canvas. This motif appears nowhere else in the set, and the hero tips carry nothing else on their base.` : ''}
+${brief.heroLine ? `- SIGNATURE MOTIFS (the main object of each inspiration photo): ${brief.heroLine} — EVERY listed motif appears in the set, each one rendered LARGE on its own one or two hero tips (hand-painted or sculpted as the list says), filling most of that tip like a tiny canvas and instantly recognizable as that object. Different motifs sit on different tips, and the hero tips carry nothing else on their base.` : ''}
 ${brief.patternLines.map((l) => `- ${l}`).join('\n')}
 ${textureLine}
 ${brief.styleBlock ?? ''}
@@ -313,7 +314,7 @@ ${PARTS_PHYSICS}
 }
 
 const BRIEF_INSTRUCTION = `You are a veteran Korean nail artist AND a prompt engineer for an image generation model.
-Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. Your #1 job is to extract THIS photo's design vocabulary so completely that the finished set is unmistakably born from it — but as a new design, not a copy. Capture the specific motifs, techniques, textures, color relationships, and compositional ideas that make this photo distinctive: which flowers, how sculpted, what kind of droplets, which metallic finishes, how colors meet. Never dilute it into a vague mood ("floral, pink-green" is a failure) — the brief must be so specific that no other photo would produce the same one. ALWAYS pick ONE hero motif: the single most striking pictorial element across the photos (an animal, a figure, a flower, a named object — the thing a person would describe first), written in heroLine as a drawable description with its technique and colors (e.g. "a roaring tiger hand-painted in warm orange and black ink-brush strokes"). The hero motif belongs on one or two tips only; everything else in the brief plays a supporting role. If the photos are pure texture or palette with no pictorial element, heroLine is an empty string. If the photo shows nail art, distill each nail's design into reusable elements. If it shows graphics, illustrations or collages, translate their visual ideas into nail-art vocabulary. You are extracting ingredients for new designs, not a blueprint to copy. The execution style is decided later. You are writing generation instructions, not describing the photo.
+Study the attached inspiration photo(s) and write a DESIGN BRIEF for a press-on nail SET. Your #1 job is to extract THIS photo's design vocabulary so completely that the finished set is unmistakably born from it — but as a new design, not a copy. Capture the specific motifs, techniques, textures, color relationships, and compositional ideas that make this photo distinctive: which flowers, how sculpted, what kind of droplets, which metallic finishes, how colors meet. Never dilute it into a vague mood ("floral, pink-green" is a failure) — the brief must be so specific that no other photo would produce the same one. ALWAYS pick ONE signature motif PER PHOTO: for each attached photo, its main object — the thing a person would name first when describing that photo (an animal, a figure, a flower, a vase, a named object), keeping its specific identity (a leaping white rabbit, not "a cute animal"; a lilac vase of pink star flowers, not "florals"). Write heroLine as "Photo 1: ...; Photo 2: ..." in photo order, one drawable description per photo with its technique and colors (e.g. "Photo 1: a roaring tiger hand-painted in warm orange and black ink-brush strokes"). The user must be able to look at the set and point to each photo's object, so never drop a photo's motif and never merge two photos into one. Each signature motif belongs on its own one or two tips; everything else in the brief plays a supporting role. A photo that is pure texture or palette with no pictorial element gets no entry; if no photo has one, heroLine is an empty string. If the photo shows nail art, distill each nail's design into reusable elements. If it shows graphics, illustrations or collages, translate their visual ideas into nail-art vocabulary. You are extracting ingredients for new designs, not a blueprint to copy. The execution style is decided later. You are writing generation instructions, not describing the photo.
 
 ## Translate materiality into technique (the master artist's move)
 Do not merely DRAW what you see — translate each motif's PHYSICAL NATURE into a nail technique, the way a master artist would: a necklace or chain becomes a draped line of pearls and beads actually arranged in a hanging curve; embroidered or woven fabric becomes tone-on-tone raised gel line work; watercolor or airbrush art becomes a soft airbrushed wash; jade, sea glass or stone becomes a translucent tinted-gel depth effect; stickers or flat graphics become crisp hand-painted outlines; jewelry stones become real flat-back gems. Write each patternLine as a BUILD instruction (what technique, what material) rather than a picture description. And mirror the photos' surface finish exactly: matte stays matte (velvet top coat), glossy stays glossy — if the photos are illustrations or paper, the set leans matte and hand-painted with few or zero metal parts.
@@ -532,21 +533,21 @@ DESIGN BRIEF (extracted from the photos — follow it in every plan):
 - Structure: ${brief.structureLine}
 ${brief.textureLine ? `- Texture: ${brief.textureLine}` : ''}
 - Palette: ${brief.paletteLine}
-${brief.heroLine ? `- HERO MOTIF: ${brief.heroLine}` : ''}
+${brief.heroLine ? `- SIGNATURE MOTIFS (one per photo, ALL of them must appear in EVERY plan): ${brief.heroLine}` : ''}
 - Motifs and placement: ${brief.patternLines.join(' | ')}
 - Parts rule to mirror: ${brief.partsLine}
 - Mood: ${brief.moodLine}
 
-THE THREE COMPOSITIONS (the hero motif must sit on a DIFFERENT tip number in each plan — never tip 1 in all three):
-- v1 = the balanced cut: hero motif on one central tip (tip 3 or 8), supporting motifs spread evenly.
-- v2 = the bold cut: hero motif larger, on a ring-finger tip (tip 4 or 9), denser pattern tips, fewer rest tips.
-- v3 = the quiet cut: hero motif on a thumb or pinky tip (tip 1, 5, 6 or 10), more rest tips, the sparsest and most wearable.
+THE THREE COMPOSITIONS (every plan carries EVERY signature motif, each on its own hero tip; the hero tips move to DIFFERENT tip numbers in each plan):
+- v1 = the balanced cut: hero tips spread evenly across both rows, supporting motifs in between.
+- v2 = the bold cut: the signature motifs painted larger, the first one repeated on a second tip, denser pattern tips, fewer rest tips.
+- v3 = the quiet cut: one tip per signature motif, more rest tips, the sparsest and most wearable.
 
 ## Output: exactly 3 plans (v1, v2, v3 in the composition order above), each with
 - id: "v1" to "v3"
 - title: short English name (2-3 words) describing this composition
 - note: one short English sentence
-- patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Build a HIERARCHY, not ten equal tips: exactly one or two HERO tip lines render the hero motif from the brief LARGE, filling most of that tip, with nothing else on its base (if the brief has no hero motif, promote its strongest pictorial element). Two or three REST tip lines stay nearly quiet — plain base color in the set palette with a subtle finish or one tiny accent. Every remaining tip line is a SUPPORTING design: one clear companion idea (a smaller motif, line work, a pattern) that echoes the hero's story without repeating it. No two tips match, the ten lines reuse the same two or three base colors, and density varies boldly across the set. Distribute the parts across the ten lines exactly as your partsLine states, keeping hero tips free of metal parts, and keep every tip inside the brief's base, finish and palette.
+- patternLines: EXACTLY 10 English lines, one per tip, each starting "Tip 1:" … "Tip 10:". Build a HIERARCHY, not ten equal tips: each signature motif from the brief gets its own HERO tip line (one or two tips per motif) that renders that exact object LARGE and recognizable, filling most of that tip, with nothing else on its base (if the brief has no signature motif, promote its strongest pictorial element). Two or three REST tip lines stay nearly quiet — plain base color in the set palette with a subtle finish or one tiny accent. Every remaining tip line is a SUPPORTING design: one clear companion idea (a smaller motif, line work, a pattern) that echoes the hero's story without repeating it. No two tips match, the ten lines reuse the same two or three base colors, and density varies boldly across the set. Distribute the parts across the ten lines exactly as your partsLine states, keeping hero tips free of metal parts, and keep every tip inside the brief's base, finish and palette.
 - partsLine: explicit counts mirroring the brief's parts rule ("Exactly one tip...", ending by excluding the rest); hero tips carry no metal parts
 - letteringWord: usually empty string; at most one plan may carry a common 4-6 letter script word
 - paletteLine: empty string (the brief's palette applies)

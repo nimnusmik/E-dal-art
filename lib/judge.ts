@@ -96,17 +96,29 @@ export interface QualityReport {
  * {pass, score}만 남기고 버렸다. 화면에는 배지 하나만 남아 "검수"가 무엇인지,
  * 왜 이 컷이 아쉬운지 한 글자도 없었다 — 이 제품의 유일한 차별점을 스스로 감춘 셈이다.
  */
+/** 사진별 주인공 수 — heroLine의 "Photo N:" 개수 (형식이 없으면 1) */
+function motifCount(brief: NailBrief): number {
+  return Math.max(1, (brief.heroLine.match(/Photo \d+:/g) ?? []).length);
+}
+
+/** 위계: 사진마다 주인공이 1~2팁 (브리프에 주인공이 없으면 자동 통과) */
+function heroCountOk(j: NailJudgement, brief: NailBrief): boolean {
+  if (!brief.heroLine) return true;
+  const n = motifCount(brief);
+  return j.heroTipCount >= n && j.heroTipCount <= n * 2;
+}
+
 export function verdictDetail(j: NailJudgement, brief: NailBrief): QualityReport {
   const { min, max } = expectedMetalTips(brief);
   const countOk = j.metalTipCount >= min && j.metalTipCount <= max;
   const letteringOk = brief.letteringWord ? j.letteringCount === 1 : j.letteringCount === 0;
   const tipCountOk = j.tipCount === 10;
-  const heroOk = !brief.heroLine || (j.heroTipCount >= 1 && j.heroTipCount <= 2);
+  const heroOk = heroCountOk(j, brief);
   const issues: string[] = [];
   if (!tipCountOk) issues.push(`${j.tipCount} tips (should be 10)`);
   if (!j.physicsOk) issues.push('Hard to build in a salon');
   if (!j.cleanRender) issues.push('Some smudged rendering');
-  if (!heroOk) issues.push(`Hero motif on ${j.heroTipCount} tips (should be 1-2)`);
+  if (!heroOk) issues.push(`Photo motifs on ${j.heroTipCount} tips (should be ${motifCount(brief)}-${motifCount(brief) * 2})`);
   if (!j.partsMatch) issues.push('Charm type or placement off');
   if (!countOk) issues.push(`${j.metalTipCount} charms (expected ${min}-${max})`);
   if (!j.baseMatch) issues.push('Base or structure off');
@@ -122,8 +134,7 @@ export function verdict(j: NailJudgement, brief: NailBrief): { pass: boolean; sc
   const letteringOk = brief.letteringWord ? j.letteringCount === 1 : j.letteringCount === 0;
   const partsOk = j.partsMatch && countOk;
   const tipCountOk = j.tipCount === 10;
-  // 위계: 주인공은 1~2팁에만 (브리프에 주인공이 없으면 자동 통과)
-  const heroOk = !brief.heroLine || (j.heroTipCount >= 1 && j.heroTipCount <= 2);
+  const heroOk = heroCountOk(j, brief);
   const checks = [tipCountOk, j.baseMatch, j.paletteMatch, partsOk, letteringOk, heroOk, j.physicsOk, j.cleanRender];
   const score = checks.filter(Boolean).length;
   // 즉시 탈락 4종: 팁 개수(제품 불변식 — 12팁 세트는 상품이 아님)·물리 위반·AI 티
@@ -235,11 +246,11 @@ DESIGN BRIEF:
 - Patterns: ${brief.patternLines.join(' | ')}
 - Parts rule: ${brief.partsLine}
 - Lettering: ${brief.letteringWord ? `the cursive word "${brief.letteringWord}" on exactly one tip` : 'none'}
-- Hero motif: ${brief.heroLine || 'none'}
+- Signature motifs (one per photo): ${brief.heroLine || 'none'}
 
 Report:
 - tipCount: the TOTAL number of nail tips visible in the image. Count carefully, one by one, row by row.
-- heroTipCount: on how many tips the hero motif appears rendered LARGE (owning most of that tip). 0 if the brief lists no hero motif.
+- heroTipCount: on how many tips any of the signature motifs appears rendered LARGE (owning most of that tip). 0 if the brief lists no signature motif.
 - baseMatch: base color/sheerness and french/full structure follow the brief (design contained where specified, negative space preserved).
 - paletteMatch: all colors belong to the brief palette; true only if there is no clearly foreign color (small neutral accents are fine).
 - partsMatch: judge ONLY whether the KIND of parts (stud / pearl / rose / gem) and their PLACEMENT (boundary line / center / etc.) match the parts rule. partsMatch MUST stay true even when there are more or fewer decorated tips than specified — quantity is reported separately in metalTipCount and judged elsewhere.
