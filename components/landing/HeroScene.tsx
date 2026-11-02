@@ -150,7 +150,6 @@ export default function HeroScene() {
             <img className="hs-after" src="/hero/cutout/hand-after.webp" alt="" loading="eager" decoding="async" />
           </div>
           {/* 맨손이 다 바뀐 순간에만 떠오름 — 손 쓸기(hs-paint)와 같은 7초 주기 */}
-          <span className="hs-yc" aria-hidden>YouCam try-on</span>
         </div>
         {[14, 24].map((z) => (
           <div className="hs-layer" style={{ ['--z' as string]: z }} key={z}>
