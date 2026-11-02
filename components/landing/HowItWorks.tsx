@@ -52,7 +52,7 @@ export default function HowItWorks() {
           </div>
           <span className="hw-n">02</span>
           <h3>Get three designed sets</h3>
-          <p>Ten tips each, quality checked, in about a minute.</p>
+          <p>Ten tips each, quality checked, in 1 to 2 minutes.</p>
         </li>
         <li className="hw-zone is-hand">
           <div className="hw-art" aria-hidden>

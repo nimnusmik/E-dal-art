@@ -572,7 +572,7 @@ export default function Home() {
                 </li>
                 <li>
                   <img className="is-tip" src="/hero/cutout/tip-4.webp" alt="" />
-                  <span><b>3 nail sets</b>Ten tips each, about a minute</span>
+                  <span><b>3 nail sets</b>Ten tips each, in 1 to 2 minutes</span>
                 </li>
                 <li>
                   <img className="is-hand" src="/hero/cutout/hand-after.webp" alt="" />

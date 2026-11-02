@@ -11,21 +11,21 @@ import '@/app/studio.css';
  * 왼쪽 레일 = 시안 칸이 완성순으로 채워짐 / 가운데 = 영감 사진 부채꼴 + 스캔 빛 / 오른쪽 = 진행 단계.
  */
 
-// 1단계(사진 분석) 동안 순환하는 문구 — analyze는 ~10초라 짧게 돈다
-const ANALYZE_MESSAGES = [
-  'Reading the colors in your photos...',
-  'Studying charms and techniques...',
-  'Planning your looks...',
-];
+/** 1단계(사진 분석) 약 50초 = 사진별 메인 사물 찾기 ~17초 + 시안 3개 계획 ~32초 (2026-11-01 실측) */
+const READ_PHOTOS_S = 18;
+const analyzeMessage = (elapsed: number, focus: number, count: number) =>
+  elapsed < READ_PHOTOS_S
+    ? count > 1 ? `Finding the main thing in photo ${focus + 1} of ${count}...` : 'Finding the main thing in your photo...'
+    : 'Planning your three looks...';
 
 /**
  * 이 시점을 넘기면 "느려지고 있다"를 명시적으로 알린다.
  * 기준은 **총 소요**다 — 단계별 고정값이면 정상 케이스 한복판에서 경고가 터졌다.
  */
-const SLOW_AFTER_S = 75;
+const SLOW_AFTER_S = 130;
 
 /** 총 소요 약속 — 단계마다 재견적하면 예산이 도중에 늘어나 이탈을 부른다 */
-const TOTAL_ESTIMATE = 'Usually under a minute';
+const TOTAL_ESTIMATE = 'Usually 1 to 2 minutes';
 
 function useElapsedSeconds(): number {
   const [s, setS] = useState(0);
@@ -75,11 +75,14 @@ export default function GeneratingScreen({
     return () => clearTimeout(t);
   }, [doneCount]);
 
+  // 지금 앞으로 나와 있는 사진 — 분석 중 2.4초마다 다음 장으로
+  const photoCount = Math.min(photos.length, 3);
   useEffect(() => {
-    if (stage !== 'analyzing') return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % ANALYZE_MESSAGES.length), 2500);
+    if (stage !== 'analyzing' || photoCount < 2) return;
+    const t = setInterval(() => setIndex((i) => (i + 1) % photoCount), 2400);
     return () => clearInterval(t);
-  }, [stage]);
+  }, [stage, photoCount]);
+  const message = analyzeMessage(elapsed, index, photoCount);
 
   // 배경 빛 번짐 — 영감 사진들의 선명한 색
   const [glow, setGlow] = useState<string[]>([]);
@@ -97,7 +100,7 @@ export default function GeneratingScreen({
   const no = (i: number) => String(i + 1).padStart(2, '0');
 
   const steps: Array<{ label: string; state: 'done' | 'active' | 'todo'; sub?: string }> = [
-    { label: 'Reading your photos', state: stage === 'analyzing' ? 'active' : 'done', sub: stage === 'analyzing' ? ANALYZE_MESSAGES[index] : undefined },
+    { label: 'Reading your photos', state: stage === 'analyzing' ? 'active' : 'done', sub: stage === 'analyzing' ? message : undefined },
     {
       label: 'Designing three looks',
       state: stage === 'analyzing' ? 'todo' : doneCount >= slots.length && slots.length > 0 ? 'done' : 'active',
@@ -162,18 +165,17 @@ export default function GeneratingScreen({
             {photos.slice(0, 3).map((p, i, arr) => (
               <div
                 key={p.id}
-                className="st-fan-card"
+                className={`st-fan-card${stage === 'analyzing' && i === index ? ' is-focus' : ''}`}
                 style={{ ['--r' as string]: `${(i - (arr.length - 1) / 2) * 9}deg`, ['--x' as string]: `${(i - (arr.length - 1) / 2) * 34}%` }}
               >
                 <img src={p.previewUrl} alt="" />
               </div>
             ))}
-            <div className="st-scan" />
           </div>
         )}
         <div role="status" aria-live="polite" className="st-gen-msg">
           {stage === 'analyzing' ? (
-            <span key={index}>{ANALYZE_MESSAGES[index]}</span>
+            <span key={message}>{message}</span>
           ) : (
             <span>Drawing your looks: {announced} of {slots.length}</span>
           )}

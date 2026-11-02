@@ -466,21 +466,20 @@
   background: rgb(var(--st-ink) / 0.06);
   box-shadow: var(--st-hero-shadow);
   transform: translateX(var(--x)) rotate(var(--r));
-  animation: st-breathe 3.2s ease-in-out infinite alternate;
+  transition: transform 0.7s var(--st-ease), opacity 0.7s, box-shadow 0.7s;
 }
 .st-fan-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-@keyframes st-breathe { to { transform: translateX(var(--x)) rotate(var(--r)) translateY(-8px); } }
-.st-scan {
-  position: absolute;
-  inset: 4% 8%;
-  border-radius: 26px;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.75) 48%, rgba(120, 160, 255, 0.35) 52%, transparent 60%);
-  background-size: 100% 260%;
-  mix-blend-mode: screen;
-  animation: st-scan 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+/* 지금 읽는 사진이 한 장씩 앞으로 — 똑바로 서고 커지며, 그 사진 안에서만 빛이 지나간다 (2026-11-01: 반투명 창 대체) */
+.st-fan:has(.is-focus) .st-fan-card:not(.is-focus) { opacity: 0.7; }
+.st-fan-card.is-focus { z-index: 5; transform: translateX(var(--x)) translateY(-14px) scale(1.08); }
+.st-fan-card.is-focus::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.6) 50%, transparent 65%);
+  background-size: 260% 100%; background-position: 130% 0;
+  animation: st-shine 1.6s ease-in-out 0.4s forwards;
 }
-@keyframes st-scan { from { background-position: 0 100%; } to { background-position: 0 -60%; } }
+@keyframes st-shine { to { background-position: -30% 0; } }
+@media (prefers-reduced-motion: reduce) { .st-fan-card { transition: none; } .st-fan-card.is-focus::after { animation: none; } }
 .st-gen-msg { font-size: 15px; font-weight: 600; color: var(--st-fg); text-align: center; min-height: 1.4em; }
 .st-gen-msg span { display: inline-block; animation: st-in 0.4s var(--st-ease); }
 
