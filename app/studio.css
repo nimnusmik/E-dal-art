@@ -385,6 +385,25 @@
 .st-foot { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--st-text-3); }
 .st-foot button { border: 0; background: none; color: var(--st-text-2); font: inherit; text-decoration: underline; cursor: pointer; padding: 0; }
 
+/* 무대 아래 '내 손에 입혀보기' 카드 — 이 앱의 핵심 동작이라 시안 바로 밑에 크게 */
+.st-try {
+  width: min(560px, 100%); display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px 16px;
+  padding: 16px 18px; border-radius: 22px; background: rgb(255 255 255 / 0.72); backdrop-filter: blur(20px);
+  box-shadow: 0 12px 32px rgba(60, 40, 70, 0.12);
+}
+.st-try .st-error { grid-column: 1 / -1; }
+.st-try-copy { display: flex; flex-direction: column; gap: 4px; }
+.st-try-copy b { font-size: 16px; color: var(--st-fg); }
+.st-try-copy span, .st-try-left { font-size: 12.5px; color: var(--st-text-2); }
+.st-try-btns { display: flex; gap: 8px; }
+.st-try-btns .st-btn { width: auto; white-space: nowrap; padding: 12px 16px; font-size: 14px; border-radius: 14px; }
+.st-try-left { grid-column: 1 / -1; color: var(--st-text-3); }
+@media (max-width: 600px) {
+  .st-try { grid-template-columns: 1fr; }
+  .st-try-btns .st-btn { flex: 1; }
+}
+.st-link { border: 0; background: none; padding: 2px 0; font: inherit; font-size: 13px; color: var(--st-text-2); text-decoration: underline; cursor: pointer; align-self: center; }
+
 /* 기존 공용 컴포넌트(SaveToLibrary·OptionsPicker)를 어두운 유리 위에서 읽히게 */
 .st .save-library .btn-outline { width: 100%; border-radius: 16px; padding: 15px; background: rgb(var(--st-ink) / 0.12); color: var(--st-fg); border: 0; font-weight: 600; }
 .st .save-done, .st .assurance { color: var(--st-text-2); }

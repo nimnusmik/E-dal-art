@@ -9,6 +9,10 @@ import type { GeneratedImage, HeroEntry, PartsIntensity, TrayPhoto, VariantSlot 
 import type { Mood, NailLength, NailShape } from '@/lib/types';
 import '@/app/studio.css';
 
+/** app/api/tryon/route.ts TRYON_LIMIT_PER_SESSION과 같은 값 */
+const TRYON_LIMIT = 3;
+const BUSY_STEPS = ['Finding your nails...', 'Placing each tip on its finger...', 'Almost done...'];
+
 const DIFFICULTY_LABEL: Record<string, string> = {
   easy: 'Easy',
   medium: 'Medium',
@@ -153,6 +157,11 @@ export default function ResultScreen({
   >({});
   // 가운데 무대에 무엇을 보여주나 — 시안(set) / 내 손(hand) / AI 모델 손(model)
   const [view, setView] = useState<'set' | 'hand' | 'model'>('set');
+  // 입혀보기는 실행 1번당 3회(서버 TRYON_LIMIT_PER_SESSION) — 새 실행이면 이 화면이 다시 마운트돼 0부터
+  const [tryonsUsed, setTryonsUsed] = useState(0);
+  const tryonsLeft = Math.max(0, TRYON_LIMIT - tryonsUsed);
+  // 기다리는 동안 보여줄 단계 — 실제 약 35초(손톱 찾기 → 손가락별 6번 합성 → 합치기)
+  const [busyStep, setBusyStep] = useState(0);
   const [cut, setCut] = useState(50);
   // 손 사진은 사람마다 비율이 달라 고정 틀(3:4)이면 손가락 끝(=손톱)이 잘린다 — 사진 비율 그대로
   const [handAspect, setHandAspect] = useState(3 / 4);
@@ -250,6 +259,7 @@ export default function ResultScreen({
     try {
       const image = await onTryOn(planId, file);
       setTryon((p) => ({ ...p, [planId]: { status: 'done', image, before } }));
+      setTryonsUsed((n) => n + 1);
       setView('hand');
       setCut(50);
     } catch (e) {
@@ -260,6 +270,20 @@ export default function ResultScreen({
       setTryon((p) => ({ ...p, [planId]: { status: 'error', message } }));
     }
   };
+
+  const trySample = async () => {
+    const blob = await fetch('/hero/sample-hand.jpg').then((r) => r.blob());
+    void runTryOn(new File([blob], 'sample-hand.jpg', { type: 'image/jpeg' }));
+  };
+
+  const tryonLoading = t?.status === 'loading';
+  useEffect(() => {
+    if (!tryonLoading) return;
+    setBusyStep(0);
+    const a = setTimeout(() => setBusyStep(1), 8000);
+    const b = setTimeout(() => setBusyStep(2), 28000);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, [tryonLoading]);
 
   const tryonUrl = t?.status === 'done' ? `data:${t.image.mimeType};base64,${t.image.image}` : null;
   // 지금 무대에 떠 있는 이미지 — 공유는 "보고 있는 것"을 보낸다
@@ -428,8 +452,8 @@ export default function ResultScreen({
             <div className="st-busy" role="status" aria-live="polite">
               <span className="st-spinner" aria-hidden />
               <span>
-                Finding your nails...
-                <small>About 20 seconds. Only your nails will change.</small>
+                {BUSY_STEPS[busyStep]}
+                <small>Step {busyStep + 1} of 3 · about 30 seconds. Only your nails change.</small>
               </span>
             </div>
           )}
@@ -452,6 +476,28 @@ export default function ResultScreen({
         )}
         {view === 'hand' && tryonUrl && <p className="st-caption">Drag across to compare. Your hand stays exactly as uploaded.</p>}
         {view === 'model' && collageUrl && <p className="st-caption">This hand is AI-drawn. Try it on your own hand for the real thing.</p>}
+        {selected && tipSetUrl && !restored && (
+          <div className="st-try">
+            {t?.status === 'error' && <p className="st-error" role="status">{t.message}</p>}
+            <div className="st-try-copy">
+              <b>{t?.status === 'done' ? 'Try it on another hand' : 'See this set on your hand'}</b>
+              <span>Back of your hand, fingers spread, bright light.</span>
+            </div>
+            <div className="st-try-btns">
+              {tryonsLeft > 0 && !tryonLoading ? (
+                <>
+                  {handPicker('Upload my hand', true)}
+                  <button className="st-btn ghost" onClick={() => void trySample()}>Use a sample hand</button>
+                </>
+              ) : tryonLoading ? (
+                <span className="st-try-left">Working on it...</span>
+              ) : null}
+            </div>
+            <span className="st-try-left">
+              {tryonsLeft > 0 ? `${tryonsLeft} ${tryonsLeft === 1 ? 'try-on' : 'try-ons'} left in this run` : 'No try-ons left in this run. Start a new run for 3 more.'}
+            </span>
+          </div>
+        )}
       </section>
 
       {/* 오른쪽 유리 패널 */}
@@ -514,11 +560,7 @@ export default function ResultScreen({
             )}
 
             <div className="st-actions">
-              {t?.status === 'error' && <p className="st-error" role="status">{t.message}</p>}
               {heroError && <p className="st-error" role="status">{heroError}</p>}
-              {!restored && t?.status !== 'loading' &&
-                handPicker(t?.status === 'done' ? 'Try another hand photo' : 'Try it on my hand', true)}
-
               {/* 로그인했으면 파일 저장 말고 계정에 남길 수 있다 — 무대에 떠 있는 것을 저장 */}
               {signedIn && tipSet && (
                 view === 'hand' && t?.status === 'done' ? (
@@ -551,10 +593,10 @@ export default function ResultScreen({
               <div className="st-row">
                 <button className="st-btn ghost" onClick={share} disabled={!stageUrl}>Share</button>
                 <button className="st-btn ghost" onClick={saveTipSet} disabled={!tipSetUrl}>Download</button>
-                {!restored && !hero && (
-                  <button className="st-btn ghost" onClick={() => onHero(selected.plan.id)}>Model hand</button>
-                )}
               </div>
+              {!restored && !hero && (
+                <button className="st-link" onClick={() => onHero(selected.plan.id)}>Or see it on an AI model hand</button>
+              )}
 
               {/* 재생성 입구는 여기 하나뿐 — 유료·파괴적 액션은 입구를 하나로 모으고 확인을 받는다 */}
               {hasAnyDone && !restored && (
