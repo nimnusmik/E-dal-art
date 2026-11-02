@@ -76,8 +76,12 @@ async function analyzeOnce(images: ImagePayload[]): Promise<NailBrief | null> {
       ],
       config: { responseMimeType: 'application/json', responseSchema: BRIEF_SCHEMA },
     });
-    return parseBrief(response.text ?? '');
-  } catch {
+    const brief = parseBrief(response.text ?? '');
+    // 실패 이유가 로그에 안 남아 운영에서 원인을 못 찾았다(2026-11-01) — 응답 앞부분만 남긴다
+    if (!brief) console.error('[analyze] brief parse failed:', (response.text ?? '').slice(0, 300));
+    return brief;
+  } catch (e) {
+    console.error('[analyze] model call failed:', (e as Error)?.message?.slice(0, 300));
     return null;
   }
 }
