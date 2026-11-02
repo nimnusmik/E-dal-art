@@ -342,8 +342,8 @@ export default function Home() {
     // 이 한 줄이 없으면 12초 기다린 뒤 히어로로 튕겨 "초기화됐네" 하고 이탈한다.
     anchorToolRef.current = true;
     try {
-      // analyze는 maxDuration 60초 — 모바일 네트워크 행(hang)에 대비해 타임아웃을 건다
-      const timeout = AbortSignal.timeout(70_000);
+      // analyze는 maxDuration 120초 — 모바일 네트워크 행(hang)에 대비해 타임아웃을 건다
+      const timeout = AbortSignal.timeout(130_000);
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

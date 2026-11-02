@@ -11,7 +11,7 @@ import { AnalyzeBodySchema } from '@/lib/schemas';
  * 분석 1회 → 옵션 오버라이드 → 변주 플랜 3종. 세션 시작 = 기존 일일 크레딧 1 차감(성공 시에만).
  */
 
-export const maxDuration = 60; // 분석 + 플랜 텍스트 호출 2회 + 여유
+export const maxDuration = 120; // 분석 약 17초 + 플랜 약 32초(사진별 주인공 이후 실측, 2026-11-01) — 60이면 콜드스타트에 끊겼다
 
 type AnalyzeErrorCode =
   | 'INVALID_INPUT'
