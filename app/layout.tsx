@@ -12,7 +12,7 @@ const SITE_URL =
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : 'http://localhost:3000');
-const TITLE = 'idala: nail sets from your inspiration photos';
+const TITLE = 'idala: your photos as nails, on your hand';
 const DESCRIPTION = 'Drop in an inspiration photo and get a salon-ready nail set, then try it on your own hand.';
 const OG_DESCRIPTION = 'One inspiration photo becomes three nail sets, quality-checked and ready to try on your own hand.';
 
@@ -28,13 +28,13 @@ export const metadata: Metadata = {
     title: TITLE,
     description: OG_DESCRIPTION,
     url: '/',
-    images: [{ url: '/og.jpg', width: 1200, height: 630, alt: TITLE }],
+    images: [{ url: '/og-v2.jpg', width: 1200, height: 630, alt: TITLE }],
   },
   twitter: {
     card: 'summary_large_image',
     title: TITLE,
     description: OG_DESCRIPTION,
-    images: ['/og.jpg'],
+    images: ['/og-v2.jpg'],
   },
 };
 
